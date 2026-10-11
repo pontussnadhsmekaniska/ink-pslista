@@ -1,5 +1,5 @@
 // Enkel offline-cache: visa senaste versionen direkt, uppdatera i bakgrunden.
-const CACHE = "veckohandling-v4";
+const CACHE = "veckohandling-v5";
 const FILES = ["./", "index.html", "manifest.webmanifest", "icons/icon-192.png", "icons/icon-512.png", "icons/apple-touch-icon.png"];
 
 self.addEventListener("install", e => {

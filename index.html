@@ -890,26 +890,36 @@ function openWebSearch(q, site) {
   window.open("https://www.google.com/search?q=" + encodeURIComponent(query), "_blank");
 }
 
-// Hämtar sidan via en mellanhand, eftersom webbläsaren inte får läsa andra sajter direkt
+// Hämtar sidan via en mellanhand, eftersom webbläsaren inte får läsa andra sajter direkt.
+// Alla provas samtidigt och den första som ger ett recept vinner.
 const PROXIES = [
-  u => "https://corsproxy.io/?url=" + encodeURIComponent(u),
-  u => "https://api.allorigins.win/raw?url=" + encodeURIComponent(u),
-  u => "https://api.codetabs.com/v1/proxy/?quest=" + encodeURIComponent(u),
+  { url: u => "https://api.allorigins.win/raw?url=" + encodeURIComponent(u) },
+  { url: u => "https://api.allorigins.win/get?url=" + encodeURIComponent(u), json: "contents" },
+  { url: u => "https://whateverorigin.org/get?url=" + encodeURIComponent(u), json: "contents" },
+  { url: u => "https://api.codetabs.com/v1/proxy/?quest=" + encodeURIComponent(u) },
+  { url: u => "https://r.jina.ai/" + u, headers: { "X-Return-Format": "html" } },
 ];
-async function fetchPage(url) {
-  for (const proxy of PROXIES) {
+
+async function fetchRecipeLd(url) {
+  let fetched = false;
+  const attempts = PROXIES.map(async proxy => {
     const ctrl = new AbortController();
-    const timer = setTimeout(() => ctrl.abort(), 15000);
+    const timer = setTimeout(() => ctrl.abort(), 25000);
     try {
-      const res = await fetch(proxy(url), { signal: ctrl.signal });
-      if (res.ok) {
-        const html = await res.text();
-        if (html.length > 500) return html;
-      }
-    } catch (e) { /* prova nästa */ }
-    finally { clearTimeout(timer); }
+      const res = await fetch(proxy.url(url), { signal: ctrl.signal, headers: proxy.headers });
+      if (!res.ok) throw new Error(res.status);
+      let html = await res.text();
+      if (proxy.json) html = JSON.parse(html)[proxy.json] || "";
+      if (html.length > 500) fetched = true;
+      const ld = findRecipeLd(new DOMParser().parseFromString(html, "text/html"));
+      if (!ld) throw new Error("inget recept");
+      return ld;
+    } finally { clearTimeout(timer); }
+  });
+  try { return await Promise.any(attempts); }
+  catch (e) {
+    throw new Error(fetched ? "Sidan hämtades, men inget recept hittades på den" : "Sidan kunde inte hämtas – sajten blockerar troligen hämtningen");
   }
-  throw new Error("Sidan kunde inte hämtas");
 }
 
 const stripHtml = t => {
@@ -918,7 +928,8 @@ const stripHtml = t => {
 };
 
 // Letar upp ett schema.org-recept i sidans JSON-LD (finns på de flesta stora receptsajter)
-function findRecipeLd(doc) {
+// Letar upp ett schema.org-recept i sidans JSON-LD (finns på de flesta stora receptsajter)
+function findRecipeInJson(texts) {
   const isRecipe = o => o && typeof o === "object" && [].concat(o["@type"] || []).some(t => /recipe$/i.test(t));
   const search = o => {
     if (!o || typeof o !== "object") return null;
@@ -929,15 +940,16 @@ function findRecipeLd(doc) {
     }
     return null;
   };
-  for (const el of doc.querySelectorAll('script[type="application/ld+json"]')) {
+  for (const text of texts) {
     let data;
-    try { data = JSON.parse(el.textContent); }
-    catch (e) { try { data = JSON.parse(el.textContent.replace(/[\u0000-\u001f]+/g, " ")); } catch (e2) { continue; } }
+    try { data = JSON.parse(text); }
+    catch (e) { try { data = JSON.parse(text.replace(/[\u0000-\u001f]+/g, " ")); } catch (e2) { continue; } }
     const hit = search(data);
     if (hit) return hit;
   }
   return null;
 }
+const findRecipeLd = doc => findRecipeInJson([...doc.querySelectorAll('script[type="application/ld+json"]')].map(el => el.textContent));
 
 // "PT1H30M" -> 90
 function isoMinutes(d) {
@@ -947,7 +959,10 @@ function isoMinutes(d) {
 
 function flattenSteps(ins) {
   if (!ins) return [];
-  if (typeof ins === "string") return stripHtml(ins.replace(/<\/(p|li)>|<br\s*\/?>/gi, "\n")).split(/\n|(?<=\.)\s+(?=\d+\.\s)/).map(x => x.trim()).filter(Boolean);
+  if (typeof ins === "string") {
+    // Dela på stycken/listpunkter/radbrytningar innan HTML tas bort
+    return ins.replace(/<\/(p|li|div)>|<br\s*\/?>/gi, "\n").split(/\n|(?<=\.)\s+(?=\d+\.\s)/).map(stripHtml).filter(Boolean);
+  }
   if (Array.isArray(ins)) return ins.flatMap(flattenSteps);
   if (ins.itemListElement) return flattenSteps(ins.itemListElement);
   return [stripHtml(ins.text || ins.name || "")].filter(Boolean);
@@ -988,6 +1003,69 @@ function recipeFromLd(ld, url) {
   };
 }
 
+function showDraft(draft) {
+  recipeQuery = ""; $("#recipe-search").value = "";
+  view = "recipes"; render();
+  recipeEditSheet(null, null, null, draft);
+  toast("Kolla receptet och tryck Spara");
+}
+
+// Text från genvägen "Spara i Handla": {"handla":1,"url":"…","ld":["…"]}
+function importShared(text) {
+  let data;
+  try { data = JSON.parse(text); } catch (e) { return false; }
+  if (!data || !data.handla) return false;
+  const ld = findRecipeInJson([].concat(data.ld || []));
+  if (ld) showDraft(recipeFromLd(ld, data.url || ""));
+  else toast("Hittade inget recept på den sidan");
+  return true;
+}
+
+// Klistrat in något: recept från genvägen eller en länk
+function importFromText(text) {
+  text = (text || "").trim();
+  if (importShared(text)) return true;
+  const url = text.match(/https?:\/\/\S+/)?.[0];
+  if (url) { importRecipe(url); return true; }
+  return false;
+}
+
+const SHORTCUT_JS = `var s=[];document.querySelectorAll('script[type="application/ld+json"]').forEach(function(e){s.push(e.textContent)});completion(JSON.stringify({handla:1,url:location.href,ld:s}));`;
+
+function shortcutSheet() {
+  openSheet(`
+    <h3>Spara recept från Safari</h3>
+    <p class="hint" style="font-size:16px;margin-top:-6px">Skapa genvägen en gång, så kan du sedan spara recept direkt från dela-menyn i Safari. Det tar ett par minuter.</p>
+    <h4>1. Tillåt skript</h4>
+    <div class="card"><ol class="steps">
+      <li>Öppna <b>Inställningar</b> → <b>Appar</b> → <b>Genvägar</b> → <b>Avancerat</b>. (På äldre iPhone: Inställningar → Genvägar → Avancerat.)</li>
+      <li>Slå på <b>Tillåt körning av skript</b>.</li>
+    </ol></div>
+    <h4>2. Skapa genvägen</h4>
+    <div class="card"><ol class="steps">
+      <li>Tryck på knappen här nedanför för att kopiera koden.</li>
+      <li>Öppna appen <b>Genvägar</b> och tryck på <b>+</b> uppe till höger.</li>
+      <li>Tryck på <b>Lägg till åtgärd</b>, sök på <b>Kör JavaScript på webbsida</b> och välj den.</li>
+      <li>Tryck i kodrutan, markera allt som står där och välj <b>Klistra in</b>.</li>
+      <li>Sök på åtgärden <b>Kopiera till urklipp</b> och lägg till den under.</li>
+      <li>Tryck på namnet längst upp, välj <b>Byt namn</b> och skriv <b>Spara i Handla</b>.</li>
+      <li>Tryck på <b>ⓘ</b> eller namnet → <b>Detaljer</b> och slå på <b>Visa i delningsblad</b>. Tryck på <b>Klar</b>.</li>
+    </ol></div>
+    <button class="btn" id="s-copy" style="width:100%;margin-top:12px;padding:13px">📋 Kopiera koden</button>
+    <h4>3. Så använder du den</h4>
+    <div class="card"><ol class="steps">
+      <li>Öppna ett recept i Safari, tryck på <b>dela-knappen</b> och välj <b>Spara i Handla</b>. (Första gången frågar iPhone om lov – välj <b>Tillåt alltid</b>.)</li>
+      <li>Öppna appen Handla, gå till <b>Recept</b> → <b>+</b> och tryck på <b>Klistra in kopierat recept</b>.</li>
+    </ol></div>
+    <div class="actions"><button class="btn ghost" id="s-close">Stäng</button></div>`, body => {
+    body.querySelector("#s-close").onclick = closeSheet;
+    body.querySelector("#s-copy").onclick = async () => {
+      try { await navigator.clipboard.writeText(SHORTCUT_JS); toast("Koden är kopierad"); }
+      catch (e) { prompt("Kopiera koden:", SHORTCUT_JS); }
+    };
+  });
+}
+
 let importing = false;
 async function importRecipe(url) {
   url = url.trim();
@@ -997,19 +1075,15 @@ async function importRecipe(url) {
     <div class="card" style="padding:18px 16px;display:flex;gap:12px;align-items:center;color:var(--muted)">
       <span class="spinner"></span><span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(url)}</span></div>`);
   try {
-    const doc = new DOMParser().parseFromString(await fetchPage(url), "text/html");
-    const ld = findRecipeLd(doc);
-    if (!ld) throw new Error("Hittade inget recept på sidan");
-    const draft = recipeFromLd(ld, url);
-    recipeQuery = ""; $("#recipe-search").value = "";
-    view = "recipes"; render();
-    recipeEditSheet(null, null, null, draft);
-    toast("Kolla receptet och tryck Spara");
+    showDraft(recipeFromLd(await fetchRecipeLd(url), url));
   } catch (e) {
     openSheet(`<h3>Det gick inte att hämta receptet</h3>
-      <p class="hint" style="font-size:16px">${esc(e.message)}. Alla sajter går tyvärr inte att läsa. Du kan skriva in receptet själv istället.</p>
+      <p class="hint" style="font-size:16px">${esc(e.message)}.</p>
+      <p class="hint" style="font-size:16px">Använd genvägen <b>Spara i Handla</b> i Safaris dela-meny istället – den läser receptet direkt från sidan och fungerar även när länken inte gör det.</p>
+      <div class="card" style="margin-bottom:8px"><button class="pick" id="i-shortcut">📲 Visa hur du skapar genvägen</button></div>
       <div class="actions"><button class="btn ghost" id="i-close">Stäng</button><button class="btn" id="i-manual">Skriv själv</button></div>`, body => {
       body.querySelector("#i-close").onclick = closeSheet;
+      body.querySelector("#i-shortcut").onclick = shortcutSheet;
       body.querySelector("#i-manual").onclick = () => recipeEditSheet(null, null, null, { name: "", category: "Övrigt", servings: 4, time: 0, ingredients: [], steps: [], source: url, image: "" });
     });
   } finally {
@@ -1021,11 +1095,14 @@ function addRecipeSheet() {
   openSheet(`
     <h3>Lägg till recept</h3>
     <form class="addbar card" id="a-form" style="position:static" autocomplete="off">
-      <input id="a-url" type="url" inputmode="url" placeholder="Klistra in länk till ett recept" enterkeyhint="go">
+      <input id="a-url" inputmode="url" placeholder="Klistra in länk till ett recept" enterkeyhint="go" autocapitalize="off">
       <button class="btn" type="submit">Hämta</button>
     </form>
     <p class="hint">Fungerar med de flesta stora receptsajter, t.ex. ICA, Arla, Köket och Coop.</p>
-    ${navigator.clipboard?.readText ? `<div class="card" style="margin-bottom:14px"><button class="pick" id="a-paste">📋 Klistra in kopierad länk</button></div>` : ""}
+    <div class="card" style="margin-bottom:14px">
+      ${navigator.clipboard?.readText ? `<button class="pick" id="a-paste">📋 Klistra in kopierat recept eller länk</button>` : ""}
+      <button class="pick" id="a-shortcut">📲 Spara recept direkt från Safari (genväg)</button>
+    </div>
     <form class="addbar card" id="a-search" style="position:static" autocomplete="off">
       <input id="a-q" type="search" placeholder="Sök recept på nätet, t.ex. lasagne" enterkeyhint="search">
       <button class="btn ghost" type="submit">Sök</button>
@@ -1034,13 +1111,16 @@ function addRecipeSheet() {
     <div class="actions"><button class="btn ghost" id="a-close">Stäng</button></div>`, body => {
     body.querySelector("#a-close").onclick = closeSheet;
     body.querySelector("#a-manual").onclick = () => recipeEditSheet(null);
-    body.querySelector("#a-form").onsubmit = e => { e.preventDefault(); importRecipe(body.querySelector("#a-url").value); };
+    body.querySelector("#a-shortcut").onclick = shortcutSheet;
+    body.querySelector("#a-form").onsubmit = e => {
+      e.preventDefault();
+      if (!importFromText(body.querySelector("#a-url").value)) body.querySelector("#a-url").focus();
+    };
     body.querySelector("#a-paste")?.addEventListener("click", async () => {
-      try {
-        const text = (await navigator.clipboard.readText()).trim();
-        const url = text.match(/https?:\/\/\S+/)?.[0];
-        if (url) importRecipe(url); else toast("Ingen länk hittades i urklipp");
-      } catch (e) { toast("Kunde inte läsa urklipp – klistra in i rutan istället"); }
+      let text;
+      try { text = await navigator.clipboard.readText(); }
+      catch (e) { toast("Kunde inte läsa urklipp – klistra in i rutan istället"); return; }
+      if (!importFromText(text)) toast("Inget recept eller länk i urklipp");
     });
     body.querySelector("#a-search").onsubmit = e => {
       e.preventDefault();
@@ -1634,7 +1714,11 @@ $("#recipes").addEventListener("click", e => {
   const imp = e.target.closest("[data-import]");
   if (imp) importRecipe(imp.dataset.import);
 });
-$("#recipe-search").addEventListener("input", e => { recipeQuery = e.target.value.trim(); renderRecipes(); });
+$("#recipe-search").addEventListener("input", e => {
+  if (e.target.value.trim().startsWith("{") && importShared(e.target.value.trim())) return;
+  recipeQuery = e.target.value.trim();
+  renderRecipes();
+});
 $("#recipe-cats").addEventListener("click", e => {
   const b = e.target.closest("[data-rcat]");
   if (!b) return;
