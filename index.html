@@ -214,7 +214,7 @@
     transform: translate(-50%, 20px); opacity: 0; z-index: 30;
     background: var(--text); color: var(--bg); padding: 10px 14px; border-radius: 12px;
     font-size: 15px; display: flex; gap: 14px; align-items: center; transition: .2s; pointer-events: none;
-    max-width: calc(100% - 32px);
+    width: max-content; max-width: calc(100% - 32px);
   }
   .toast.show { opacity: 1; transform: translate(-50%, 0); pointer-events: auto; }
   .toast button { color: var(--accent); font-weight: 700; }
@@ -246,6 +246,45 @@
   .field-row .field { flex: 1; min-width: 0; }
   .field-row .field.small { flex: 0 0 110px; }
 
+  /* Flera listor */
+  .title-btn { display: flex; align-items: center; gap: 6px; text-align: left; max-width: 100%; }
+  .title-btn h1 { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .title-btn svg { width: 22px; height: 22px; flex: none; color: var(--muted); margin-top: 4px; }
+  header.top > div { min-width: 0; }
+  .pick .count { float: right; color: var(--muted); font-weight: 400; }
+
+  /* Recept i listan */
+  .in-list { margin-bottom: 14px; overflow: hidden; }
+  .in-list .row { display: flex; align-items: center; border-top: 1px solid var(--line); }
+  .in-list h2 + .row { border-top: 0; }
+  .in-list .open { flex: 1; min-width: 0; text-align: left; padding: 11px 16px; }
+  .in-list .open small { color: var(--muted); font-size: 14px; margin-left: 6px; }
+  .in-list .x { padding: 11px 16px; color: var(--muted); font-size: 18px; line-height: 1; }
+
+  /* Timers */
+  .timer { display: flex; align-items: center; gap: 6px; margin-top: 8px; flex-wrap: wrap; }
+  .timer button { min-width: 36px; height: 34px; padding: 0 10px; border-radius: 10px; background: var(--surface-2); font-weight: 600; font-size: 15px; }
+  .timer .t-go { background: var(--accent); color: var(--accent-ink); }
+  .timer .t-time { min-width: 64px; text-align: center; font-weight: 700; font-variant-numeric: tabular-nums; font-size: 16px; }
+  .timer.running .t-time { color: var(--accent); }
+  .timer.done .t-time { color: var(--danger); animation: blink 1s steps(2) infinite; }
+  @keyframes blink { 50% { opacity: .35; } }
+  #timerbar {
+    position: fixed; left: 0; right: 0; z-index: 15;
+    bottom: calc(var(--tabbar-h) + env(safe-area-inset-bottom) + 8px);
+    display: flex; flex-direction: column; gap: 6px; align-items: center; padding: 0 16px; pointer-events: none;
+  }
+  #timerbar .tb {
+    pointer-events: auto; width: 100%; max-width: 608px; display: flex; align-items: center; gap: 10px;
+    background: var(--text); color: var(--bg); border-radius: 14px; padding: 10px 8px 10px 14px; box-shadow: 0 6px 20px rgba(0,0,0,.18);
+  }
+  #timerbar .tb .lbl { flex: 1; min-width: 0; text-align: left; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 15px; }
+  #timerbar .tb .tt { font-weight: 700; font-variant-numeric: tabular-nums; }
+  #timerbar .tb.done { background: var(--danger); color: #fff; animation: blink 1s steps(2) infinite; }
+  #timerbar .tb .x { padding: 4px 8px; font-size: 18px; line-height: 1; color: inherit; opacity: .8; }
+  body.has-timers .app { padding-bottom: calc(var(--tabbar-h) + env(safe-area-inset-bottom) + 90px); }
+  body.has-timers .toast { bottom: calc(var(--tabbar-h) + env(safe-area-inset-bottom) + 80px); }
+
   .hint { color: var(--muted); font-size: 14px; margin: 4px 4px 14px; }
   [hidden] { display: none !important; }
 </style>
@@ -256,13 +295,17 @@
   <section id="view-list">
     <header class="top">
       <div>
-        <h1>Inköpslista</h1>
+        <button class="title-btn" id="list-switch" aria-label="Byt lista">
+          <h1 id="list-title">Inköpslista</h1>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
+        </button>
         <div class="sub" id="list-sub"></div>
       </div>
       <button class="icon-btn" id="list-menu" aria-label="Fler val">
         <svg viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg>
       </button>
     </header>
+    <div class="chips" id="list-tabs" hidden></div>
     <div class="progress" id="progress" hidden><i></i></div>
     <form class="addbar card" id="add-form" autocomplete="off">
       <input id="add-input" list="suggestions" placeholder="Lägg till vara, t.ex. 2 l mjölk" enterkeyhint="done" aria-label="Ny vara">
@@ -272,6 +315,7 @@
     </form>
     <datalist id="suggestions"></datalist>
     <div class="chips" id="quick-chips"></div>
+    <div id="list-recipes"></div>
     <div id="list"></div>
   </section>
 
@@ -337,6 +381,7 @@
 
 <div class="scrim" id="scrim"></div>
 <div class="sheet" id="sheet" role="dialog" aria-modal="true"><div class="grab"></div><div id="sheet-body"></div></div>
+<div id="timerbar"></div>
 <div class="toast" id="toast" role="status"><span id="toast-text"></span><button id="toast-btn" hidden>Ångra</button></div>
 
 <script>
@@ -394,25 +439,25 @@ const recipeCat = name => RECIPE_CATS.find(c => c.name === name) || RECIPE_CATS[
 
 // Mängder anges för `servings` portioner och räknas om när man väljer annat antal
 const DEFAULT_RECIPES = [
-  { name: "Tacos", category: "Kött", servings: 4,
+  { name: "Tacos", category: "Kött", servings: 4, time: 30,
     ingredients: ["500 g köttfärs", "1 påse tacokrydda", "12 tacoskal", "1 isbergssallad", "3 tomater", "1 gurka", "2 dl riven ost", "2 dl gräddfil", "1 burk tacosås", "1 burk majs"],
     steps: ["Bryn köttfärsen i en stekpanna.", "Tillsätt tacokrydda och vatten enligt förpackningen och låt puttra i ca 5 minuter.", "Strimla salladen och tärna tomater och gurka.", "Värm tacoskalen i ugnen enligt förpackningen.", "Servera med ost, gräddfil, majs och tacosås."] },
-  { name: "Spaghetti med köttfärssås", category: "Pasta", servings: 4,
+  { name: "Spaghetti med köttfärssås", category: "Pasta", servings: 4, time: 40,
     ingredients: ["500 g köttfärs", "400 g spaghetti", "1 gul lök", "2 klyftor vitlök", "1 burk krossade tomater", "2 msk tomatpuré", "1 dl riven parmesan"],
     steps: ["Hacka lök och vitlök och fräs dem mjuka i lite olja.", "Tillsätt köttfärsen och bryn den.", "Rör ner tomatpuré och krossade tomater. Låt sjuda under lock i 15–20 minuter. Smaka av med salt och peppar.", "Koka spaghettin enligt förpackningen.", "Servera med riven parmesan."] },
-  { name: "Ugnslax med potatis", category: "Fisk & skaldjur", servings: 4,
+  { name: "Ugnslax med potatis", category: "Fisk & skaldjur", servings: 4, time: 35,
     ingredients: ["4 laxfiléer", "1 kg potatis", "1 citron", "1 knippe dill", "2 dl crème fraiche", "500 g broccoli"],
     steps: ["Sätt ugnen på 200 °C och koka potatisen.", "Lägg laxen i en ugnsform, salta och peppra och lägg på citronskivor.", "Baka laxen i mitten av ugnen i ca 15 minuter.", "Koka eller ånga broccolin.", "Rör ihop crème fraiche med hackad dill, lite citronsaft och salt till en sås."] },
-  { name: "Kycklinggryta med ris", category: "Kyckling", servings: 4,
+  { name: "Kycklinggryta med ris", category: "Kyckling", servings: 4, time: 30,
     ingredients: ["600 g kycklingfilé", "3 dl ris", "2,5 dl matlagningsgrädde", "1 röd paprika", "1 gul lök", "2 tsk curry", "1 kycklingbuljongtärning"],
     steps: ["Koka riset enligt förpackningen.", "Skär kycklingen i bitar och bryn den i olja. Salta och peppra.", "Hacka lök och paprika och fräs dem med curryn.", "Tillsätt grädde, smulad buljongtärning och 1 dl vatten. Låt koka i ca 10 minuter tills kycklingen är genomstekt."] },
-  { name: "Linssoppa med kokos", category: "Soppa & gryta", servings: 4,
+  { name: "Linssoppa med kokos", category: "Soppa & gryta", servings: 4, time: 35,
     ingredients: ["2 dl röda linser", "1 gul lök", "2 morötter", "1 burk krossade tomater", "1 burk kokosmjölk", "1 grönsaksbuljongtärning", "1 tsk spiskummin"],
     steps: ["Hacka löken och riv morötterna. Fräs dem med spiskummin i en kastrull.", "Skölj linserna och lägg i dem tillsammans med tomater, kokosmjölk, buljong och 5 dl vatten.", "Låt sjuda i ca 20 minuter tills linserna är mjuka.", "Mixa gärna slät och smaka av med salt."] },
-  { name: "Pannkakor", category: "Dessert", servings: 4,
+  { name: "Pannkakor", category: "Dessert", servings: 4, time: 30,
     ingredients: ["6 dl mjölk", "3 ägg", "2,5 dl vetemjöl", "2 msk smör", "1 burk sylt"],
     steps: ["Vispa mjölet med hälften av mjölken till en slät smet.", "Vispa i resten av mjölken, äggen och en nypa salt. Låt smeten vila i 10 minuter.", "Smält smöret i stekpannan och rör ner det i smeten.", "Stek tunna pannkakor på medelvärme och servera med sylt."] },
-  { name: "Havregrynsgröt", category: "Frukost", servings: 2,
+  { name: "Havregrynsgröt", category: "Frukost", servings: 2, time: 10,
     ingredients: ["2 dl havregryn", "2 dl mjölk", "1 burk lingonsylt"],
     steps: ["Koka upp havregryn, 4 dl vatten och en nypa salt.", "Låt sjuda under omrörning i 3–5 minuter.", "Servera med kall mjölk och sylt."] },
 ];
@@ -427,15 +472,16 @@ const OLD_DEFAULTS = {
 };
 
 function normalizeRecipe(r) {
-  if (!r.category && OLD_DEFAULTS[r.name] === (r.ingredients || []).join("|")) {
-    const fresh = DEFAULT_RECIPES.find(d => d.name === r.name);
-    if (fresh) return { id: r.id, ...fresh };
-  }
+  const fresh = DEFAULT_RECIPES.find(d => d.name === r.name);
+  if (fresh && !r.category && OLD_DEFAULTS[r.name] === (r.ingredients || []).join("|")) return { id: r.id, ...fresh };
+  // Standardrecept från förra versionen saknade tid
+  if (fresh && r.time == null && fresh.ingredients.join("|") === (r.ingredients || []).join("|")) r = { ...r, time: fresh.time };
   return {
     id: r.id || uid(),
     name: r.name || "Namnlöst recept",
     category: r.category || "Övrigt",
     servings: Math.max(1, parseInt(r.servings, 10) || 4),
+    time: Math.max(0, parseInt(r.time, 10) || 0),   // total tid i minuter
     ingredients: Array.isArray(r.ingredients) ? r.ingredients : [],
     steps: Array.isArray(r.steps) ? r.steps : [],
   };
@@ -447,9 +493,13 @@ const STORE_KEY = "veckohandling.v1";
 
 const uid = () => Math.random().toString(36).slice(2, 10) + Date.now().toString(36).slice(-4);
 
+const newList = name => ({ id: uid(), name, items: [], recipes: [] });
+
 function defaultState() {
+  const first = newList("Inköpslista");
   return {
-    items: [],           // {id, name, qty, cat, done, from}
+    lists: [first],      // {id, name, items: [{id, name, qty, cat, done, from}], recipes: [{recipeId, name, servings}]}
+    activeList: first.id,
     recipes: DEFAULT_RECIPES.map(r => ({ id: uid(), ...r })),
     plan: {},            // "2026-10-12": {recipeId?, text?}
     history: {},         // varunamn (gemener) -> {name, cat, count}
@@ -460,20 +510,32 @@ function defaultState() {
   };
 }
 
+// Gör om sparad data (även från äldre versioner) till aktuellt format
+function migrate(data) {
+  const st = Object.assign(defaultState(), data);
+  if (!Array.isArray(data.lists) || !data.lists.length) {
+    // Före flera listor fanns bara en lista i cur().items
+    const first = newList("Inköpslista");
+    first.items = Array.isArray(data.items) ? data.items : [];
+    st.lists = [first];
+    st.activeList = first.id;
+  }
+  delete st.items;
+  st.lists.forEach(l => { l.items = l.items || []; l.recipes = l.recipes || []; });
+  if (!st.lists.some(l => l.id === st.activeList)) st.activeList = st.lists[0].id;
+  st.recipes = st.recipes.map(normalizeRecipe);
+  if ((data.defaultsVersion || 1) < 2) {
+    // Nya exempelrecept läggs till en gång för den som redan använder appen
+    for (const d of DEFAULT_RECIPES) if (!st.recipes.some(r => r.name === d.name)) st.recipes.push({ id: uid(), ...d });
+    st.defaultsVersion = 2;
+  }
+  return st;
+}
+
 function load() {
   try {
     const raw = localStorage.getItem(STORE_KEY);
-    if (raw) {
-      const data = JSON.parse(raw);
-      const st = Object.assign(defaultState(), data);
-      st.recipes = st.recipes.map(normalizeRecipe);
-      if ((data.defaultsVersion || 1) < 2) {
-        // Nya exempelrecept läggs till en gång för den som redan använder appen
-        for (const d of DEFAULT_RECIPES) if (!st.recipes.some(r => r.name === d.name)) st.recipes.push({ id: uid(), ...d });
-        st.defaultsVersion = 2;
-      }
-      return st;
-    }
+    if (raw) return migrate(JSON.parse(raw));
   } catch (e) { /* tom eller blockerad lagring */ }
   return defaultState();
 }
@@ -487,6 +549,9 @@ function save() {
 }
 
 function commit() { save(); render(); }
+
+// Den lista som visas just nu
+const cur = () => state.lists.find(l => l.id === state.activeList) || state.lists[0];
 
 /* ---------- Hjälpfunktioner ---------- */
 
@@ -592,11 +657,11 @@ function remember(name, cat) {
   state.history[k] = h;
 }
 
-function addItem(text, from, factor = 1) {
+function addItem(text, from, factor = 1, list = cur()) {
   const parsed = parseEntry(text);
   const name = parsed.name, qty = scaleQty(parsed.qty, factor);
   if (!name) return null;
-  const existing = state.items.find(i => key(i.name) === key(name));
+  const existing = list.items.find(i => key(i.name) === key(name));
   if (existing) {
     // Finns redan: bocka av-markering tas bort och mängd slås ihop
     if (existing.done) { existing.done = false; existing.qty = qty; }
@@ -605,7 +670,7 @@ function addItem(text, from, factor = 1) {
     return existing;
   }
   const item = { id: uid(), name, qty, cat: guessCategory(name), done: false, from: from || "" };
-  state.items.push(item);
+  list.items.push(item);
   remember(name, item.cat);
   return item;
 }
@@ -636,7 +701,7 @@ function render() {
   $("#view-week").hidden = view !== "week";
   $("#view-recipes").hidden = view !== "recipes";
 
-  const left = state.items.filter(i => !i.done).length;
+  const left = cur().items.filter(i => !i.done).length;
   const badge = $("#badge");
   badge.hidden = left === 0; badge.textContent = left;
 
@@ -646,8 +711,24 @@ function render() {
 }
 
 function renderList() {
-  const total = state.items.length;
-  const done = state.items.filter(i => i.done).length;
+  const list = cur();
+  $("#list-title").textContent = list.name;
+  const tabs = $("#list-tabs");
+  tabs.hidden = state.lists.length < 2;
+  tabs.innerHTML = state.lists.length < 2 ? "" : state.lists.map(l => {
+    const left = l.items.filter(i => !i.done).length;
+    return `<button class="chip${l.id === list.id ? " on" : ""}" data-list="${l.id}">${esc(l.name)}${left ? ` · ${left}` : ""}</button>`;
+  }).join("");
+
+  $("#list-recipes").innerHTML = list.recipes.length ? `<div class="card in-list">
+    <h2 style="margin:0;padding:12px 16px 6px;font-size:13px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)">🍽️ Recept i listan</h2>
+    ${list.recipes.map(x => `<div class="row">
+      <button class="open" data-open-recipe="${x.recipeId}">${esc(x.name)}<small>${x.servings} port.</small></button>
+      <button class="x" data-remove-recipe="${x.recipeId}" aria-label="Ta bort ${esc(x.name)} ur listan">✕</button>
+    </div>`).join("")}</div>` : "";
+
+  const total = cur().items.length;
+  const done = cur().items.filter(i => i.done).length;
   $("#list-sub").textContent = total
     ? (done === total ? "Allt handlat! 🎉" : `${total - done} kvar av ${total}`)
     : "Listan är tom";
@@ -656,7 +737,7 @@ function renderList() {
   prog.firstElementChild.style.width = total ? (done / total * 100) + "%" : "0";
 
   // Snabbval: mest köpta varor som inte redan står på listan
-  const onList = new Set(state.items.filter(i => !i.done).map(i => key(i.name)));
+  const onList = new Set(cur().items.filter(i => !i.done).map(i => key(i.name)));
   const frequent = Object.values(state.history)
     .filter(h => !onList.has(key(h.name)))
     .sort((a, b) => b.count - a.count)
@@ -666,13 +747,13 @@ function renderList() {
 
   $("#suggestions").innerHTML = Object.values(state.history).map(h => `<option value="${esc(h.name)}">`).join("");
 
-  const list = $("#list");
+  const box = $("#list");
   if (!total) {
-    list.innerHTML = `<div class="empty"><div class="big">🧺</div>Skriv in det du behöver ovan,<br>eller planera veckan under <b>Veckomeny</b>.</div>`;
+    box.innerHTML = `<div class="empty"><div class="big">🧺</div>Skriv in det du behöver ovan,<br>eller planera veckan under <b>Veckomeny</b>.</div>`;
     return;
   }
 
-  const visible = state.items.filter(i => !(state.hideDone && i.done));
+  const visible = cur().items.filter(i => !(state.hideDone && i.done));
   let html = "";
   for (const c of CATEGORIES) {
     const items = visible.filter(i => i.cat === c.id)
@@ -691,11 +772,12 @@ function renderList() {
     html += `</div>`;
   }
   if (state.hideDone && done) html += `<p class="hint" style="text-align:center">${done} avbockade varor dolda</p>`;
-  list.innerHTML = html;
+  box.innerHTML = html;
 }
 
 function recipeById(id) { return state.recipes.find(r => r.id === id); }
 const planServings = (p, r) => p.servings || r.servings;
+const fmtTime = min => min < 60 ? `${min} min` : `${Math.floor(min / 60)} h${min % 60 ? ` ${min % 60} min` : ""}`;
 
 function renderWeek() {
   const mon = mondayOf(weekOffset);
@@ -714,7 +796,7 @@ function renderWeek() {
     html += `<button class="day${iso === today ? " today" : ""}" data-day="${iso}">
       <span class="date"><span>${DAYS_SHORT[d]}</span><b>${date.getDate()}</b></span>
       <span class="meal">${label ? esc(label) : `<span class="placeholder">Välj middag…</span>`}
-        ${r ? `<small>${planServings(p, r)} portioner</small>` : ""}</span>
+        ${r ? `<small>${planServings(p, r)} portioner${r.time ? " · " + fmtTime(r.time) : ""}</small>` : ""}</span>
     </button>`;
   }
   $("#days").innerHTML = html;
@@ -755,7 +837,7 @@ function renderRecipes() {
     if (!list.length) continue;
     html += `<div class="group card"><h2><span>${c.emoji} ${esc(c.name)}</span><span>${list.length}</span></h2>`;
     html += list.map(r => `<button class="recipe" data-recipe="${r.id}"><b>${esc(r.name)}</b>
-      <small>${r.servings} portioner · ${r.ingredients.length} ingredienser${r.steps.length ? ` · ${r.steps.length} steg` : ""}</small></button>`).join("");
+      <small>${r.time ? `⏱ ${fmtTime(r.time)} · ` : ""}${r.servings} portioner · ${r.ingredients.length} ingredienser</small></button>`).join("");
     html += `</div>`;
   }
   box.innerHTML = html;
@@ -779,7 +861,7 @@ function closeSheet() {
 $("#scrim").addEventListener("click", closeSheet);
 
 function editItemSheet(id) {
-  const i = state.items.find(x => x.id === id);
+  const i = cur().items.find(x => x.id === id);
   if (!i) return;
   openSheet(`
     <h3>Redigera vara</h3>
@@ -808,15 +890,15 @@ function editItemSheet(id) {
 }
 
 function listMenuSheet() {
-  const done = state.items.filter(i => i.done).length;
+  const done = cur().items.filter(i => i.done).length;
   openSheet(`
-    <h3>Inköpslista</h3>
+    <h3>${esc(cur().name)}</h3>
     <div class="card">
       <button class="pick" id="m-share">📤 Dela listan</button>
       <button class="pick" id="m-hide">${state.hideDone ? "👁️ Visa avbockade" : "🙈 Dölj avbockade"}</button>
       <button class="pick" id="m-clear-done"${done ? "" : " disabled style='opacity:.4'"}>✅ Rensa avbockade (${done})</button>
       <button class="pick" id="m-uncheck"${done ? "" : " disabled style='opacity:.4'"}>↩️ Avmarkera alla</button>
-      <button class="pick" id="m-clear-all" style="color:var(--danger)"${state.items.length ? "" : " disabled"}>🗑️ Töm hela listan</button>
+      <button class="pick" id="m-clear-all" style="color:var(--danger)"${cur().items.length ? "" : " disabled"}>🗑️ Töm hela listan</button>
     </div>
     <p class="hint" style="margin-top:16px">Säkerhetskopia</p>
     <div class="card">
@@ -829,11 +911,11 @@ function listMenuSheet() {
     body.querySelector("#m-share").onclick = () => { closeSheet(); shareList(); };
     body.querySelector("#m-hide").onclick = () => { state.hideDone = !state.hideDone; closeSheet(); commit(); };
     body.querySelector("#m-clear-done").onclick = () => {
-      closeSheet(); removeItems(state.items.filter(i => i.done).map(i => i.id), `${done} varor rensade`);
+      closeSheet(); removeItems(cur().items.filter(i => i.done).map(i => i.id), `${done} varor rensade`);
     };
-    body.querySelector("#m-uncheck").onclick = () => { state.items.forEach(i => i.done = false); closeSheet(); commit(); };
+    body.querySelector("#m-uncheck").onclick = () => { cur().items.forEach(i => i.done = false); closeSheet(); commit(); };
     body.querySelector("#m-clear-all").onclick = () => {
-      closeSheet(); removeItems(state.items.map(i => i.id), "Listan tömd");
+      closeSheet(); removeItems(cur().items.map(i => i.id), "Listan tömd");
     };
     body.querySelector("#m-export").onclick = exportData;
     const file = body.querySelector("#m-file");
@@ -858,6 +940,48 @@ function bindStepper(root, initial, onChange) {
     root.querySelector("[data-servings]").textContent = n;
     root.querySelector('[data-step="-1"]').disabled = n <= 1;
     onChange(n);
+  });
+}
+
+function listsSheet() {
+  const list = cur();
+  openSheet(`
+    <h3>Mina listor</h3>
+    <div class="card">
+      ${state.lists.map(l => `<button class="pick${l.id === list.id ? " sel" : ""}" data-list="${l.id}">${l.id === list.id ? "✓ " : ""}${esc(l.name)}<span class="count">${l.items.filter(i => !i.done).length}</span></button>`).join("")}
+    </div>
+    <form id="l-form" class="addbar card" style="position:static;margin-top:16px" autocomplete="off">
+      <input id="l-new" placeholder="Ny lista, t.ex. Helgfest eller Apoteket" enterkeyhint="done">
+      <button class="btn" type="submit">Skapa</button>
+    </form>
+    <p class="hint" style="margin-top:16px">Vald lista: ${esc(list.name)}</p>
+    <div class="card">
+      <button class="pick" id="l-rename">✏️ Byt namn</button>
+      ${state.lists.length > 1 ? `<button class="pick" id="l-delete" style="color:var(--danger)">🗑️ Ta bort listan</button>` : ""}
+    </div>
+    <div class="actions"><button class="btn ghost" id="l-close">Stäng</button></div>`, body => {
+    body.querySelector("#l-close").onclick = closeSheet;
+    body.querySelectorAll("[data-list]").forEach(b => b.onclick = () => { state.activeList = b.dataset.list; closeSheet(); commit(); });
+    body.querySelector("#l-form").onsubmit = e => {
+      e.preventDefault();
+      const name = cap(body.querySelector("#l-new").value.trim());
+      if (!name) { body.querySelector("#l-new").focus(); return; }
+      const l = newList(name);
+      state.lists.push(l);
+      state.activeList = l.id;
+      closeSheet(); commit();
+      toast(`Listan ${name} skapad`);
+    };
+    body.querySelector("#l-rename").onclick = () => {
+      const name = prompt("Nytt namn på listan", list.name);
+      if (name && name.trim()) { list.name = cap(name.trim()); commit(); listsSheet(); }
+    };
+    body.querySelector("#l-delete")?.addEventListener("click", () => {
+      if (!confirm(`Ta bort listan "${list.name}" och allt i den?`)) return;
+      state.lists = state.lists.filter(l => l !== list);
+      state.activeList = state.lists[0].id;
+      closeSheet(); commit();
+    });
   });
 }
 
@@ -921,11 +1045,17 @@ function recipeViewSheet(id) {
   const c = recipeCat(r.category);
   openSheet(`
     <h3>${esc(r.name)}</h3>
-    <div class="recipe-meta">${c.emoji} ${esc(c.name)} · grundrecept för ${r.servings} portioner</div>
+    <div class="recipe-meta">${c.emoji} ${esc(c.name)}${r.time ? ` · ⏱ ${fmtTime(r.time)}` : ""} · grundrecept för ${r.servings} portioner</div>
     ${stepperHtml(servings)}
     <h4>Ingredienser</h4>
     <div class="card" id="v-ing">${ingredientRows(r, servings)}</div>
-    ${r.steps.length ? `<h4>Gör så här</h4><div class="card"><ol class="steps">${r.steps.map(s => `<li>${esc(s)}</li>`).join("")}</ol></div>` : ""}
+    ${r.steps.length ? `<h4>Gör så här</h4><div class="card"><ol class="steps">${r.steps.map((s, n) => {
+      const min = stepMinutes(s);
+      return `<li>${esc(s)}${min ? timerHtml(`${r.id}:${n}`, min) : ""}</li>`;
+    }).join("")}</ol></div>` : ""}
+    ${state.lists.length > 1 ? `<label class="field" style="margin-top:16px"><span>Lägg i lista</span><select id="v-list">
+      ${state.lists.map(l => `<option value="${l.id}"${l.id === state.activeList ? " selected" : ""}>${esc(l.name)}</option>`).join("")}
+    </select></label>` : ""}
     <div class="actions">
       <button class="btn ghost" id="v-edit">Redigera</button>
       <button class="btn" id="v-add">Lägg i listan</button>
@@ -933,16 +1063,17 @@ function recipeViewSheet(id) {
     bindStepper(body, servings, n => { servings = n; body.querySelector("#v-ing").innerHTML = ingredientRows(r, n); });
     body.querySelector("#v-edit").onclick = () => recipeEditSheet(id);
     body.querySelector("#v-add").onclick = () => {
-      const factor = servings / r.servings;
-      r.ingredients.forEach(ing => addItem(ing, r.name, factor));
+      const listId = body.querySelector("#v-list")?.value;
+      const list = state.lists.find(l => l.id === listId) || cur();
+      addRecipeToList(r, servings, list);
       closeSheet(); commit();
-      toast(`${r.ingredients.length} varor för ${servings} portioner tillagda`);
+      toast(`${r.name} för ${servings} portioner tillagt i ${list.name}`);
     };
   });
 }
 
 function recipeEditSheet(id, assignTo, assignServings) {
-  const r = id ? recipeById(id) : { name: "", category: recipeCatFilter || "Övrigt", servings: 4, ingredients: [], steps: [] };
+  const r = id ? recipeById(id) : { name: "", category: recipeCatFilter || "Övrigt", servings: 4, time: 0, ingredients: [], steps: [] };
   openSheet(`
     <h3>${id ? "Redigera recept" : "Nytt recept"}</h3>
     <label class="field"><span>Namn</span><input id="r-name" value="${esc(r.name)}" placeholder="t.ex. Lasagne"></label>
@@ -950,11 +1081,14 @@ function recipeEditSheet(id, assignTo, assignServings) {
       <label class="field"><span>Kategori</span><select id="r-cat">
         ${RECIPE_CATS.map(c => `<option value="${esc(c.name)}"${c.name === r.category ? " selected" : ""}>${c.emoji} ${esc(c.name)}</option>`).join("")}
       </select></label>
-      <label class="field small"><span>Portioner</span><input id="r-serv" type="number" inputmode="numeric" min="1" max="99" value="${r.servings}"></label>
+    </div>
+    <div class="field-row">
+      <label class="field"><span>Portioner</span><input id="r-serv" type="number" inputmode="numeric" min="1" max="99" value="${r.servings}"></label>
+      <label class="field"><span>Total tid (minuter)</span><input id="r-time" type="number" inputmode="numeric" min="0" max="1440" value="${r.time || ""}" placeholder="t.ex. 30"></label>
     </div>
     <label class="field"><span>Ingredienser – en per rad, mängden först</span>
       <textarea id="r-ing" placeholder="500 g köttfärs&#10;1 gul lök&#10;2 dl grädde">${esc(r.ingredients.join("\n"))}</textarea></label>
-    <label class="field"><span>Gör så här – ett steg per rad</span>
+    <label class="field"><span>Gör så här – ett steg per rad. Skriv en tid i steget (t.ex. "koka i 10 minuter") så får steget en timer.</span>
       <textarea id="r-steps" placeholder="Hacka löken.&#10;Bryn köttfärsen.&#10;…">${esc(r.steps.join("\n"))}</textarea></label>
     <div class="actions">
       ${id ? `<button class="btn danger" id="r-del">Ta bort</button>` : ""}
@@ -968,6 +1102,7 @@ function recipeEditSheet(id, assignTo, assignServings) {
         name: cap(body.querySelector("#r-name").value.trim()),
         category: body.querySelector("#r-cat").value,
         servings: Math.max(1, Math.min(99, parseInt(body.querySelector("#r-serv").value, 10) || 4)),
+        time: Math.max(0, Math.min(1440, parseInt(body.querySelector("#r-time").value, 10) || 0)),
         ingredients: lines("#r-ing"),
         steps: lines("#r-steps").map(s => s.replace(/^\d+[.)]\s*/, "")),
       };
@@ -988,6 +1123,129 @@ function recipeEditSheet(id, assignTo, assignServings) {
   });
 }
 
+/* ---------- Timers ---------- */
+
+// Hittar en tid i ett steg: "koka i 10 minuter", "15–20 min", "1 timme"
+function stepMinutes(text) {
+  const m = text.match(/(\d+(?:[.,]\d+)?)(?:\s*[–-]\s*\d+(?:[.,]\d+)?)?\s*(timmar|timme|tim|h|minuter|minut|min)(?![a-zåäö])/i);
+  if (!m) return 0;
+  const n = parseFloat(m[1].replace(",", "."));
+  return Math.round(/^(t|h)/i.test(m[2]) ? n * 60 : n);
+}
+
+const TIMER_KEY = "veckohandling.timers";
+// tid -> {label, recipeId, endAt (ms) | null, remaining (ms) | null, done}
+let timers = {};
+try { timers = JSON.parse(localStorage.getItem(TIMER_KEY)) || {}; } catch (e) { timers = {}; }
+const timerDrafts = {};   // ändrade minuter innan timern startats
+const saveTimers = () => { try { localStorage.setItem(TIMER_KEY, JSON.stringify(timers)); } catch (e) { /* ignorera */ } };
+
+const leftMs = t => Math.max(0, t.endAt ? t.endAt - Date.now() : t.remaining);
+function fmtClock(ms) {
+  const sec = Math.ceil(ms / 1000);
+  const h = Math.floor(sec / 3600), m = Math.floor(sec % 3600 / 60), s2 = sec % 60;
+  return (h ? h + ":" + String(m).padStart(2, "0") : m) + ":" + String(s2).padStart(2, "0");
+}
+
+function timerHtml(tid, defMin) {
+  const t = timers[tid];
+  if (!t) {
+    const m = timerDrafts[tid] ?? defMin;
+    return `<div class="timer" data-tid="${tid}" data-def="${defMin}">
+      <button data-t="minus" aria-label="En minut mindre">−</button><span class="t-time">${m} min</span><button data-t="plus" aria-label="En minut mer">+</button>
+      <button class="t-go" data-t="start">▶ Starta timer</button></div>`;
+  }
+  if (t.done) {
+    return `<div class="timer done" data-tid="${tid}" data-def="${defMin}"><span class="t-time">Klar!</span><button class="t-go" data-t="reset">OK</button></div>`;
+  }
+  return `<div class="timer${t.endAt ? " running" : ""}" data-tid="${tid}" data-def="${defMin}">
+    <button data-t="minus" aria-label="En minut mindre">−</button><span class="t-time">${fmtClock(leftMs(t))}</span><button data-t="plus" aria-label="En minut mer">+</button>
+    <button class="t-go" data-t="${t.endAt ? "pause" : "resume"}">${t.endAt ? "❚❚ Pausa" : "▶ Fortsätt"}</button>
+    <button data-t="reset" aria-label="Stoppa timern">✕</button></div>`;
+}
+
+function timerAction(tid, action, defMin) {
+  const t = timers[tid];
+  const [recipeId, step] = tid.split(":");
+  if (action === "minus" || action === "plus") {
+    const d = action === "plus" ? 1 : -1;
+    if (!t) timerDrafts[tid] = Math.max(1, (timerDrafts[tid] ?? defMin) + d);
+    else if (!t.done) {
+      if (t.endAt) t.endAt = Math.max(Date.now() + 1000, t.endAt + d * 60000);
+      else t.remaining = Math.max(1000, t.remaining + d * 60000);
+    }
+  } else if (action === "start") {
+    unlockAudio();
+    const r = recipeById(recipeId);
+    timers[tid] = { label: `${r ? r.name : "Timer"} · steg ${+step + 1}`, recipeId, endAt: Date.now() + (timerDrafts[tid] ?? defMin) * 60000, remaining: null, done: false };
+  } else if (action === "pause" && t) { t.remaining = leftMs(t); t.endAt = null; }
+  else if (action === "resume" && t) { unlockAudio(); t.endAt = Date.now() + t.remaining; t.remaining = null; }
+  else if (action === "reset") { delete timers[tid]; delete timerDrafts[tid]; }
+  saveTimers();
+  updateTimers(true);
+}
+
+// Ritar om timer-raderna och timerlisten; full=false uppdaterar bara siffrorna
+function updateTimers(full) {
+  const now = Date.now();
+  for (const [tid, t] of Object.entries(timers)) {
+    if (!t.done && t.endAt && t.endAt <= now) { t.done = true; t.endAt = null; saveTimers(); full = true; alarm(t.label); }
+  }
+  document.querySelectorAll("#sheet .timer[data-tid]").forEach(el => {
+    const tid = el.dataset.tid, t = timers[tid];
+    if (full) el.outerHTML = timerHtml(tid, +el.dataset.def);
+    else if (t && !t.done) el.querySelector(".t-time").textContent = fmtClock(leftMs(t));
+  });
+  const active = Object.entries(timers);
+  document.body.classList.toggle("has-timers", active.length > 0);
+  $("#timerbar").innerHTML = active.map(([tid, t]) => `<div class="tb${t.done ? " done" : ""}">
+    <button class="lbl" data-open-recipe="${t.recipeId}">${t.done ? "🔔 Klar: " : "⏱ "}${esc(t.label)}</button>
+    ${t.done ? "" : `<span class="tt">${fmtClock(leftMs(t))}${t.endAt ? "" : " ❚❚"}</span>`}
+    <button class="x" data-tb-reset="${tid}" aria-label="Stoppa timern">✕</button></div>`).join("");
+  const ringing = active.some(([, t]) => t.done);
+  if (!ringing) stopAlarm();
+  keepAwake(active.some(([, t]) => t.endAt));
+}
+
+let audioCtx, alarmLoop;
+function unlockAudio() {
+  // iOS kräver att ljud "låses upp" av ett tryck innan det kan spelas senare
+  try {
+    audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
+    if (audioCtx.state === "suspended") audioCtx.resume();
+  } catch (e) { /* inget ljud */ }
+}
+function beep() {
+  if (!audioCtx) return;
+  [0, .25, .5].forEach(off => {
+    const o = audioCtx.createOscillator(), g = audioCtx.createGain();
+    o.frequency.value = 880; o.connect(g); g.connect(audioCtx.destination);
+    const t0 = audioCtx.currentTime + off;
+    g.gain.setValueAtTime(.0001, t0); g.gain.exponentialRampToValueAtTime(.4, t0 + .02); g.gain.exponentialRampToValueAtTime(.0001, t0 + .2);
+    o.start(t0); o.stop(t0 + .22);
+  });
+}
+function alarm(label) {
+  toast(`🔔 ${label} är klar!`);
+  if (navigator.vibrate) navigator.vibrate([300, 150, 300, 150, 300]);
+  if (alarmLoop) return;
+  beep();
+  let n = 0;
+  alarmLoop = setInterval(() => { if (++n > 40) stopAlarm(); else beep(); }, 1500);
+}
+function stopAlarm() { clearInterval(alarmLoop); alarmLoop = null; }
+
+// Håll skärmen tänd medan en timer går, så att larmet hörs
+let wakeLock = null;
+async function keepAwake(on) {
+  try {
+    if (on && !wakeLock && "wakeLock" in navigator && document.visibilityState === "visible") {
+      wakeLock = await navigator.wakeLock.request("screen");
+      wakeLock.addEventListener("release", () => { wakeLock = null; });
+    } else if (!on && wakeLock) { await wakeLock.release(); wakeLock = null; }
+  } catch (e) { /* stöds inte */ }
+}
+
 /* ---------- Åtgärder ---------- */
 
 let toastTimer;
@@ -1003,16 +1261,47 @@ function toast(text, undo) {
 
 function removeItems(ids, message) {
   if (!ids.length) return;
-  const before = state.items.slice();
-  state.items = state.items.filter(i => !ids.includes(i.id));
+  const list = cur();
+  const before = { items: list.items.slice(), recipes: list.recipes.slice() };
+  list.items = list.items.filter(i => !ids.includes(i.id));
+  if (!list.items.length) list.recipes = [];
   commit();
-  toast(message, () => { state.items = before; commit(); });
+  toast(message, () => { Object.assign(list, before); commit(); });
+}
+
+// Lägger ett recepts ingredienser i en lista och kommer ihåg receptet i listans översikt
+function addRecipeToList(r, servings, list = cur()) {
+  const factor = servings / r.servings;
+  r.ingredients.forEach(ing => addItem(ing, r.name, factor, list));
+  const entry = list.recipes.find(x => x.recipeId === r.id);
+  if (entry) entry.servings += servings;
+  else list.recipes.push({ recipeId: r.id, name: r.name, servings });
+}
+
+// Tar bort ett recept ur listan, och de varor som bara behövdes till det receptet
+function removeRecipeFromList(recipeId) {
+  const list = cur();
+  const entry = list.recipes.find(x => x.recipeId === recipeId);
+  if (!entry) return;
+  const before = JSON.parse(JSON.stringify({ items: list.items, recipes: list.recipes }));
+  list.recipes = list.recipes.filter(x => x !== entry);
+  list.items = list.items.filter(i => {
+    const from = (i.from || "").split(", ").filter(Boolean);
+    if (!from.includes(entry.name)) return true;
+    if (from.length === 1) return i.done; // avbockade varor får vara kvar
+    i.from = from.filter(f => f !== entry.name).join(", ");
+    return true;
+  });
+  commit();
+  toast(`${entry.name} borttaget ur listan`, () => { Object.assign(list, before); commit(); });
 }
 
 function listAsText() {
-  let out = "🛒 Inköpslista\n";
+  const list = cur();
+  let out = `🛒 ${list.name}\n`;
+  if (list.recipes.length) out += "\nRecept: " + list.recipes.map(x => `${x.name} (${x.servings} port.)`).join(", ") + "\n";
   for (const c of CATEGORIES) {
-    const items = state.items.filter(i => i.cat === c.id && !i.done);
+    const items = cur().items.filter(i => i.cat === c.id && !i.done);
     if (!items.length) continue;
     out += `\n${c.emoji} ${c.name}\n` + items.map(i => `• ${i.name}${i.qty ? " – " + i.qty : ""}`).join("\n") + "\n";
   }
@@ -1022,7 +1311,7 @@ function listAsText() {
 async function shareList() {
   const text = listAsText();
   try {
-    if (navigator.share) { await navigator.share({ title: "Inköpslista", text }); return; }
+    if (navigator.share) { await navigator.share({ title: cur().name, text }); return; }
     await navigator.clipboard.writeText(text);
     toast("Listan kopierad");
   } catch (e) {
@@ -1043,8 +1332,8 @@ function importData(file) {
   if (!file) return;
   file.text().then(t => {
     const data = JSON.parse(t);
-    if (!Array.isArray(data.items) || !Array.isArray(data.recipes)) throw new Error("fel format");
-    state = Object.assign(defaultState(), data);
+    if (!(Array.isArray(data.items) || Array.isArray(data.lists)) || !Array.isArray(data.recipes)) throw new Error("fel format");
+    state = migrate(data);
     closeSheet(); commit(); toast("Data importerad");
   }).catch(() => toast("Filen kunde inte läsas"));
 }
@@ -1057,12 +1346,12 @@ function addWeekToList() {
     const p = state.plan[isoDate(date)];
     const r = p?.recipeId && recipeById(p.recipeId);
     if (!r) continue;
-    const factor = planServings(p, r) / r.servings;
-    r.ingredients.forEach(ing => { addItem(ing, r.name, factor); count++; });
+    addRecipeToList(r, planServings(p, r));
+    count++;
   }
   view = "list";
   commit();
-  toast(`${count} ingredienser tillagda`);
+  toast(`${count} recept tillagda i ${cur().name}`);
 }
 
 /* ---------- Händelser ---------- */
@@ -1089,7 +1378,7 @@ $("#list").addEventListener("click", e => {
   if (edit) { editItemSheet(edit.dataset.edit); return; }
   const row = e.target.closest("[data-toggle]");
   if (!row) return;
-  const i = state.items.find(x => x.id === row.dataset.toggle);
+  const i = cur().items.find(x => x.id === row.dataset.toggle);
   if (!i) return;
   i.done = !i.done;
   if (i.done && navigator.vibrate) navigator.vibrate(10);
@@ -1097,6 +1386,31 @@ $("#list").addEventListener("click", e => {
 });
 
 $("#list-menu").addEventListener("click", listMenuSheet);
+$("#list-switch").addEventListener("click", listsSheet);
+$("#list-tabs").addEventListener("click", e => {
+  const b = e.target.closest("[data-list]");
+  if (b) { state.activeList = b.dataset.list; commit(); }
+});
+$("#list-recipes").addEventListener("click", e => {
+  const rm = e.target.closest("[data-remove-recipe]");
+  if (rm) { removeRecipeFromList(rm.dataset.removeRecipe); return; }
+  const open = e.target.closest("[data-open-recipe]");
+  if (open) recipeViewSheet(open.dataset.openRecipe);
+});
+$("#sheet-body").addEventListener("click", e => {
+  const b = e.target.closest(".timer [data-t]");
+  if (!b) return;
+  const el = b.closest(".timer");
+  timerAction(el.dataset.tid, b.dataset.t, +el.dataset.def);
+});
+$("#timerbar").addEventListener("click", e => {
+  const x = e.target.closest("[data-tb-reset]");
+  if (x) { delete timers[x.dataset.tbReset]; saveTimers(); updateTimers(true); return; }
+  const open = e.target.closest("[data-open-recipe]");
+  if (open && recipeById(open.dataset.openRecipe)) recipeViewSheet(open.dataset.openRecipe);
+});
+setInterval(() => { if (Object.keys(timers).length) updateTimers(false); }, 500);
+document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") updateTimers(true); });
 $("#days").addEventListener("click", e => { const b = e.target.closest("[data-day]"); if (b) dayPickerSheet(b.dataset.day); });
 $("#recipes").addEventListener("click", e => { const b = e.target.closest("[data-recipe]"); if (b) recipeViewSheet(b.dataset.recipe); });
 $("#recipe-add").addEventListener("click", () => recipeEditSheet(null));
@@ -1122,6 +1436,7 @@ document.querySelectorAll("nav.tabs button").forEach(b => b.addEventListener("cl
 window.addEventListener("storage", e => { if (e.key === STORE_KEY) { state = load(); render(); } });
 
 render();
+updateTimers(true);
 
 // Offline-stöd
 if ("serviceWorker" in navigator && location.protocol.startsWith("http")) {
