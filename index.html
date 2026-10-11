@@ -154,7 +154,7 @@
 
   /* Recipes */
   .recipe { padding: 14px 16px; border-top: 1px solid var(--line); width: 100%; text-align: left; display: block; }
-  .recipe:first-child { border-top: 0; }
+  .recipe:first-child, .group h2 + .recipe { border-top: 0; }
   .recipe small { display: block; color: var(--muted); font-size: 14px; margin-top: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
   /* Tab bar */
@@ -220,6 +220,32 @@
   .toast button { color: var(--accent); font-weight: 700; }
   @media (prefers-color-scheme: dark) { .toast button { color: #2f7d4f; } }
 
+  /* Recept */
+  .search { display: flex; align-items: center; gap: 8px; padding: 4px 12px; margin-bottom: 12px; }
+  .search svg { width: 18px; height: 18px; color: var(--muted); flex: none; }
+  .search input { flex: 1; min-width: 0; border: 0; outline: 0; background: transparent; padding: 10px 0; font-size: 17px; -webkit-appearance: none; }
+  .chip.on { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+  .recipe-meta { color: var(--muted); font-size: 15px; margin: -8px 0 16px; }
+  .stepper { display: flex; align-items: center; justify-content: space-between; padding: 6px; margin-bottom: 16px; }
+  .stepper button { width: 44px; height: 44px; border-radius: 12px; background: var(--surface-2); font-size: 24px; line-height: 1; font-weight: 600; }
+  .stepper button:disabled { opacity: .35; }
+  .stepper span { font-size: 17px; }
+  .stepper b { font-size: 22px; }
+  .sheet h4 { margin: 18px 4px 8px; font-size: 13px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); }
+  .ing { display: flex; gap: 12px; padding: 11px 16px; border-top: 1px solid var(--line); }
+  .ing:first-child { border-top: 0; }
+  .ing .amt { width: 92px; flex: none; color: var(--accent); font-weight: 600; font-variant-numeric: tabular-nums; }
+  .steps { margin: 0; padding: 4px 16px 4px 0; list-style: none; counter-reset: step; }
+  .steps li { counter-increment: step; position: relative; padding: 10px 0 10px 44px; line-height: 1.45; }
+  .steps li::before {
+    content: counter(step); position: absolute; left: 12px; top: 10px;
+    width: 24px; height: 24px; border-radius: 50%; background: var(--accent-soft); color: var(--accent);
+    font-size: 13px; font-weight: 700; display: grid; place-items: center;
+  }
+  .field-row { display: flex; gap: 10px; }
+  .field-row .field { flex: 1; min-width: 0; }
+  .field-row .field.small { flex: 0 0 110px; }
+
   .hint { color: var(--muted); font-size: 14px; margin: 4px 4px 14px; }
   [hidden] { display: none !important; }
 </style>
@@ -283,7 +309,12 @@
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
       </button>
     </header>
-    <div class="card" id="recipes"></div>
+    <label class="search card">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+      <input id="recipe-search" type="search" placeholder="Sök recept eller ingrediens" autocomplete="off" enterkeyhint="search">
+    </label>
+    <div class="chips" id="recipe-cats"></div>
+    <div id="recipes"></div>
   </section>
 </div>
 
@@ -346,13 +377,69 @@ const KEYWORDS = {
 const DAYS = ["Måndag", "Tisdag", "Onsdag", "Torsdag", "Fredag", "Lördag", "Söndag"];
 const DAYS_SHORT = ["Mån", "Tis", "Ons", "Tor", "Fre", "Lör", "Sön"];
 
-const DEFAULT_RECIPES = [
-  { name: "Tacos", ingredients: ["500 g köttfärs", "tacokrydda", "tacoskal", "isbergssallad", "tomat", "gurka", "riven ost", "gräddfil", "tacosås", "majs"] },
-  { name: "Spaghetti med köttfärssås", ingredients: ["500 g köttfärs", "spaghetti", "gul lök", "vitlök", "krossade tomater", "tomatpuré", "parmesan"] },
-  { name: "Ugnslax med potatis", ingredients: ["4 laxfiléer", "potatis", "citron", "dill", "crème fraiche", "broccoli"] },
-  { name: "Kycklinggryta med ris", ingredients: ["kycklingfilé", "ris", "matlagningsgrädde", "paprika", "gul lök", "curry", "buljong"] },
-  { name: "Pannkakor", ingredients: ["mjölk", "ägg", "vetemjöl", "smör", "sylt"] },
+const RECIPE_CATS = [
+  { name: "Kött",            emoji: "🥩" },
+  { name: "Kyckling",        emoji: "🍗" },
+  { name: "Fisk & skaldjur", emoji: "🐟" },
+  { name: "Vegetariskt",     emoji: "🥕" },
+  { name: "Pasta",           emoji: "🍝" },
+  { name: "Soppa & gryta",   emoji: "🍲" },
+  { name: "Sallad",          emoji: "🥗" },
+  { name: "Frukost",         emoji: "🥣" },
+  { name: "Bakning",         emoji: "🧁" },
+  { name: "Dessert",         emoji: "🍰" },
+  { name: "Övrigt",          emoji: "🍽️" },
 ];
+const recipeCat = name => RECIPE_CATS.find(c => c.name === name) || RECIPE_CATS[RECIPE_CATS.length - 1];
+
+// Mängder anges för `servings` portioner och räknas om när man väljer annat antal
+const DEFAULT_RECIPES = [
+  { name: "Tacos", category: "Kött", servings: 4,
+    ingredients: ["500 g köttfärs", "1 påse tacokrydda", "12 tacoskal", "1 isbergssallad", "3 tomater", "1 gurka", "2 dl riven ost", "2 dl gräddfil", "1 burk tacosås", "1 burk majs"],
+    steps: ["Bryn köttfärsen i en stekpanna.", "Tillsätt tacokrydda och vatten enligt förpackningen och låt puttra i ca 5 minuter.", "Strimla salladen och tärna tomater och gurka.", "Värm tacoskalen i ugnen enligt förpackningen.", "Servera med ost, gräddfil, majs och tacosås."] },
+  { name: "Spaghetti med köttfärssås", category: "Pasta", servings: 4,
+    ingredients: ["500 g köttfärs", "400 g spaghetti", "1 gul lök", "2 klyftor vitlök", "1 burk krossade tomater", "2 msk tomatpuré", "1 dl riven parmesan"],
+    steps: ["Hacka lök och vitlök och fräs dem mjuka i lite olja.", "Tillsätt köttfärsen och bryn den.", "Rör ner tomatpuré och krossade tomater. Låt sjuda under lock i 15–20 minuter. Smaka av med salt och peppar.", "Koka spaghettin enligt förpackningen.", "Servera med riven parmesan."] },
+  { name: "Ugnslax med potatis", category: "Fisk & skaldjur", servings: 4,
+    ingredients: ["4 laxfiléer", "1 kg potatis", "1 citron", "1 knippe dill", "2 dl crème fraiche", "500 g broccoli"],
+    steps: ["Sätt ugnen på 200 °C och koka potatisen.", "Lägg laxen i en ugnsform, salta och peppra och lägg på citronskivor.", "Baka laxen i mitten av ugnen i ca 15 minuter.", "Koka eller ånga broccolin.", "Rör ihop crème fraiche med hackad dill, lite citronsaft och salt till en sås."] },
+  { name: "Kycklinggryta med ris", category: "Kyckling", servings: 4,
+    ingredients: ["600 g kycklingfilé", "3 dl ris", "2,5 dl matlagningsgrädde", "1 röd paprika", "1 gul lök", "2 tsk curry", "1 kycklingbuljongtärning"],
+    steps: ["Koka riset enligt förpackningen.", "Skär kycklingen i bitar och bryn den i olja. Salta och peppra.", "Hacka lök och paprika och fräs dem med curryn.", "Tillsätt grädde, smulad buljongtärning och 1 dl vatten. Låt koka i ca 10 minuter tills kycklingen är genomstekt."] },
+  { name: "Linssoppa med kokos", category: "Soppa & gryta", servings: 4,
+    ingredients: ["2 dl röda linser", "1 gul lök", "2 morötter", "1 burk krossade tomater", "1 burk kokosmjölk", "1 grönsaksbuljongtärning", "1 tsk spiskummin"],
+    steps: ["Hacka löken och riv morötterna. Fräs dem med spiskummin i en kastrull.", "Skölj linserna och lägg i dem tillsammans med tomater, kokosmjölk, buljong och 5 dl vatten.", "Låt sjuda i ca 20 minuter tills linserna är mjuka.", "Mixa gärna slät och smaka av med salt."] },
+  { name: "Pannkakor", category: "Dessert", servings: 4,
+    ingredients: ["6 dl mjölk", "3 ägg", "2,5 dl vetemjöl", "2 msk smör", "1 burk sylt"],
+    steps: ["Vispa mjölet med hälften av mjölken till en slät smet.", "Vispa i resten av mjölken, äggen och en nypa salt. Låt smeten vila i 10 minuter.", "Smält smöret i stekpannan och rör ner det i smeten.", "Stek tunna pannkakor på medelvärme och servera med sylt."] },
+  { name: "Havregrynsgröt", category: "Frukost", servings: 2,
+    ingredients: ["2 dl havregryn", "2 dl mjölk", "1 burk lingonsylt"],
+    steps: ["Koka upp havregryn, 4 dl vatten och en nypa salt.", "Låt sjuda under omrörning i 3–5 minuter.", "Servera med kall mjölk och sylt."] },
+];
+
+// Äldre versioner av appen hade standardrecept utan mängder – de byts ut automatiskt
+const OLD_DEFAULTS = {
+  "Tacos": "500 g köttfärs|tacokrydda|tacoskal|isbergssallad|tomat|gurka|riven ost|gräddfil|tacosås|majs",
+  "Spaghetti med köttfärssås": "500 g köttfärs|spaghetti|gul lök|vitlök|krossade tomater|tomatpuré|parmesan",
+  "Ugnslax med potatis": "4 laxfiléer|potatis|citron|dill|crème fraiche|broccoli",
+  "Kycklinggryta med ris": "kycklingfilé|ris|matlagningsgrädde|paprika|gul lök|curry|buljong",
+  "Pannkakor": "mjölk|ägg|vetemjöl|smör|sylt",
+};
+
+function normalizeRecipe(r) {
+  if (!r.category && OLD_DEFAULTS[r.name] === (r.ingredients || []).join("|")) {
+    const fresh = DEFAULT_RECIPES.find(d => d.name === r.name);
+    if (fresh) return { id: r.id, ...fresh };
+  }
+  return {
+    id: r.id || uid(),
+    name: r.name || "Namnlöst recept",
+    category: r.category || "Övrigt",
+    servings: Math.max(1, parseInt(r.servings, 10) || 4),
+    ingredients: Array.isArray(r.ingredients) ? r.ingredients : [],
+    steps: Array.isArray(r.steps) ? r.steps : [],
+  };
+}
 
 const STORE_KEY = "veckohandling.v1";
 
@@ -368,13 +455,25 @@ function defaultState() {
     history: {},         // varunamn (gemener) -> {name, cat, count}
     catOverrides: {},    // varunamn (gemener) -> cat
     hideDone: false,
+    servings: 4,         // senast valda antal portioner i veckomenyn
+    defaultsVersion: 2,
   };
 }
 
 function load() {
   try {
     const raw = localStorage.getItem(STORE_KEY);
-    if (raw) return Object.assign(defaultState(), JSON.parse(raw));
+    if (raw) {
+      const data = JSON.parse(raw);
+      const st = Object.assign(defaultState(), data);
+      st.recipes = st.recipes.map(normalizeRecipe);
+      if ((data.defaultsVersion || 1) < 2) {
+        // Nya exempelrecept läggs till en gång för den som redan använder appen
+        for (const d of DEFAULT_RECIPES) if (!st.recipes.some(r => r.name === d.name)) st.recipes.push({ id: uid(), ...d });
+        st.defaultsVersion = 2;
+      }
+      return st;
+    }
   } catch (e) { /* tom eller blockerad lagring */ }
   return defaultState();
 }
@@ -397,14 +496,77 @@ const key = s => s.trim().toLowerCase();
 const cap = s => s.charAt(0).toUpperCase() + s.slice(1);
 
 // "2 l mjölk" -> {qty: "2 l", name: "mjölk"}; "mjölk x2" -> {qty: "2", name: "mjölk"}
-const UNITS = "st|g|kg|hg|l|dl|cl|ml|pkt|paket|burk|burkar|förp|påse|påsar|flaska|flaskor|tsk|msk|krm|kruka|knippe|bit|bitar|skivor|klyftor";
+const UNITS = "st|g|kg|hg|l|dl|cl|ml|pkt|paket|burk|burkar|förp|påse|påsar|flaska|flaskor|tsk|msk|krm|kruka|krukor|knippe|knippen|bit|bitar|skiva|skivor|klyfta|klyftor|näve|nävar";
+const NUM = "\\d+(?:[.,]\\d+)?(?:\\/\\d+)?|[½¼¾⅓⅔]";
+const ENTRY_RE = new RegExp(`^((?:${NUM})(?:\\s*-\\s*(?:${NUM}))?)\\s*(${UNITS})?\\.?\\s+(.+)$`, "i");
+const QTY_RE = new RegExp(`^(${NUM})(?:\\s*-\\s*(${NUM}))?\\s*(.*)$`, "i");
+const COUNT_UNITS = /^(st|burk|burkar|pkt|paket|förp|påse|påsar|flaska|flaskor|kruka|krukor|knippe|knippen|bit|bitar|skiva|skivor|klyfta|klyftor|näve|nävar)?$/i;
+
 function parseEntry(text) {
   let t = text.trim().replace(/\s+/g, " ");
   let qty = "";
-  let m = t.match(new RegExp(`^(\\d+(?:[.,]\\d+)?(?:\\s*-\\s*\\d+)?)\\s*(${UNITS})?\\.?\\s+(.+)$`, "i"));
+  let m = t.match(ENTRY_RE);
   if (m) { qty = (m[1] + (m[2] ? " " + m[2] : "")).trim(); t = m[3]; }
   else if ((m = t.match(/^(.+?)\s*[x×]\s*(\d+)$/i))) { t = m[1]; qty = m[2]; }
   return { qty, name: cap(t) };
+}
+
+const FRACTIONS = { "½": .5, "¼": .25, "¾": .75, "⅓": 1 / 3, "⅔": 2 / 3 };
+function toNumber(s) {
+  if (FRACTIONS[s]) return FRACTIONS[s];
+  if (s.includes("/")) { const [a, b] = s.split("/"); return +a / +b; }
+  return parseFloat(s.replace(",", "."));
+}
+const fmtNum = n => String(+n.toFixed(2)).replace(".", ",");
+
+// "500 g" -> {lo: 500, hi: null, unit: "g"}
+function parseQty(qty) {
+  const m = (qty || "").trim().match(QTY_RE);
+  if (!m) return null;
+  return { lo: toNumber(m[1]), hi: m[2] ? toNumber(m[2]) : null, unit: m[3].trim() };
+}
+
+// Avrunda omräknade mängder till något man faktiskt kan mäta upp
+const PACKAGE_UNITS = /^(burk|burkar|pkt|paket|förp|påse|påsar|flaska|flaskor|kruka|krukor)$/i;
+function roundNice(n, unit) {
+  if (PACKAGE_UNITS.test(unit)) return Math.max(1, Math.ceil(n - .05)); // förpackningar köps hela
+  if (COUNT_UNITS.test(unit)) return n < 3 ? Math.max(.5, Math.round(n * 2) / 2) : Math.round(n);
+  if (/^(g|ml)$/i.test(unit)) return n >= 100 ? Math.round(n / 25) * 25 : n >= 20 ? Math.round(n / 5) * 5 : Math.max(1, Math.round(n));
+  if (n >= 10) return Math.round(n);
+  if (n >= 2) return Math.round(n * 2) / 2;
+  return Math.max(.25, Math.round(n * 4) / 4);
+}
+
+function scaleQty(qty, factor) {
+  if (!qty || factor === 1) return qty;
+  const p = parseQty(qty);
+  if (!p) return qty;
+  if (p.hi == null && /^(g|ml)$/i.test(p.unit) && p.lo * factor >= 1000) {
+    return fromBase(roundNice(p.lo * factor, p.unit), p.unit.toLowerCase());
+  }
+  const lo = fmtNum(roundNice(p.lo * factor, p.unit));
+  const hi = p.hi != null ? "-" + fmtNum(roundNice(p.hi * factor, p.unit)) : "";
+  return lo + hi + (p.unit ? " " + p.unit : "");
+}
+
+// Vikt och volym räknas om till gram/milliliter så att t.ex. "1 kg" + "500 g" kan slås ihop
+const BASE_UNITS = { g: ["g", 1], hg: ["g", 100], kg: ["g", 1000], ml: ["ml", 1], cl: ["ml", 10], dl: ["ml", 100], l: ["ml", 1000] };
+function fromBase(n, base) {
+  if (base === "g") return n >= 1000 ? fmtNum(n / 1000) + " kg" : fmtNum(n) + " g";
+  return n >= 1000 ? fmtNum(n / 1000) + " l" : n >= 100 ? fmtNum(n / 100) + " dl" : fmtNum(n) + " ml";
+}
+
+// Slå ihop "500 g" + "250 g" -> "750 g"; olika enheter skrivs ut bredvid varandra
+function mergeQty(a, b) {
+  if (!a) return b;
+  if (!b) return a;
+  const pa = parseQty(a), pb = parseQty(b);
+  if (pa && pb && pa.hi == null && pb.hi == null) {
+    const ua = BASE_UNITS[pa.unit.toLowerCase()], ub = BASE_UNITS[pb.unit.toLowerCase()];
+    if (ua && ub && ua[0] === ub[0]) return fromBase(pa.lo * ua[1] + pb.lo * ub[1], ua[0]);
+    if (pa.unit.toLowerCase() === pb.unit.toLowerCase()) return fmtNum(pa.lo + pb.lo) + (pa.unit ? " " + pa.unit : "");
+  }
+  return a + " + " + b;
 }
 
 function guessCategory(name) {
@@ -430,15 +592,15 @@ function remember(name, cat) {
   state.history[k] = h;
 }
 
-function addItem(text, from) {
-  const { qty, name } = parseEntry(text);
+function addItem(text, from, factor = 1) {
+  const parsed = parseEntry(text);
+  const name = parsed.name, qty = scaleQty(parsed.qty, factor);
   if (!name) return null;
   const existing = state.items.find(i => key(i.name) === key(name));
   if (existing) {
     // Finns redan: bocka av-markering tas bort och mängd slås ihop
-    existing.done = false;
-    if (qty && existing.qty && existing.qty !== qty) existing.qty = existing.qty + " + " + qty;
-    else if (qty) existing.qty = qty;
+    if (existing.done) { existing.done = false; existing.qty = qty; }
+    else existing.qty = mergeQty(existing.qty, qty);
     if (from && !(existing.from || "").includes(from)) existing.from = existing.from ? existing.from + ", " + from : from;
     return existing;
   }
@@ -533,6 +695,7 @@ function renderList() {
 }
 
 function recipeById(id) { return state.recipes.find(r => r.id === id); }
+const planServings = (p, r) => p.servings || r.servings;
 
 function renderWeek() {
   const mon = mondayOf(weekOffset);
@@ -551,7 +714,7 @@ function renderWeek() {
     html += `<button class="day${iso === today ? " today" : ""}" data-day="${iso}">
       <span class="date"><span>${DAYS_SHORT[d]}</span><b>${date.getDate()}</b></span>
       <span class="meal">${label ? esc(label) : `<span class="placeholder">Välj middag…</span>`}
-        ${r ? `<small>${r.ingredients.length} ingredienser</small>` : ""}</span>
+        ${r ? `<small>${planServings(p, r)} portioner</small>` : ""}</span>
     </button>`;
   }
   $("#days").innerHTML = html;
@@ -559,11 +722,43 @@ function renderWeek() {
   $("#week-to-list").style.opacity = planned ? 1 : .5;
 }
 
+let recipeQuery = "";
+let recipeCatFilter = "";
+
+function recipeMatches(r, q) {
+  if (!q) return true;
+  const hay = [r.name, r.category, ...r.ingredients].join(" ").toLowerCase();
+  return q.toLowerCase().split(/\s+/).every(w => hay.includes(w));
+}
+
 function renderRecipes() {
-  const sorted = [...state.recipes].sort((a, b) => a.name.localeCompare(b.name, "sv"));
-  $("#recipes").innerHTML = sorted.length
-    ? sorted.map(r => `<button class="recipe" data-recipe="${r.id}"><b>${esc(r.name)}</b><small>${esc(r.ingredients.join(", ")) || "Inga ingredienser"}</small></button>`).join("")
-    : `<div class="empty"><div class="big">📖</div>Inga recept än. Tryck på + för att lägga till.</div>`;
+  const used = RECIPE_CATS.filter(c => state.recipes.some(r => r.category === c.name));
+  if (recipeCatFilter && !used.some(c => c.name === recipeCatFilter)) recipeCatFilter = "";
+  $("#recipe-cats").innerHTML = used.length > 1
+    ? `<button class="chip${recipeCatFilter ? "" : " on"}" data-rcat="">Alla</button>` +
+      used.map(c => `<button class="chip${recipeCatFilter === c.name ? " on" : ""}" data-rcat="${esc(c.name)}">${c.emoji} ${esc(c.name)}</button>`).join("")
+    : "";
+
+  const box = $("#recipes");
+  if (!state.recipes.length) {
+    box.innerHTML = `<div class="card empty"><div class="big">📖</div>Inga recept än. Tryck på + för att lägga till.</div>`;
+    return;
+  }
+  const hits = state.recipes.filter(r => (!recipeCatFilter || r.category === recipeCatFilter) && recipeMatches(r, recipeQuery));
+  if (!hits.length) {
+    box.innerHTML = `<div class="card empty"><div class="big">🔍</div>Inga recept matchar din sökning.</div>`;
+    return;
+  }
+  let html = "";
+  for (const c of RECIPE_CATS) {
+    const list = hits.filter(r => recipeCat(r.category) === c).sort((a, b) => a.name.localeCompare(b.name, "sv"));
+    if (!list.length) continue;
+    html += `<div class="group card"><h2><span>${c.emoji} ${esc(c.name)}</span><span>${list.length}</span></h2>`;
+    html += list.map(r => `<button class="recipe" data-recipe="${r.id}"><b>${esc(r.name)}</b>
+      <small>${r.servings} portioner · ${r.ingredients.length} ingredienser${r.steps.length ? ` · ${r.steps.length} steg` : ""}</small></button>`).join("");
+    html += `</div>`;
+  }
+  box.innerHTML = html;
 }
 
 /* ---------- Sheet (bottenpanel) ---------- */
@@ -647,16 +842,40 @@ function listMenuSheet() {
   });
 }
 
+function stepperHtml(n) {
+  return `<div class="stepper card">
+    <button type="button" data-step="-1" aria-label="Färre portioner"${n <= 1 ? " disabled" : ""}>−</button>
+    <span><b data-servings>${n}</b> portioner</span>
+    <button type="button" data-step="1" aria-label="Fler portioner">+</button>
+  </div>`;
+}
+
+// Kopplar +/- till en räknare; onChange får det nya antalet
+function bindStepper(root, initial, onChange) {
+  let n = initial;
+  root.querySelectorAll("[data-step]").forEach(b => b.onclick = () => {
+    n = Math.max(1, Math.min(99, n + +b.dataset.step));
+    root.querySelector("[data-servings]").textContent = n;
+    root.querySelector('[data-step="-1"]').disabled = n <= 1;
+    onChange(n);
+  });
+}
+
 function dayPickerSheet(iso) {
   const p = state.plan[iso] || {};
+  const current = p.recipeId && recipeById(p.recipeId);
+  let servings = current ? planServings(p, current) : state.servings;
   const d = new Date(iso + "T12:00:00");
   const dayName = DAYS[(d.getDay() + 6) % 7];
   const sorted = [...state.recipes].sort((a, b) => a.name.localeCompare(b.name, "sv"));
+  const options = q => sorted.filter(r => recipeMatches(r, q)).map(r =>
+    `<button class="pick${p.recipeId === r.id ? " sel" : ""}" data-pick="${r.id}">${recipeCat(r.category).emoji} ${esc(r.name)}</button>`
+  ).join("") || `<div class="pick" style="color:var(--muted)">Inga recept hittades</div>`;
   openSheet(`
     <h3>${dayName} ${d.getDate()} ${MONTHS[d.getMonth()]}</h3>
-    <div class="card">
-      ${sorted.map(r => `<button class="pick${p.recipeId === r.id ? " sel" : ""}" data-pick="${r.id}">${esc(r.name)}</button>`).join("")}
-    </div>
+    ${stepperHtml(servings)}
+    ${sorted.length > 6 ? `<label class="search card"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg><input id="d-search" type="search" placeholder="Sök recept" autocomplete="off"></label>` : ""}
+    <div class="card" id="d-options">${options("")}</div>
     <label class="field" style="margin-top:16px"><span>…eller skriv fritt (t.ex. "Rester", "Äter ute")</span>
       <input id="d-text" value="${esc(p.text || "")}" placeholder="Egen anteckning"></label>
     <div class="actions">
@@ -664,51 +883,102 @@ function dayPickerSheet(iso) {
       <button class="btn ghost" id="d-new">+ Nytt recept</button>
       <button class="btn" id="d-save">Spara</button>
     </div>`, body => {
-    body.querySelectorAll("[data-pick]").forEach(b => b.onclick = () => {
-      state.plan[iso] = { recipeId: b.dataset.pick };
-      closeSheet(); commit();
+    bindStepper(body, servings, n => {
+      servings = n;
+      if (p.recipeId) { state.plan[iso].servings = n; state.servings = n; commit(); }
     });
+    const opts = body.querySelector("#d-options");
+    opts.onclick = e => {
+      const b = e.target.closest("[data-pick]");
+      if (!b) return;
+      state.plan[iso] = { recipeId: b.dataset.pick, servings };
+      state.servings = servings;
+      closeSheet(); commit();
+    };
+    body.querySelector("#d-search")?.addEventListener("input", e => { opts.innerHTML = options(e.target.value.trim()); });
     body.querySelector("#d-save").onclick = () => {
       const text = body.querySelector("#d-text").value.trim();
       if (text) state.plan[iso] = { text }; else if (!p.recipeId) delete state.plan[iso];
       closeSheet(); commit();
     };
     body.querySelector("#d-clear")?.addEventListener("click", () => { delete state.plan[iso]; closeSheet(); commit(); });
-    body.querySelector("#d-new").onclick = () => recipeSheet(null, iso);
+    body.querySelector("#d-new").onclick = () => recipeEditSheet(null, iso, servings);
   });
 }
 
-function recipeSheet(id, assignTo) {
-  const r = id ? recipeById(id) : { name: "", ingredients: [] };
+function ingredientRows(r, servings) {
+  const factor = servings / r.servings;
+  return r.ingredients.map(line => {
+    const { qty, name } = parseEntry(line);
+    return `<div class="ing"><span class="amt">${esc(scaleQty(qty, factor))}</span><span>${esc(name)}</span></div>`;
+  }).join("") || `<div class="ing" style="color:var(--muted)">Inga ingredienser</div>`;
+}
+
+function recipeViewSheet(id) {
+  const r = recipeById(id);
+  if (!r) return;
+  let servings = r.servings;
+  const c = recipeCat(r.category);
+  openSheet(`
+    <h3>${esc(r.name)}</h3>
+    <div class="recipe-meta">${c.emoji} ${esc(c.name)} · grundrecept för ${r.servings} portioner</div>
+    ${stepperHtml(servings)}
+    <h4>Ingredienser</h4>
+    <div class="card" id="v-ing">${ingredientRows(r, servings)}</div>
+    ${r.steps.length ? `<h4>Gör så här</h4><div class="card"><ol class="steps">${r.steps.map(s => `<li>${esc(s)}</li>`).join("")}</ol></div>` : ""}
+    <div class="actions">
+      <button class="btn ghost" id="v-edit">Redigera</button>
+      <button class="btn" id="v-add">Lägg i listan</button>
+    </div>`, body => {
+    bindStepper(body, servings, n => { servings = n; body.querySelector("#v-ing").innerHTML = ingredientRows(r, n); });
+    body.querySelector("#v-edit").onclick = () => recipeEditSheet(id);
+    body.querySelector("#v-add").onclick = () => {
+      const factor = servings / r.servings;
+      r.ingredients.forEach(ing => addItem(ing, r.name, factor));
+      closeSheet(); commit();
+      toast(`${r.ingredients.length} varor för ${servings} portioner tillagda`);
+    };
+  });
+}
+
+function recipeEditSheet(id, assignTo, assignServings) {
+  const r = id ? recipeById(id) : { name: "", category: recipeCatFilter || "Övrigt", servings: 4, ingredients: [], steps: [] };
   openSheet(`
     <h3>${id ? "Redigera recept" : "Nytt recept"}</h3>
     <label class="field"><span>Namn</span><input id="r-name" value="${esc(r.name)}" placeholder="t.ex. Lasagne"></label>
-    <label class="field"><span>Ingredienser – en per rad</span>
-      <textarea id="r-ing" placeholder="500 g köttfärs&#10;1 gul lök&#10;krossade tomater">${esc(r.ingredients.join("\n"))}</textarea></label>
+    <div class="field-row">
+      <label class="field"><span>Kategori</span><select id="r-cat">
+        ${RECIPE_CATS.map(c => `<option value="${esc(c.name)}"${c.name === r.category ? " selected" : ""}>${c.emoji} ${esc(c.name)}</option>`).join("")}
+      </select></label>
+      <label class="field small"><span>Portioner</span><input id="r-serv" type="number" inputmode="numeric" min="1" max="99" value="${r.servings}"></label>
+    </div>
+    <label class="field"><span>Ingredienser – en per rad, mängden först</span>
+      <textarea id="r-ing" placeholder="500 g köttfärs&#10;1 gul lök&#10;2 dl grädde">${esc(r.ingredients.join("\n"))}</textarea></label>
+    <label class="field"><span>Gör så här – ett steg per rad</span>
+      <textarea id="r-steps" placeholder="Hacka löken.&#10;Bryn köttfärsen.&#10;…">${esc(r.steps.join("\n"))}</textarea></label>
     <div class="actions">
       ${id ? `<button class="btn danger" id="r-del">Ta bort</button>` : ""}
-      ${id ? `<button class="btn ghost" id="r-add">Till listan</button>` : ""}
+      <button class="btn ghost" id="r-cancel">Avbryt</button>
       <button class="btn" id="r-save">Spara</button>
     </div>`, body => {
-    const read = () => ({
-      name: cap(body.querySelector("#r-name").value.trim()),
-      ingredients: body.querySelector("#r-ing").value.split("\n").map(s => s.trim()).filter(Boolean),
-    });
+    const lines = sel => body.querySelector(sel).value.split("\n").map(s => s.trim()).filter(Boolean);
+    body.querySelector("#r-cancel").onclick = () => id ? recipeViewSheet(id) : closeSheet();
     body.querySelector("#r-save").onclick = () => {
-      const v = read();
+      const v = {
+        name: cap(body.querySelector("#r-name").value.trim()),
+        category: body.querySelector("#r-cat").value,
+        servings: Math.max(1, Math.min(99, parseInt(body.querySelector("#r-serv").value, 10) || 4)),
+        ingredients: lines("#r-ing"),
+        steps: lines("#r-steps").map(s => s.replace(/^\d+[.)]\s*/, "")),
+      };
       if (!v.name) { body.querySelector("#r-name").focus(); return; }
       let rid = id;
       if (id) Object.assign(r, v);
       else { rid = uid(); state.recipes.push({ id: rid, ...v }); }
-      if (assignTo) state.plan[assignTo] = { recipeId: rid };
-      closeSheet(); commit();
+      if (assignTo) { state.plan[assignTo] = { recipeId: rid, servings: assignServings || v.servings }; closeSheet(); }
+      else recipeViewSheet(rid);
+      commit();
     };
-    body.querySelector("#r-add")?.addEventListener("click", () => {
-      const v = read();
-      v.ingredients.forEach(ing => addItem(ing, v.name));
-      closeSheet(); commit();
-      toast(`${v.ingredients.length} varor tillagda`);
-    });
     body.querySelector("#r-del")?.addEventListener("click", () => {
       if (!confirm(`Ta bort receptet "${r.name}"?`)) return;
       state.recipes = state.recipes.filter(x => x.id !== id);
@@ -784,9 +1054,11 @@ function addWeekToList() {
   let count = 0;
   for (let d = 0; d < 7; d++) {
     const date = new Date(mon); date.setDate(mon.getDate() + d);
-    const r = state.plan[isoDate(date)]?.recipeId && recipeById(state.plan[isoDate(date)].recipeId);
+    const p = state.plan[isoDate(date)];
+    const r = p?.recipeId && recipeById(p.recipeId);
     if (!r) continue;
-    r.ingredients.forEach(ing => { addItem(ing, r.name); count++; });
+    const factor = planServings(p, r) / r.servings;
+    r.ingredients.forEach(ing => { addItem(ing, r.name, factor); count++; });
   }
   view = "list";
   commit();
@@ -826,8 +1098,15 @@ $("#list").addEventListener("click", e => {
 
 $("#list-menu").addEventListener("click", listMenuSheet);
 $("#days").addEventListener("click", e => { const b = e.target.closest("[data-day]"); if (b) dayPickerSheet(b.dataset.day); });
-$("#recipes").addEventListener("click", e => { const b = e.target.closest("[data-recipe]"); if (b) recipeSheet(b.dataset.recipe); });
-$("#recipe-add").addEventListener("click", () => recipeSheet(null));
+$("#recipes").addEventListener("click", e => { const b = e.target.closest("[data-recipe]"); if (b) recipeViewSheet(b.dataset.recipe); });
+$("#recipe-add").addEventListener("click", () => recipeEditSheet(null));
+$("#recipe-search").addEventListener("input", e => { recipeQuery = e.target.value.trim(); renderRecipes(); });
+$("#recipe-cats").addEventListener("click", e => {
+  const b = e.target.closest("[data-rcat]");
+  if (!b) return;
+  recipeCatFilter = b.dataset.rcat;
+  renderRecipes();
+});
 $("#week-prev").addEventListener("click", () => { weekOffset--; render(); });
 $("#week-next").addEventListener("click", () => { weekOffset++; render(); });
 $("#week-to-list").addEventListener("click", addWeekToList);

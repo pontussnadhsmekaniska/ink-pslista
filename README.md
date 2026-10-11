@@ -8,7 +8,8 @@ En liten webbapp för veckans matplanering och inköpslista. Ren HTML/CSS/JS uta
 - Skriv flera varor på en gång: `2 l mjölk, ägg, bröd`
 - Snabbknappar för det du köper oftast
 - **Veckomeny** – välj en middag per dag och lägg alla ingredienser i listan med ett tryck
-- **Recept** – spara dina rätter med ingredienser
+- **Recept** med mängder, tillvägagångssätt och kategorier – sök på namn eller ingrediens
+- Välj antal portioner – mängderna räknas om automatiskt, både i receptet och i inköpslistan
 - Dela listan (via iOS delningsmeny), ångra borttagning, mörkt läge
 - Exportera/importera all data som säkerhetskopia
 
