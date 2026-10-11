@@ -285,6 +285,18 @@
   body.has-timers .app { padding-bottom: calc(var(--tabbar-h) + env(safe-area-inset-bottom) + 90px); }
   body.has-timers .toast { bottom: calc(var(--tabbar-h) + env(safe-area-inset-bottom) + 80px); }
 
+  /* Recept från nätet */
+  .web { padding: 14px 16px; margin-bottom: 14px; }
+  .web p { margin: 0 0 10px; font-size: 15px; color: var(--muted); }
+  .web p b { color: var(--text); }
+  .web .chips { padding-bottom: 2px; flex-wrap: wrap; overflow: visible; }
+  .web .chip { background: var(--surface-2); border-color: transparent; }
+  .web + .web { margin-top: -4px; }
+  .hero { width: calc(100% + 32px); margin: -8px -16px 14px; aspect-ratio: 16 / 9; object-fit: cover; display: block; background: var(--surface-2); }
+  .source { display: inline-block; margin-top: 14px; color: var(--accent); font-size: 15px; text-decoration: none; }
+  .spinner { width: 18px; height: 18px; border: 2.5px solid currentColor; border-right-color: transparent; border-radius: 50%; animation: spin .7s linear infinite; display: inline-block; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
   .hint { color: var(--muted); font-size: 14px; margin: 4px 4px 14px; }
   [hidden] { display: none !important; }
 </style>
@@ -347,9 +359,9 @@
     <header class="top">
       <div>
         <h1>Recept</h1>
-        <div class="sub">Dina rätter och deras ingredienser</div>
+        <div class="sub">Sök bland dina recept eller hitta nya på nätet</div>
       </div>
-      <button class="icon-btn" id="recipe-add" aria-label="Nytt recept">
+      <button class="icon-btn" id="recipe-add" aria-label="Lägg till recept">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
       </button>
     </header>
@@ -484,6 +496,8 @@ function normalizeRecipe(r) {
     time: Math.max(0, parseInt(r.time, 10) || 0),   // total tid i minuter
     ingredients: Array.isArray(r.ingredients) ? r.ingredients : [],
     steps: Array.isArray(r.steps) ? r.steps : [],
+    source: r.source || "",   // länk till receptet om det importerats
+    image: r.image || "",
   };
 }
 
@@ -826,9 +840,15 @@ function renderRecipes() {
     box.innerHTML = `<div class="card empty"><div class="big">📖</div>Inga recept än. Tryck på + för att lägga till.</div>`;
     return;
   }
+  if (isUrl(recipeQuery)) {
+    box.innerHTML = `<div class="card web"><p>Det där ser ut som en länk till ett recept.</p>
+      <button class="btn" data-import="${esc(recipeQuery)}" style="width:100%">🔗 Hämta receptet</button></div>`;
+    return;
+  }
   const hits = state.recipes.filter(r => (!recipeCatFilter || r.category === recipeCatFilter) && recipeMatches(r, recipeQuery));
+  const web = recipeQuery ? webSearchHtml(recipeQuery) : "";
   if (!hits.length) {
-    box.innerHTML = `<div class="card empty"><div class="big">🔍</div>Inga recept matchar din sökning.</div>`;
+    box.innerHTML = `<div class="card empty" style="padding:28px 24px"><div class="big">🔍</div>Du har inget sparat recept som matchar.</div>` + web;
     return;
   }
   let html = "";
@@ -840,7 +860,197 @@ function renderRecipes() {
       <small>${r.time ? `⏱ ${fmtTime(r.time)} · ` : ""}${r.servings} portioner · ${r.ingredients.length} ingredienser</small></button>`).join("");
     html += `</div>`;
   }
-  box.innerHTML = html;
+  box.innerHTML = html + web;
+}
+
+/* ---------- Recept från nätet ---------- */
+
+const WEB_SITES = [
+  { name: "ICA", site: "ica.se" },
+  { name: "Arla", site: "arla.se" },
+  { name: "Köket", site: "koket.se" },
+  { name: "Coop", site: "coop.se" },
+  { name: "Mathem", site: "mathem.se" },
+];
+const isUrl = t => /^https?:\/\/\S+\.\S+/i.test(t || "");
+
+function webSearchHtml(q) {
+  return `<div class="card web">
+    <p>Sök <b>${esc(q)}</b> på nätet:</p>
+    <div class="chips">
+      ${WEB_SITES.map(w => `<button class="chip" data-websearch="${esc(w.site)}">${esc(w.name)}</button>`).join("")}
+      <button class="chip" data-websearch="">Alla sajter</button>
+    </div>
+    <p style="margin:10px 0 0">Hittar du något bra: kopiera länken och klistra in den här i sökrutan.</p>
+  </div>`;
+}
+
+function openWebSearch(q, site) {
+  const query = `${q} recept${site ? " site:" + site : ""}`;
+  window.open("https://www.google.com/search?q=" + encodeURIComponent(query), "_blank");
+}
+
+// Hämtar sidan via en mellanhand, eftersom webbläsaren inte får läsa andra sajter direkt
+const PROXIES = [
+  u => "https://corsproxy.io/?url=" + encodeURIComponent(u),
+  u => "https://api.allorigins.win/raw?url=" + encodeURIComponent(u),
+  u => "https://api.codetabs.com/v1/proxy/?quest=" + encodeURIComponent(u),
+];
+async function fetchPage(url) {
+  for (const proxy of PROXIES) {
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), 15000);
+    try {
+      const res = await fetch(proxy(url), { signal: ctrl.signal });
+      if (res.ok) {
+        const html = await res.text();
+        if (html.length > 500) return html;
+      }
+    } catch (e) { /* prova nästa */ }
+    finally { clearTimeout(timer); }
+  }
+  throw new Error("Sidan kunde inte hämtas");
+}
+
+const stripHtml = t => {
+  const d = new DOMParser().parseFromString(String(t ?? ""), "text/html");
+  return (d.body.textContent || "").replace(/\s+/g, " ").trim();
+};
+
+// Letar upp ett schema.org-recept i sidans JSON-LD (finns på de flesta stora receptsajter)
+function findRecipeLd(doc) {
+  const isRecipe = o => o && typeof o === "object" && [].concat(o["@type"] || []).some(t => /recipe$/i.test(t));
+  const search = o => {
+    if (!o || typeof o !== "object") return null;
+    if (isRecipe(o)) return o;
+    for (const v of Array.isArray(o) ? o : [o["@graph"], o.mainEntity, o.mainEntityOfPage].filter(Boolean)) {
+      const hit = search(v);
+      if (hit) return hit;
+    }
+    return null;
+  };
+  for (const el of doc.querySelectorAll('script[type="application/ld+json"]')) {
+    let data;
+    try { data = JSON.parse(el.textContent); }
+    catch (e) { try { data = JSON.parse(el.textContent.replace(/[\u0000-\u001f]+/g, " ")); } catch (e2) { continue; } }
+    const hit = search(data);
+    if (hit) return hit;
+  }
+  return null;
+}
+
+// "PT1H30M" -> 90
+function isoMinutes(d) {
+  const m = String(d || "").match(/P(?:(\d+)D)?T?(?:(\d+)H)?(?:(\d+)M)?/i);
+  return m ? (+m[1] || 0) * 1440 + (+m[2] || 0) * 60 + (+m[3] || 0) : 0;
+}
+
+function flattenSteps(ins) {
+  if (!ins) return [];
+  if (typeof ins === "string") return stripHtml(ins.replace(/<\/(p|li)>|<br\s*\/?>/gi, "\n")).split(/\n|(?<=\.)\s+(?=\d+\.\s)/).map(x => x.trim()).filter(Boolean);
+  if (Array.isArray(ins)) return ins.flatMap(flattenSteps);
+  if (ins.itemListElement) return flattenSteps(ins.itemListElement);
+  return [stripHtml(ins.text || ins.name || "")].filter(Boolean);
+}
+
+const CAT_GUESS = [
+  ["Bakning", /kaka|bulle|bröd|muffins|cupcake|tårta|kladd|scones|cookie|småkak|baka/],
+  ["Dessert", /dessert|glass|paj|pannacotta|mousse|efterrätt|crumble|fromage/],
+  ["Frukost", /gröt|frukost|smoothie|granola|omelett/],
+  ["Soppa & gryta", /soppa|gryta|chili|curry|stuvning|kalops/],
+  ["Sallad", /sallad/],
+  ["Pasta", /pasta|spaghetti|lasagne|penne|tagliatelle|carbonara|makaron|gnocchi|risotto/],
+  ["Fisk & skaldjur", /lax|torsk|fisk|räk|sej|tonfisk|skaldjur|musslor|kolja|rödspätta/],
+  ["Kyckling", /kyckling|kalkon/],
+  ["Kött", /färs|kött|fläsk|biff|oxfilé|entrecote|lamm|korv|bacon|skinka|högrev|kassler|köttbullar/],
+  ["Vegetariskt", /vegetar|vegan|halloumi|linser|bönor|tofu|kikärt|falafel|grönsak/],
+];
+function guessRecipeCat(ld, name) {
+  const hay = [name, ...[].concat(ld.recipeCategory || []), ...[].concat(ld.keywords || [])].join(" ").toLowerCase();
+  return (CAT_GUESS.find(([, re]) => re.test(hay)) || ["Övrigt"])[0];
+}
+
+function recipeFromLd(ld, url) {
+  const name = cap(stripHtml(ld.name) || "Importerat recept");
+  const yields = [].concat(ld.recipeYield || []).map(String).join(" ");
+  const servings = parseInt(yields.match(/\d+/)?.[0], 10) || 4;
+  const time = isoMinutes(ld.totalTime) || isoMinutes(ld.prepTime) + isoMinutes(ld.cookTime);
+  const img = [].concat(ld.image || [])[0];
+  return {
+    name,
+    category: guessRecipeCat(ld, name),
+    servings: Math.min(99, servings),
+    time: Math.min(1440, time),
+    ingredients: [].concat(ld.recipeIngredient || ld.ingredients || []).map(stripHtml).filter(Boolean),
+    steps: flattenSteps(ld.recipeInstructions),
+    source: url,
+    image: typeof img === "string" ? img : img?.url || "",
+  };
+}
+
+let importing = false;
+async function importRecipe(url) {
+  url = url.trim();
+  if (!isUrl(url) || importing) return;
+  importing = true;
+  openSheet(`<h3>Hämtar recept…</h3>
+    <div class="card" style="padding:18px 16px;display:flex;gap:12px;align-items:center;color:var(--muted)">
+      <span class="spinner"></span><span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(url)}</span></div>`);
+  try {
+    const doc = new DOMParser().parseFromString(await fetchPage(url), "text/html");
+    const ld = findRecipeLd(doc);
+    if (!ld) throw new Error("Hittade inget recept på sidan");
+    const draft = recipeFromLd(ld, url);
+    recipeQuery = ""; $("#recipe-search").value = "";
+    view = "recipes"; render();
+    recipeEditSheet(null, null, null, draft);
+    toast("Kolla receptet och tryck Spara");
+  } catch (e) {
+    openSheet(`<h3>Det gick inte att hämta receptet</h3>
+      <p class="hint" style="font-size:16px">${esc(e.message)}. Alla sajter går tyvärr inte att läsa. Du kan skriva in receptet själv istället.</p>
+      <div class="actions"><button class="btn ghost" id="i-close">Stäng</button><button class="btn" id="i-manual">Skriv själv</button></div>`, body => {
+      body.querySelector("#i-close").onclick = closeSheet;
+      body.querySelector("#i-manual").onclick = () => recipeEditSheet(null, null, null, { name: "", category: "Övrigt", servings: 4, time: 0, ingredients: [], steps: [], source: url, image: "" });
+    });
+  } finally {
+    importing = false;
+  }
+}
+
+function addRecipeSheet() {
+  openSheet(`
+    <h3>Lägg till recept</h3>
+    <form class="addbar card" id="a-form" style="position:static" autocomplete="off">
+      <input id="a-url" type="url" inputmode="url" placeholder="Klistra in länk till ett recept" enterkeyhint="go">
+      <button class="btn" type="submit">Hämta</button>
+    </form>
+    <p class="hint">Fungerar med de flesta stora receptsajter, t.ex. ICA, Arla, Köket och Coop.</p>
+    ${navigator.clipboard?.readText ? `<div class="card" style="margin-bottom:14px"><button class="pick" id="a-paste">📋 Klistra in kopierad länk</button></div>` : ""}
+    <form class="addbar card" id="a-search" style="position:static" autocomplete="off">
+      <input id="a-q" type="search" placeholder="Sök recept på nätet, t.ex. lasagne" enterkeyhint="search">
+      <button class="btn ghost" type="submit">Sök</button>
+    </form>
+    <div class="card" style="margin-top:14px"><button class="pick" id="a-manual">✍️ Skriv ett eget recept</button></div>
+    <div class="actions"><button class="btn ghost" id="a-close">Stäng</button></div>`, body => {
+    body.querySelector("#a-close").onclick = closeSheet;
+    body.querySelector("#a-manual").onclick = () => recipeEditSheet(null);
+    body.querySelector("#a-form").onsubmit = e => { e.preventDefault(); importRecipe(body.querySelector("#a-url").value); };
+    body.querySelector("#a-paste")?.addEventListener("click", async () => {
+      try {
+        const text = (await navigator.clipboard.readText()).trim();
+        const url = text.match(/https?:\/\/\S+/)?.[0];
+        if (url) importRecipe(url); else toast("Ingen länk hittades i urklipp");
+      } catch (e) { toast("Kunde inte läsa urklipp – klistra in i rutan istället"); }
+    });
+    body.querySelector("#a-search").onsubmit = e => {
+      e.preventDefault();
+      const q = body.querySelector("#a-q").value.trim();
+      if (!q) return;
+      closeSheet();
+      recipeQuery = q; $("#recipe-search").value = q; recipeCatFilter = "";
+      view = "recipes"; render();
+    };
+  });
 }
 
 /* ---------- Sheet (bottenpanel) ---------- */
@@ -1044,6 +1254,7 @@ function recipeViewSheet(id) {
   let servings = r.servings;
   const c = recipeCat(r.category);
   openSheet(`
+    ${r.image ? `<img class="hero" src="${esc(r.image)}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()">` : ""}
     <h3>${esc(r.name)}</h3>
     <div class="recipe-meta">${c.emoji} ${esc(c.name)}${r.time ? ` · ⏱ ${fmtTime(r.time)}` : ""} · grundrecept för ${r.servings} portioner</div>
     ${stepperHtml(servings)}
@@ -1053,6 +1264,7 @@ function recipeViewSheet(id) {
       const min = stepMinutes(s);
       return `<li>${esc(s)}${min ? timerHtml(`${r.id}:${n}`, min) : ""}</li>`;
     }).join("")}</ol></div>` : ""}
+    ${r.source ? `<a class="source" href="${esc(r.source)}" target="_blank" rel="noopener">🔗 Originalrecept på ${esc(new URL(r.source).hostname.replace(/^www\./, ""))}</a>` : ""}
     ${state.lists.length > 1 ? `<label class="field" style="margin-top:16px"><span>Lägg i lista</span><select id="v-list">
       ${state.lists.map(l => `<option value="${l.id}"${l.id === state.activeList ? " selected" : ""}>${esc(l.name)}</option>`).join("")}
     </select></label>` : ""}
@@ -1072,10 +1284,10 @@ function recipeViewSheet(id) {
   });
 }
 
-function recipeEditSheet(id, assignTo, assignServings) {
-  const r = id ? recipeById(id) : { name: "", category: recipeCatFilter || "Övrigt", servings: 4, time: 0, ingredients: [], steps: [] };
+function recipeEditSheet(id, assignTo, assignServings, draft) {
+  const r = id ? recipeById(id) : draft || { name: "", category: recipeCatFilter || "Övrigt", servings: 4, time: 0, ingredients: [], steps: [], source: "", image: "" };
   openSheet(`
-    <h3>${id ? "Redigera recept" : "Nytt recept"}</h3>
+    <h3>${id ? "Redigera recept" : draft?.source ? "Importerat recept" : "Nytt recept"}</h3>
     <label class="field"><span>Namn</span><input id="r-name" value="${esc(r.name)}" placeholder="t.ex. Lasagne"></label>
     <div class="field-row">
       <label class="field"><span>Kategori</span><select id="r-cat">
@@ -1105,6 +1317,8 @@ function recipeEditSheet(id, assignTo, assignServings) {
         time: Math.max(0, Math.min(1440, parseInt(body.querySelector("#r-time").value, 10) || 0)),
         ingredients: lines("#r-ing"),
         steps: lines("#r-steps").map(s => s.replace(/^\d+[.)]\s*/, "")),
+        source: r.source || "",
+        image: r.image || "",
       };
       if (!v.name) { body.querySelector("#r-name").focus(); return; }
       let rid = id;
@@ -1413,7 +1627,13 @@ setInterval(() => { if (Object.keys(timers).length) updateTimers(false); }, 500)
 document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") updateTimers(true); });
 $("#days").addEventListener("click", e => { const b = e.target.closest("[data-day]"); if (b) dayPickerSheet(b.dataset.day); });
 $("#recipes").addEventListener("click", e => { const b = e.target.closest("[data-recipe]"); if (b) recipeViewSheet(b.dataset.recipe); });
-$("#recipe-add").addEventListener("click", () => recipeEditSheet(null));
+$("#recipe-add").addEventListener("click", addRecipeSheet);
+$("#recipes").addEventListener("click", e => {
+  const w = e.target.closest("[data-websearch]");
+  if (w) { openWebSearch(recipeQuery, w.dataset.websearch); return; }
+  const imp = e.target.closest("[data-import]");
+  if (imp) importRecipe(imp.dataset.import);
+});
 $("#recipe-search").addEventListener("input", e => { recipeQuery = e.target.value.trim(); renderRecipes(); });
 $("#recipe-cats").addEventListener("click", e => {
   const b = e.target.closest("[data-rcat]");
@@ -1437,6 +1657,18 @@ window.addEventListener("storage", e => { if (e.key === STORE_KEY) { state = loa
 
 render();
 updateTimers(true);
+
+// Öppnas appen med ?import=<länk> (t.ex. från en iPhone-genväg) hämtas receptet direkt
+{
+  const params = new URLSearchParams(location.search);
+  const shared = params.get("import") || params.get("url") || params.get("text") || "";
+  const link = shared.match(/https?:\/\/\S+/)?.[0];
+  if (link) {
+    history.replaceState(null, "", location.pathname);
+    view = "recipes"; render();
+    importRecipe(link);
+  }
+}
 
 // Offline-stöd
 if ("serviceWorker" in navigator && location.protocol.startsWith("http")) {
