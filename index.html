@@ -22,7 +22,8 @@
     --text: #1d1f23;
     --muted: #6d6a63;
     --line: #e2ddd1;
-    --accent: #2f7d4f;
+    --ring: #8f897c;
+    --accent: #2a7247;
     --accent-ink: #ffffff;
     --accent-soft: #dcefe2;
     --danger: #b3403a;
@@ -39,6 +40,7 @@
       --text: #eceae4;
       --muted: #9a978f;
       --line: #30343c;
+      --ring: #767b85;
       --accent: #5cc285;
       --accent-ink: #0f1a13;
       --accent-soft: #1f3a2a;
@@ -50,10 +52,15 @@
 
   * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
   html, body { margin: 0; height: 100%; }
+  html { font-size: 17px; }
+  /* Följ iPhones textstorlek (Inställningar → Skärm → Textstorlek) */
+  @media (hover: none) and (pointer: coarse) {
+    @supports (font: -apple-system-body) { html { font: -apple-system-body; } }
+  }
   body {
     background: var(--bg);
     color: var(--text);
-    font: 17px/1.4 -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, sans-serif;
+    font: 1rem/1.4 -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, sans-serif;
     -webkit-font-smoothing: antialiased;
     overscroll-behavior-y: none;
   }
@@ -66,12 +73,12 @@
     padding: calc(env(safe-area-inset-top) + 12px) 16px calc(var(--tabbar-h) + env(safe-area-inset-bottom) + 24px);
   }
 
-  header.top { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; margin: 8px 0 16px; }
-  header.top h1 { font-size: 32px; line-height: 1.1; margin: 0; letter-spacing: -.02em; }
-  header.top .sub { color: var(--muted); font-size: 14px; margin-top: 4px; }
+  header.top { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 8px 0 16px; }
+  header.top h1 { font-size: 1.882rem; line-height: 1.1; margin: 0; letter-spacing: -.02em; }
+  header.top .sub { color: var(--muted); font-size: 0.824rem; margin-top: 4px; }
 
   .icon-btn {
-    width: 40px; height: 40px; border-radius: 50%;
+    width: 44px; height: 44px; border-radius: 50%;
     display: grid; place-items: center;
     background: var(--surface); box-shadow: var(--shadow);
     flex: none;
@@ -88,7 +95,7 @@
   .addbar { display: flex; gap: 8px; padding: 6px; margin-bottom: 12px; position: sticky; top: calc(env(safe-area-inset-top) + 6px); z-index: 5; }
   .addbar input {
     flex: 1; min-width: 0; border: 0; outline: 0; background: transparent;
-    padding: 10px 10px; font-size: 17px;
+    padding: 10px 10px; font-size: 1rem;
   }
   .btn {
     background: var(--accent); color: var(--accent-ink);
@@ -102,14 +109,15 @@
   .chips { display: flex; gap: 8px; overflow-x: auto; padding: 2px 2px 12px; scrollbar-width: none; }
   .chips::-webkit-scrollbar { display: none; }
   .chip {
-    flex: none; background: var(--surface); border: 1px solid var(--line);
-    border-radius: 999px; padding: 6px 12px; font-size: 15px; white-space: nowrap;
+    flex: none; background: var(--surface); border: 1px solid transparent; box-shadow: var(--shadow);
+    min-height: 44px; display: inline-flex; align-items: center;
+    border-radius: 999px; padding: 6px 14px; font-size: 0.882rem; white-space: nowrap;
   }
 
   /* List */
   .group { margin-bottom: 14px; overflow: hidden; }
   .group h2 {
-    margin: 0; padding: 12px 16px 6px; font-size: 13px; text-transform: uppercase;
+    margin: 0; padding: 12px 16px 6px; font-size: 0.765rem; text-transform: uppercase;
     letter-spacing: .06em; color: var(--muted); display: flex; justify-content: space-between;
   }
   .item {
@@ -118,44 +126,44 @@
   }
   .group h2 + .item { border-top: 0; }
   .check {
-    width: 26px; height: 26px; border-radius: 50%; border: 2px solid var(--line); flex: none;
+    width: 26px; height: 26px; border-radius: 50%; border: 2px solid var(--ring); flex: none;
     display: grid; place-items: center; transition: background .15s, border-color .15s;
   }
   .check svg { width: 15px; height: 15px; opacity: 0; color: var(--accent-ink); }
   .item.done .check { background: var(--accent); border-color: var(--accent); }
   .item.done .check svg { opacity: 1; }
   .item .name { flex: 1; min-width: 0; overflow-wrap: anywhere; }
-  .item .qty { color: var(--muted); font-size: 15px; white-space: nowrap; }
-  .item .from { display: block; color: var(--muted); font-size: 13px; }
+  .item .qty { color: var(--muted); font-size: 0.882rem; white-space: nowrap; }
+  .item .from { display: block; color: var(--muted); font-size: 0.765rem; }
   .item.done .name { color: var(--muted); text-decoration: line-through; }
-  .item .more { color: var(--muted); padding: 6px; margin-right: -6px; }
+  .item .more { color: var(--muted); padding: 12px; margin: -6px -12px -6px 0; }
   .item .more svg { width: 20px; height: 20px; display: block; }
 
   .empty { text-align: center; color: var(--muted); padding: 48px 24px; }
-  .empty .big { font-size: 44px; margin-bottom: 8px; }
+  .empty .big { font-size: 2.588rem; margin-bottom: 8px; }
 
   .row-actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
 
   /* Week */
   .week-nav { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
-  .week-nav strong { font-size: 17px; }
+  .week-nav strong { font-size: 1rem; }
   .day {
     display: flex; gap: 14px; align-items: center; padding: 12px 16px;
     border-top: 1px solid var(--line); width: 100%; text-align: left;
   }
   .day:first-child { border-top: 0; }
   .day .date { width: 44px; flex: none; text-align: center; }
-  .day .date b { display: block; font-size: 22px; line-height: 1; }
-  .day .date span { font-size: 12px; text-transform: uppercase; color: var(--muted); letter-spacing: .05em; }
+  .day .date b { display: block; font-size: 1.294rem; line-height: 1; }
+  .day .date span { font-size: 0.706rem; text-transform: uppercase; color: var(--muted); letter-spacing: .05em; }
   .day.today .date b, .day.today .date span { color: var(--accent); }
   .day .meal { flex: 1; min-width: 0; }
   .day .meal .placeholder { color: var(--muted); }
-  .day .meal small { display: block; color: var(--muted); font-size: 13px; }
+  .day .meal small { display: block; color: var(--muted); font-size: 0.765rem; }
 
   /* Recipes */
   .recipe { padding: 14px 16px; border-top: 1px solid var(--line); width: 100%; text-align: left; display: block; }
   .recipe:first-child, .group h2 + .recipe { border-top: 0; }
-  .recipe small { display: block; color: var(--muted); font-size: 14px; margin-top: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .recipe small { display: block; color: var(--muted); font-size: 0.824rem; margin-top: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
   /* Tab bar */
   nav.tabs {
@@ -169,13 +177,13 @@
   nav.tabs .inner { display: flex; width: 100%; max-width: 640px; height: var(--tabbar-h); }
   nav.tabs button {
     flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px;
-    font-size: 11px; color: var(--muted); position: relative;
+    font-size: 0.647rem; color: var(--muted); position: relative;
   }
   nav.tabs button svg { width: 25px; height: 25px; }
   nav.tabs button[aria-selected="true"] { color: var(--accent); }
   nav.tabs .badge {
     position: absolute; top: 6px; left: calc(50% + 6px);
-    background: var(--danger); color: #fff; font-size: 11px; font-weight: 700;
+    background: var(--danger); color: #fff; font-size: 0.647rem; font-weight: 700;
     min-width: 18px; height: 18px; border-radius: 9px; padding: 0 5px; display: grid; place-items: center;
   }
 
@@ -194,12 +202,12 @@
   }
   .sheet.open { transform: none; }
   .sheet .grab { width: 40px; height: 5px; border-radius: 3px; background: var(--line); margin: 4px auto 12px; }
-  .sheet h3 { margin: 0 0 14px; font-size: 21px; }
+  .sheet h3 { margin: 0 0 14px; font-size: 1.235rem; }
   .field { display: block; margin-bottom: 12px; }
-  .field > span { display: block; font-size: 13px; color: var(--muted); margin: 0 0 6px 4px; }
+  .field > span { display: block; font-size: 0.765rem; color: var(--muted); margin: 0 0 6px 4px; }
   .field input, .field select, .field textarea {
     width: 100%; background: var(--surface); border: 1px solid var(--line); border-radius: 12px;
-    padding: 12px 14px; outline: none; font-size: 17px;
+    padding: 12px 14px; outline: none; font-size: 1rem;
   }
   .field textarea { min-height: 150px; resize: vertical; line-height: 1.5; }
   .field input:focus, .field select:focus, .field textarea:focus { border-color: var(--accent); }
@@ -213,7 +221,7 @@
     position: fixed; left: 50%; bottom: calc(var(--tabbar-h) + env(safe-area-inset-bottom) + 16px);
     transform: translate(-50%, 20px); opacity: 0; z-index: 30;
     background: var(--text); color: var(--bg); padding: 10px 14px; border-radius: 12px;
-    font-size: 15px; display: flex; gap: 14px; align-items: center; transition: .2s; pointer-events: none;
+    font-size: 0.882rem; display: flex; gap: 14px; align-items: center; transition: .2s; pointer-events: none;
     width: max-content; max-width: calc(100% - 32px);
   }
   .toast.show { opacity: 1; transform: translate(-50%, 0); pointer-events: auto; }
@@ -223,15 +231,15 @@
   /* Recept */
   .search { display: flex; align-items: center; gap: 8px; padding: 4px 12px; margin-bottom: 12px; }
   .search svg { width: 18px; height: 18px; color: var(--muted); flex: none; }
-  .search input { flex: 1; min-width: 0; border: 0; outline: 0; background: transparent; padding: 10px 0; font-size: 17px; -webkit-appearance: none; }
+  .search input { flex: 1; min-width: 0; border: 0; outline: 0; background: transparent; padding: 10px 0; font-size: 1rem; -webkit-appearance: none; }
   .chip.on { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
-  .recipe-meta { color: var(--muted); font-size: 15px; margin: -8px 0 16px; }
+  .recipe-meta { color: var(--muted); font-size: 0.882rem; margin: -8px 0 16px; }
   .stepper { display: flex; align-items: center; justify-content: space-between; padding: 6px; margin-bottom: 16px; }
-  .stepper button { width: 44px; height: 44px; border-radius: 12px; background: var(--surface-2); font-size: 24px; line-height: 1; font-weight: 600; }
+  .stepper button { width: 44px; height: 44px; border-radius: 12px; background: var(--surface-2); font-size: 1.412rem; line-height: 1; font-weight: 600; }
   .stepper button:disabled { opacity: .35; }
-  .stepper span { font-size: 17px; }
-  .stepper b { font-size: 22px; }
-  .sheet h4 { margin: 18px 4px 8px; font-size: 13px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); }
+  .stepper span { font-size: 1rem; }
+  .stepper b { font-size: 1.294rem; }
+  .sheet h4 { margin: 18px 4px 8px; font-size: 0.765rem; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); }
   .ing { display: flex; gap: 12px; padding: 11px 16px; border-top: 1px solid var(--line); }
   .ing:first-child { border-top: 0; }
   .ing .amt { width: 92px; flex: none; color: var(--accent); font-weight: 600; font-variant-numeric: tabular-nums; }
@@ -240,7 +248,7 @@
   .steps li::before {
     content: counter(step); position: absolute; left: 12px; top: 10px;
     width: 24px; height: 24px; border-radius: 50%; background: var(--accent-soft); color: var(--accent);
-    font-size: 13px; font-weight: 700; display: grid; place-items: center;
+    font-size: 0.765rem; font-weight: 700; display: grid; place-items: center;
   }
   .field-row { display: flex; gap: 10px; }
   .field-row .field { flex: 1; min-width: 0; }
@@ -258,14 +266,14 @@
   .in-list .row { display: flex; align-items: center; border-top: 1px solid var(--line); }
   .in-list h2 + .row { border-top: 0; }
   .in-list .open { flex: 1; min-width: 0; text-align: left; padding: 11px 16px; }
-  .in-list .open small { color: var(--muted); font-size: 14px; margin-left: 6px; }
-  .in-list .x { padding: 11px 16px; color: var(--muted); font-size: 18px; line-height: 1; }
+  .in-list .open small { color: var(--muted); font-size: 0.824rem; margin-left: 6px; }
+  .in-list .x { padding: 11px 16px; color: var(--muted); font-size: 1.059rem; line-height: 1; }
 
   /* Timers */
   .timer { display: flex; align-items: center; gap: 6px; margin-top: 8px; flex-wrap: wrap; }
-  .timer button { min-width: 36px; height: 34px; padding: 0 10px; border-radius: 10px; background: var(--surface-2); font-weight: 600; font-size: 15px; }
+  .timer button { min-width: 36px; height: 34px; padding: 0 10px; border-radius: 10px; background: var(--surface-2); font-weight: 600; font-size: 0.882rem; }
   .timer .t-go { background: var(--accent); color: var(--accent-ink); }
-  .timer .t-time { min-width: 64px; text-align: center; font-weight: 700; font-variant-numeric: tabular-nums; font-size: 16px; }
+  .timer .t-time { min-width: 64px; text-align: center; font-weight: 700; font-variant-numeric: tabular-nums; font-size: 0.941rem; }
   .timer.running .t-time { color: var(--accent); }
   .timer.done .t-time { color: var(--danger); animation: blink 1s steps(2) infinite; }
   @keyframes blink { 50% { opacity: .35; } }
@@ -278,39 +286,39 @@
     pointer-events: auto; width: 100%; max-width: 608px; display: flex; align-items: center; gap: 10px;
     background: var(--text); color: var(--bg); border-radius: 14px; padding: 10px 8px 10px 14px; box-shadow: 0 6px 20px rgba(0,0,0,.18);
   }
-  #timerbar .tb .lbl { flex: 1; min-width: 0; text-align: left; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 15px; }
+  #timerbar .tb .lbl { flex: 1; min-width: 0; text-align: left; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 0.882rem; }
   #timerbar .tb .tt { font-weight: 700; font-variant-numeric: tabular-nums; }
   #timerbar .tb.done { background: var(--danger); color: #fff; animation: blink 1s steps(2) infinite; }
-  #timerbar .tb .x { padding: 4px 8px; font-size: 18px; line-height: 1; color: inherit; opacity: .8; }
+  #timerbar .tb .x { padding: 4px 8px; font-size: 1.059rem; line-height: 1; color: inherit; opacity: .8; }
   body.has-timers .app { padding-bottom: calc(var(--tabbar-h) + env(safe-area-inset-bottom) + 90px); }
   body.has-timers .toast { bottom: calc(var(--tabbar-h) + env(safe-area-inset-bottom) + 80px); }
 
   /* Recept från nätet */
   .web { padding: 14px 16px; margin-bottom: 14px; }
-  .web p { margin: 0 0 10px; font-size: 15px; color: var(--muted); }
+  .web p { margin: 0 0 10px; font-size: 0.882rem; color: var(--muted); }
   .web p b { color: var(--text); }
   .web .chips { padding-bottom: 2px; flex-wrap: wrap; overflow: visible; }
   .web .chip { background: var(--surface-2); border-color: transparent; }
   .web + .web { margin-top: -4px; }
   .hero { width: calc(100% + 32px); margin: -8px -16px 14px; aspect-ratio: 16 / 9; object-fit: cover; display: block; background: var(--surface-2); }
-  .source { display: inline-block; margin-top: 14px; color: var(--accent); font-size: 15px; text-decoration: none; }
+  .source { display: inline-block; margin-top: 14px; color: var(--accent); font-size: 0.882rem; text-decoration: none; }
   .groups { overflow: hidden; margin-bottom: 14px; }
   .groups .group { margin: 0; }
   .groups .group + .group { border-top: 1px solid var(--line); }
-  .linkbtn { color: var(--accent); font-size: 14px; padding: 4px 0; text-align: left; }
-  .helpinline { display: block; margin-top: 2px; }
+  .linkbtn { min-height: 44px; display: inline-flex; align-items: center; color: var(--accent); font-size: 0.824rem; padding: 4px 0; text-align: left; }
+  .helpinline { display: flex; margin: -10px 0 -12px; }
   .helpline { text-align: center; margin: 12px 0 0; }
   .helptoc { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; }
-  .helptoc-link { background: var(--surface); border-radius: 999px; padding: 6px 12px; font-size: 14px; box-shadow: var(--shadow); }
+  .helptoc-link { background: var(--surface); border-radius: 999px; padding: 6px 12px; font-size: 0.824rem; box-shadow: var(--shadow); }
   .helpsec { background: var(--surface); border-radius: var(--radius); padding: 2px 16px 12px; margin-top: 12px; scroll-margin-top: 12px; }
-  .sheet .helpsec h4 { margin: 14px 0 6px; font-size: 17px; text-transform: none; letter-spacing: 0; color: var(--text); }
-  .helpsec p, .helpsec li { font-size: 15px; }
+  .sheet .helpsec h4 { margin: 14px 0 6px; font-size: 1rem; text-transform: none; letter-spacing: 0; color: var(--text); }
+  .helpsec p, .helpsec li { font-size: 0.882rem; }
   .helpsteps { padding-left: 20px; margin: 6px 0; display: flex; flex-direction: column; gap: 4px; }
-  .helptip { margin: 10px 0; padding: 8px 12px; border-left: 3px solid var(--accent); background: var(--accent-soft); border-radius: 0 10px 10px 0; font-size: 15px; }
+  .helptip { margin: 10px 0; padding: 8px 12px; border-left: 3px solid var(--accent); background: var(--accent-soft); border-radius: 0 10px 10px 0; font-size: 0.882rem; }
   .helpq { border-top: 1px solid var(--line); padding: 10px 0; }
-  .helpq summary { cursor: pointer; font-weight: 600; font-size: 15px; }
-  .helpq div { margin-top: 6px; color: var(--muted); font-size: 15px; }
-  .welcome { padding: 14px 16px; margin-bottom: 14px; font-size: 15px; }
+  .helpq summary { cursor: pointer; font-weight: 600; font-size: 0.882rem; }
+  .helpq div { margin-top: 6px; color: var(--muted); font-size: 0.882rem; }
+  .welcome { padding: 14px 16px; margin-bottom: 14px; font-size: 0.882rem; }
   .welcome ul { padding-left: 18px; margin: 8px 0 12px; display: flex; flex-direction: column; gap: 4px; }
   .welcome-actions { display: flex; gap: 8px; }
   .welcome-actions .btn { flex: 1; padding: 11px; }
@@ -320,7 +328,22 @@
     .app.wide-week #view-recipes { position: sticky; top: 12px; max-height: calc(100vh - var(--tabbar-h) - 24px); overflow-y: auto; padding-bottom: 12px; }
     .app.wide-week #view-recipes .recipe { cursor: grab; }
   }
-  .avatar { width: 48px; height: 48px; border-radius: 50%; flex: none; display: grid; place-items: center; background: var(--accent); color: #fff; font-weight: 700; font-size: 20px; }
+  .cat-ico { display: inline-grid; place-items: center; width: 1.5em; height: 1.5em; border-radius: 50%; background: var(--surface-2); margin-right: 8px; font-size: 1.05em; vertical-align: -0.35em; text-transform: none; }
+  .item.pop .check { animation: pop .28s ease-out; }
+  @keyframes pop { 0% { transform: scale(.8); } 60% { transform: scale(1.15); } 100% { transform: scale(1); } }
+  .item.swiping { color: var(--text); }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 8px; }
+  .addbar:focus-within { box-shadow: 0 0 0 2px var(--accent), var(--shadow); }
+  @media (hover: hover) {
+    .pick:hover, .recipe:hover, .item:hover, .day:hover { background: var(--surface-2); }
+    .chip:hover, .icon-btn:hover, .btn.ghost:hover { filter: brightness(.97); }
+    .btn:hover { filter: brightness(1.08); }
+    .linkbtn:hover { text-decoration: underline; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { transition-duration: 0s !important; animation: none !important; scroll-behavior: auto !important; }
+  }
+  .avatar { width: 48px; height: 48px; border-radius: 50%; flex: none; display: grid; place-items: center; background: var(--accent); color: #fff; font-weight: 700; font-size: 1.176rem; }
   #sync-dot { width: 9px; height: 9px; border-radius: 50%; flex: none; align-self: center; margin: 0 10px 0 auto; background: var(--muted); opacity: .5; }
   #sync-dot[data-state="off"] { display: none; }
   #sync-dot[data-state="ok"] { background: #34a853; opacity: .9; }
@@ -328,7 +351,7 @@
   .spinner { width: 18px; height: 18px; border: 2.5px solid currentColor; border-right-color: transparent; border-radius: 50%; animation: spin .7s linear infinite; display: inline-block; }
   @keyframes spin { to { transform: rotate(360deg); } }
 
-  .hint { color: var(--muted); font-size: 14px; margin: 4px 4px 14px; }
+  .hint { color: var(--muted); font-size: 0.824rem; margin: 4px 4px 14px; }
   [hidden] { display: none !important; }
 </style>
 </head>
@@ -760,8 +783,9 @@ const MONTHS = ["jan", "feb", "mar", "apr", "maj", "jun", "jul", "aug", "sep", "
 
 /* ---------- Rendering ---------- */
 
+let justToggled = null;   // den vara som just bockades av (får en liten animation)
 const ICON_CHECK = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>`;
-const ICON_MORE = `<svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="12" cy="19" r="1.8"/></svg>`;
+const ICON_MORE = `<svg viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="19" cy="12" r="1.8"/></svg>`;
 
 function render() {
   document.querySelectorAll("nav.tabs button").forEach(b => b.setAttribute("aria-selected", b.dataset.view === view));
@@ -774,7 +798,7 @@ function render() {
 
   const left = cur().items.filter(i => !i.done).length;
   const badge = $("#badge");
-  badge.hidden = left === 0; badge.textContent = left;
+  badge.hidden = true; badge.textContent = left;
 
   if (view === "list") renderList();
   if (view === "week") renderWeek();
@@ -794,7 +818,7 @@ function renderList() {
   }).join("");
 
   $("#list-recipes").innerHTML = list.recipes.length ? `<div class="card in-list">
-    <h2 style="margin:0;padding:12px 16px 6px;font-size:13px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)">🍽️ Recept i listan</h2>
+    <h2 style="margin:0;padding:12px 16px 6px;font-size: 0.765rem;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)">🍽️ Recept i listan</h2>
     ${list.recipes.map(x => `<div class="row">
       <button class="open" data-open-recipe="${x.recipeId}">${esc(x.name)}<small>${x.servings} port.</small></button>
       <button class="x" data-remove-recipe="${x.recipeId}" aria-label="Ta bort ${esc(x.name)} ur listan">✕</button>
@@ -835,9 +859,9 @@ function renderList() {
       .sort((a, b) => (a.done - b.done) || a.name.localeCompare(b.name, "sv"));
     if (!items.length) continue;
     const remaining = items.filter(i => !i.done).length;
-    html += `<div class="group"><h2><span>${c.emoji} ${c.name}</span><span>${remaining || "✓"}</span></h2>`;
+    html += `<div class="group"><h2><span><span class="cat-ico">${c.emoji}</span>${c.name}</span><span>${remaining || "✓"}</span></h2>`;
     for (const i of items) {
-      html += `<div class="item${i.done ? " done" : ""}" data-toggle="${i.id}">
+      html += `<div class="item${i.done ? " done" : ""}${i.id === justToggled ? " pop" : ""}" data-toggle="${i.id}">
         <span class="check">${ICON_CHECK}</span>
         <span class="name">${esc(i.name)}${i.from ? `<span class="from">${esc(i.from)}</span>` : ""}</span>
         ${i.qty ? `<span class="qty">${esc(i.qty)}</span>` : ""}
@@ -917,7 +941,7 @@ function renderRecipes() {
   for (const c of RECIPE_CATS) {
     const list = hits.filter(r => recipeCat(r.category) === c).sort((a, b) => a.name.localeCompare(b.name, "sv"));
     if (!list.length) continue;
-    html += `<div class="group"><h2><span>${c.emoji} ${esc(c.name)}</span><span>${list.length}</span></h2>`;
+    html += `<div class="group"><h2><span><span class="cat-ico">${c.emoji}</span>${esc(c.name)}</span><span>${list.length}</span></h2>`;
     html += list.map(r => `<button class="recipe" data-recipe="${r.id}" draggable="${isWide() ? "true" : "false"}"><b>${esc(r.name)}</b>
       <small>${r.time ? `⏱ ${fmtTime(r.time)} · ` : ""}${r.servings} portioner · ${r.ingredients.length} ingredienser</small></button>`).join("");
     html += `</div>`;
@@ -1100,7 +1124,7 @@ const SHORTCUT_JS = `var s=[];document.querySelectorAll('script[type="applicatio
 function shortcutSheet() {
   openSheet(`
     <h3>Spara recept från Safari</h3>
-    <p class="hint" style="font-size:16px;margin-top:-6px">Skapa genvägen en gång, så kan du sedan spara recept direkt från dela-menyn i Safari. Det tar ett par minuter.</p>
+    <p class="hint" style="font-size: 0.941rem;margin-top:-6px">Skapa genvägen en gång, så kan du sedan spara recept direkt från dela-menyn i Safari. Det tar ett par minuter.</p>
     <h4>1. Tillåt skript</h4>
     <div class="card"><ol class="steps">
       <li>Öppna <b>Inställningar</b> → <b>Appar</b> → <b>Genvägar</b> → <b>Avancerat</b>. (På äldre iPhone: Inställningar → Genvägar → Avancerat.)</li>
@@ -1151,10 +1175,10 @@ async function importRecipe(url) {
     if (e.code === "unauthorized") setLinkCode("");
     const linked = isLinked();
     openSheet(`<h3>Det gick inte att hämta receptet</h3>
-      <p class="hint" style="font-size:16px">${esc(e.message)}.</p>
-      ${linked ? `<p class="hint" style="font-size:16px">Ta en skärmbild av receptet och läs in den med <b>Fota recept</b>, eller kopiera texten och välj <b>Klistra in recepttext</b>.</p>
+      <p class="hint" style="font-size: 0.941rem">${esc(e.message)}.</p>
+      ${linked ? `<p class="hint" style="font-size: 0.941rem">Ta en skärmbild av receptet och läs in den med <b>Fota recept</b>, eller kopiera texten och välj <b>Klistra in recepttext</b>.</p>
       <div class="card" style="margin-bottom:8px"><button class="pick" id="i-photo">📷 Fota recept eller välj bild</button><button class="pick" id="i-text">📝 Klistra in recepttext</button></div>` : ""}
-      <p class="hint" style="font-size:16px">Använd genvägen <b>Spara i Handla</b> i Safaris dela-meny istället – den läser receptet direkt från sidan och fungerar även när länken inte gör det.</p>
+      <p class="hint" style="font-size: 0.941rem">Använd genvägen <b>Spara i Handla</b> i Safaris dela-meny istället – den läser receptet direkt från sidan och fungerar även när länken inte gör det.</p>
       <div class="card" style="margin-bottom:8px"><button class="pick" id="i-shortcut">📲 Visa hur du skapar genvägen</button></div>
       <div class="actions"><button class="btn ghost" id="i-close">Stäng</button><button class="btn" id="i-manual">Skriv själv</button></div>`, body => {
       body.querySelector("#i-close").onclick = closeSheet;
@@ -1511,8 +1535,8 @@ async function maybeJoin() {
   const kind = code.split("|")[1] || "home";
   code = code.split("|")[0];
   openSheet((kind === "list" ? `<h3>Öppna den delade listan?</h3>
-    <p class="hint" style="font-size:16px;margin-top:-6px">Någon har delat en inköpslista med dig. Ni ser och bockar av i samma lista. Dina andra listor påverkas inte.</p>` : `<h3>Gå med i hushållet?</h3>
-    <p class="hint" style="font-size:16px;margin-top:-6px">Ni delar då hushållets inköpslistor, recept och veckomeny, och ser varandras ändringar direkt. Det du har nu läggs till i hushållet. Dina egna och delade listor påverkas inte.</p>`) + `
+    <p class="hint" style="font-size: 0.941rem;margin-top:-6px">Någon har delat en inköpslista med dig. Ni ser och bockar av i samma lista. Dina andra listor påverkas inte.</p>` : `<h3>Gå med i hushållet?</h3>
+    <p class="hint" style="font-size: 0.941rem;margin-top:-6px">Ni delar då hushållets inköpslistor, recept och veckomeny, och ser varandras ändringar direkt. Det du har nu läggs till i hushållet. Dina egna och delade listor påverkas inte.</p>`) + `
     <div class="actions"><button class="btn ghost" id="j-no">Inte nu</button><button class="btn" id="j-yes">Gå med</button></div>`, body => {
     body.querySelector("#j-no").onclick = closeSheet;
     body.querySelector("#j-yes").onclick = async () => {
@@ -1565,7 +1589,7 @@ function accountSheet() {
   if (session && household) return householdSheet();
   openSheet(`
     <h3>Logga in eller skapa konto</h3>
-    <p class="hint" style="font-size:16px;margin-top:-6px">Med ett konto får du samma listor, recept och veckomeny på telefon och dator, kan dela med hushållet och läsa in recept från foton. Utan konto fungerar appen som vanligt på den här enheten.</p>
+    <p class="hint" style="font-size: 0.941rem;margin-top:-6px">Med ett konto får du samma listor, recept och veckomeny på telefon och dator, kan dela med hushållet och läsa in recept från foton. Utan konto fungerar appen som vanligt på den här enheten.</p>
     <form class="card" id="u-form" style="padding:14px 16px" autocomplete="on">
       <input id="u-email" type="email" autocomplete="username" placeholder="E-post" required style="width:100%;margin-bottom:10px">
       <input id="u-pass" type="password" autocomplete="current-password" placeholder="Lösenord" required minlength="6" style="width:100%">
@@ -1594,7 +1618,7 @@ function accountSheet() {
         await loadSupabase();
         const { error } = await sb.auth.resetPasswordForEmail(email(), { redirectTo: APP_URL });
         if (error) throw error;
-        openSheet(`<h3>Kolla din e-post</h3><p class="hint" style="font-size:16px">Om det finns ett konto för <b>${esc(email())}</b> har vi skickat en länk. Öppna den på den här enheten, så får du välja ett nytt lösenord.</p>
+        openSheet(`<h3>Kolla din e-post</h3><p class="hint" style="font-size: 0.941rem">Om det finns ett konto för <b>${esc(email())}</b> har vi skickat en länk. Öppna den på den här enheten, så får du välja ett nytt lösenord.</p>
           <div class="actions"><button class="btn" id="c-ok">Okej</button></div>`, b => { b.querySelector("#c-ok").onclick = closeSheet; });
       } catch (err) { toast(/rate|seconds/i.test(err.message || "") ? "Vänta en stund innan du försöker igen" : "Kunde inte skicka mejlet. Försök igen"); }
       finally { busy(false); }
@@ -1605,7 +1629,7 @@ function accountSheet() {
       try {
         const r = await signUp(email(), pass());
         if (r === "in") { closeSheet(); toast("Kontot är skapat"); }
-        else openSheet(`<h3>Kolla din e-post</h3><p class="hint" style="font-size:16px">Vi har skickat ett mejl till <b>${esc(email())}</b>. Tryck på länken i det, kom sedan tillbaka hit och logga in.</p>
+        else openSheet(`<h3>Kolla din e-post</h3><p class="hint" style="font-size: 0.941rem">Vi har skickat ett mejl till <b>${esc(email())}</b>. Tryck på länken i det, kom sedan tillbaka hit och logga in.</p>
           <div class="actions"><button class="btn" id="c-ok">Okej</button></div>`, b => { b.querySelector("#c-ok").onclick = accountSheet; });
       } catch (err) { toast(err.message); }
       finally { busy(false); }
@@ -1874,7 +1898,7 @@ function busySheet(title, detail) {
 
 function aiFailSheet(title, err, retry) {
   openSheet(`<h3>${esc(title)}</h3>
-    <p class="hint" style="font-size:16px">${esc(err.message)}.</p>
+    <p class="hint" style="font-size: 0.941rem">${esc(err.message)}.</p>
     ${err.code === "unauthorized" ? `<div class="card" style="margin-bottom:8px"><button class="pick" id="f-link">👤 Logga in</button></div>` : ""}
     <div class="actions"><button class="btn ghost" id="f-close">Stäng</button>${retry ? `<button class="btn" id="f-retry">Försök igen</button>` : ""}</div>`, body => {
     body.querySelector("#f-close").onclick = closeSheet;
@@ -1888,7 +1912,7 @@ function linkSheet() {
   const linked = isLinked();
   openSheet(`
     <h3>Koppla till träningsappen</h3>
-    <p class="hint" style="font-size:16px;margin-top:-6px">Med kopplingen kan Veckohandling läsa recept från foton, inklistrad text och fler länkar, och söka recept på nätet. Träningsappens hälsodata följer aldrig med.</p>
+    <p class="hint" style="font-size: 0.941rem;margin-top:-6px">Med kopplingen kan Veckohandling läsa recept från foton, inklistrad text och fler länkar, och söka recept på nätet. Träningsappens hälsodata följer aldrig med.</p>
     ${linked ? `<div class="card" style="padding:14px 16px">✅ Kopplad på den här telefonen</div>
       <div class="actions"><button class="btn ghost" id="l-close">Stäng</button><button class="btn" id="l-unlink" style="background:var(--danger)">Koppla från</button></div>` : `
     <div class="card"><ol class="steps">
@@ -1958,7 +1982,7 @@ async function readRecipePhotos(files) {
 function pasteTextSheet() {
   openSheet(`
     <h3>Klistra in ett recept</h3>
-    <p class="hint" style="font-size:16px;margin-top:-6px">Från ett sms, ett mejl, Instagram eller var som helst. AI:n plockar ut ingredienser och steg.</p>
+    <p class="hint" style="font-size: 0.941rem;margin-top:-6px">Från ett sms, ett mejl, Instagram eller var som helst. AI:n plockar ut ingredienser och steg.</p>
     <textarea id="t-text" style="width:100%;min-height:200px" placeholder="Klistra in recepttexten här"></textarea>
     <div class="actions"><button class="btn ghost" id="t-close">Stäng</button><button class="btn" id="t-go">Läs receptet</button></div>`, body => {
     body.querySelector("#t-close").onclick = closeSheet;
@@ -2771,7 +2795,38 @@ $("#quick-chips").addEventListener("click", e => {
   commit();
 });
 
+// Svep vänster på en vara för att ta bort den (med Ångra)
+let swipe = null, swiped = false;
+$("#list").addEventListener("touchstart", e => {
+  const row = e.target.closest("[data-toggle]");
+  swipe = row ? { row, x: e.touches[0].clientX, y: e.touches[0].clientY, dx: 0, locked: null } : null;
+}, { passive: true });
+$("#list").addEventListener("touchmove", e => {
+  if (!swipe) return;
+  const dx = e.touches[0].clientX - swipe.x, dy = e.touches[0].clientY - swipe.y;
+  if (swipe.locked == null && (Math.abs(dx) > 8 || Math.abs(dy) > 8)) swipe.locked = Math.abs(dx) > Math.abs(dy) && dx < 0;
+  if (!swipe.locked) return;
+  swipe.dx = Math.min(0, dx);
+  const w = Math.min(-swipe.dx, swipe.row.offsetWidth);
+  swipe.row.classList.add("swiping");
+  swipe.row.style.background = `linear-gradient(to left, var(--danger) ${w}px, var(--surface) ${w}px)`;
+  swipe.row.style.setProperty("--swipe", w > 90 ? "1" : "0");
+}, { passive: true });
+$("#list").addEventListener("touchend", () => {
+  if (!swipe) return;
+  const { row, dx, locked } = swipe;
+  swipe = null;
+  if (!locked) return;
+  swiped = true; setTimeout(() => { swiped = false; }, 350);
+  row.classList.remove("swiping"); row.style.background = "";
+  if (dx < -90) {
+    const i = cur().items.find(x => x.id === row.dataset.toggle);
+    if (i) { if (navigator.vibrate) navigator.vibrate(15); removeItems([i.id], `${i.name} borttagen`); }
+  }
+});
+
 $("#list").addEventListener("click", e => {
+  if (swiped) return;
   const edit = e.target.closest("[data-edit]");
   if (edit) { editItemSheet(edit.dataset.edit); return; }
   const row = e.target.closest("[data-toggle]");
@@ -2780,7 +2835,10 @@ $("#list").addEventListener("click", e => {
   if (!i) return;
   i.done = !i.done;
   if (i.done && navigator.vibrate) navigator.vibrate(10);
+  justToggled = i.id;
   commit();
+  justToggled = null;
+  if (i.done && cur().items.length > 1 && cur().items.every(x => x.done)) toast("Allt handlat! 🎉 Bra jobbat");
 });
 
 $("#list-menu").addEventListener("click", listMenuSheet);
