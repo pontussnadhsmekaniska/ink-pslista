@@ -294,6 +294,7 @@
   .web + .web { margin-top: -4px; }
   .hero { width: calc(100% + 32px); margin: -8px -16px 14px; aspect-ratio: 16 / 9; object-fit: cover; display: block; background: var(--surface-2); }
   .source { display: inline-block; margin-top: 14px; color: var(--accent); font-size: 15px; text-decoration: none; }
+  .avatar { width: 48px; height: 48px; border-radius: 50%; flex: none; display: grid; place-items: center; background: var(--accent); color: #fff; font-weight: 700; font-size: 20px; }
   #sync-dot { width: 9px; height: 9px; border-radius: 50%; flex: none; align-self: center; margin-right: 4px; background: var(--muted); opacity: .5; }
   #sync-dot[data-state="off"] { display: none; }
   #sync-dot[data-state="ok"] { background: #34a853; opacity: .9; }
@@ -359,6 +360,16 @@
     </div>
   </section>
 
+  <!-- PROFIL -->
+  <section id="view-profile" hidden>
+    <header class="top">
+      <div>
+        <h1>Profil</h1>
+        <div class="sub" id="profile-sub"></div>
+      </div>
+    </header>
+    <div id="profile"></div>
+  </section>
   <!-- RECEPT -->
   <section id="view-recipes" hidden>
     <header class="top">
@@ -392,6 +403,10 @@
     <button role="tab" data-view="recipes" aria-selected="false">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3v8a3 3 0 0 0 6 0V3M9 3v18M18 21V3c-2 1-3 4-3 8h3"/></svg>
       Recept
+    </button>
+    <button role="tab" data-view="profile" aria-selected="false">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+      Profil
     </button>
   </div>
 </nav>
@@ -720,6 +735,7 @@ function render() {
   $("#view-list").hidden = view !== "list";
   $("#view-week").hidden = view !== "week";
   $("#view-recipes").hidden = view !== "recipes";
+  $("#view-profile").hidden = view !== "profile";
 
   const left = cur().items.filter(i => !i.done).length;
   const badge = $("#badge");
@@ -728,6 +744,7 @@ function render() {
   if (view === "list") renderList();
   if (view === "week") renderWeek();
   if (view === "recipes") renderRecipes();
+  if (view === "profile") renderProfile();
 }
 
 function renderList() {
@@ -1190,6 +1207,8 @@ function setStatus(s) {
   syncStatus = s;
   const el = document.getElementById("sync-dot");
   if (el) { el.dataset.state = s; el.title = { ok: "Synkad", syncing: "Synkar…", offline: "Väntar på nät", off: "" }[s] || ""; }
+  const t = document.getElementById("sync-text");
+  if (t) t.textContent = SYNC_TEXT[s] || "";
 }
 
 function schedulePush() {
@@ -1519,47 +1538,87 @@ async function deleteAccount() {
   toast("Kontot är raderat");
 }
 
-function householdSheet() {
-  const me = session.user;
-  const members = household.members.map(m => `<div class="pick" style="cursor:default">👤 ${esc(m.display_name || "Medlem")}${m.user_id === me.id ? " <small style='color:var(--muted)'>(du)</small>" : ""}</div>`).join("");
-  openSheet(`
-    <h3>Konto och hushåll</h3>
-    <p class="hint" style="font-size:16px;margin-top:-6px">Inloggad som <b>${esc(me.email || "")}</b>. Listor, recept och veckomeny synkas mellan dina enheter och alla i hushållet.</p>
-    <p class="hint" style="margin-top:16px">${esc(household.name)}</p>
-    <div class="card">${members}
-      <button class="pick" id="h-invite">➕ Bjud in någon till hushållet</button>
-    </div>
-    <div class="card" style="margin-top:14px">
-      ${household.members.length > 1 ? `<button class="pick" id="h-leave">🚪 Lämna hushållet</button>` : ""}
-      <button class="pick" id="h-out" style="color:var(--danger)">Logga ut</button>
-    </div>
-    <div class="card" style="margin-top:14px"><button class="pick" id="h-delete" style="color:var(--danger)">🗑️ Radera kontot</button></div>
-    <div class="actions"><button class="btn ghost" id="h-close">Stäng</button></div>`, body => {
-    body.querySelector("#h-close").onclick = closeSheet;
-    body.querySelector("#h-out").onclick = async () => {
-      if (!confirm("Logga ut? Listorna finns kvar i kontot men tas bort från den här enheten.")) return;
-      closeSheet(); await signOut(); toast("Utloggad");
-    };
-    body.querySelector("#h-delete").onclick = deleteAccount;
-    body.querySelector("#h-leave")?.addEventListener("click", async () => {
-      if (!confirm("Lämna hushållet? Du får en egen, tom lista. De andra behåller allt ni delat.")) return;
-      const { error } = await sb.rpc("leave_household");
-      if (error) { toast("Det gick inte. Försök igen"); return; }
-      synced = { hid: null, docs: {}, since: null }; saveSynced();
-      state = defaultState(); save();
-      closeSheet(); await startSync(); toast("Du har lämnat hushållet");
-    });
-    body.querySelector("#h-invite").onclick = async () => {
-      const { data: code, error } = await sb.rpc("create_household_invite");
-      if (error) { toast("Kunde inte skapa en inbjudan. Försök igen"); return; }
-      const link = APP_URL + "?join=" + code;
-      const text = "Gå med i vårt hushåll i Veckohandling, så delar vi inköpslistan: " + link;
-      if (navigator.share) { try { await navigator.share({ title: "Veckohandling", text }); return; } catch (e) { if (e.name === "AbortError") return; } }
-      try { await navigator.clipboard.writeText(link); toast("Länken är kopierad – skicka den till den du vill bjuda in"); }
-      catch (e) { prompt("Skicka den här länken:", link); }
-    };
-  });
+// Hushållets knappar (används från profilen)
+async function inviteToHousehold() {
+  const { data: code, error } = await sb.rpc("create_household_invite");
+  if (error) { toast("Kunde inte skapa en inbjudan. Försök igen"); return; }
+  const link = APP_URL + "?join=" + code;
+  const text = "Gå med i vårt hushåll i Veckohandling, så delar vi inköpslistan: " + link;
+  if (navigator.share) { try { await navigator.share({ title: "Veckohandling", text }); return; } catch (e) { if (e.name === "AbortError") return; } }
+  try { await navigator.clipboard.writeText(link); toast("Länken är kopierad – skicka den till den du vill bjuda in"); }
+  catch (e) { prompt("Skicka den här länken:", link); }
 }
+
+async function leaveHousehold() {
+  if (!confirm("Lämna hushållet? Du får en egen, tom lista. De andra behåller allt ni delat.")) return;
+  const { error } = await sb.rpc("leave_household");
+  if (error) { toast("Det gick inte. Försök igen"); return; }
+  synced = { hid: null, docs: {}, since: null }; saveSynced();
+  state = defaultState(); save();
+  await startSync(); toast("Du har lämnat hushållet");
+}
+
+async function confirmSignOut() {
+  if (!confirm("Logga ut? Listorna finns kvar i kontot men tas bort från den här enheten.")) return;
+  await signOut(); toast("Utloggad");
+}
+
+// Logga in-rutan, eller profilen om man redan är inloggad
+function householdSheet() { closeSheet(); view = "profile"; render(); window.scrollTo(0, 0); }
+
+const SYNC_TEXT = { ok: "✓ Synkad", syncing: "Synkar…", offline: "Väntar på nät – ändringar skickas sen", off: "" };
+
+function renderProfile() {
+  const box = $("#profile");
+  const signedIn = !!(session && household);
+  const email = session?.user?.email || "";
+  $("#profile-sub").textContent = signedIn ? email : session ? "Ansluter…" : "Inte inloggad";
+  let html = "";
+  if (!signedIn) {
+    html += `<div class="card" style="padding:18px 16px">
+      <div style="display:flex;gap:14px;align-items:center;margin-bottom:12px">
+        <div class="avatar">👤</div>
+        <div><b>Logga in eller skapa konto</b><div class="hint" style="margin:2px 0 0">Samma listor, recept och veckomeny på telefon och dator, dela med hushållet och läs in recept från foton.</div></div>
+      </div>
+      <button class="btn" data-p="login" style="width:100%;padding:13px">Logga in</button>
+    </div>
+    <p class="hint">Utan konto sparas allt bara på den här enheten.</p>`;
+  } else {
+    const me = session.user;
+    html += `<div class="card" style="padding:16px;display:flex;gap:14px;align-items:center">
+      <div class="avatar">${esc((email[0] || "?").toUpperCase())}</div>
+      <div style="min-width:0"><b style="display:block;overflow:hidden;text-overflow:ellipsis">${esc(email)}</b>
+        <small id="sync-text" style="color:var(--muted)">${SYNC_TEXT[syncStatus] || ""}</small></div>
+    </div>
+    <p class="hint" style="margin-top:16px">Hushåll</p>
+    <div class="card">
+      ${household.members.map(m => `<div class="pick" style="cursor:default">👤 ${esc(m.display_name || "Medlem")}${m.user_id === me.id ? " <small style='color:var(--muted)'>(du)</small>" : ""}</div>`).join("")}
+      <button class="pick" data-p="invite">➕ Bjud in någon till hushållet</button>
+      ${household.members.length > 1 ? `<button class="pick" data-p="leave">🚪 Lämna hushållet</button>` : ""}
+    </div>
+    <p class="hint">Alla i hushållet delar listor, recept och veckomeny och ser ändringar direkt.</p>`;
+  }
+  html += `<p class="hint" style="margin-top:16px">Recept</p>
+    <div class="card">
+      ${signedIn ? `<button class="pick" data-p="photo">📷 Fota recept eller välj bild</button>` : ""}
+      <button class="pick" data-p="shortcut">📲 Spara recept direkt från Safari (genväg)</button>
+    </div>
+    <p class="hint" style="margin-top:16px">Säkerhetskopia</p>
+    <div class="card">
+      <button class="pick" data-p="export">💾 Exportera all data</button>
+      <button class="pick" data-p="import">📥 Importera data</button>
+    </div>
+    <input type="file" id="p-file" accept="application/json,.json" hidden>`;
+  if (signedIn) html += `<div class="card" style="margin-top:16px">
+      <button class="pick" data-p="signout" style="color:var(--danger)">Logga ut</button>
+      <button class="pick" data-p="delete" style="color:var(--danger)">🗑️ Radera kontot</button>
+    </div>`;
+  html += `<p class="hint" style="margin-top:16px;text-align:center">Har du träningsappen? Samma inloggning fungerar här.</p>`;
+  box.innerHTML = html;
+  const file = box.querySelector("#p-file");
+  file.onchange = () => importData(file.files[0]);
+}
+
 
 // Tillbaka till appen eller nätet: hämta det som missats och skicka det som väntar
 document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible" && session) { pullChanges(); pushNow(); } });
@@ -1863,14 +1922,6 @@ function listMenuSheet() {
       <button class="pick" id="m-uncheck"${done ? "" : " disabled style='opacity:.4'"}>↩️ Avmarkera alla</button>
       <button class="pick" id="m-clear-all" style="color:var(--danger)"${cur().items.length ? "" : " disabled"}>🗑️ Töm hela listan</button>
     </div>
-    <p class="hint" style="margin-top:16px">Konto</p>
-    <div class="card"><button class="pick" id="m-link">${session ? "👤 Konto och hushåll" : "👤 Logga in – samma listor på alla enheter"}</button></div>
-    <p class="hint" style="margin-top:16px">Säkerhetskopia</p>
-    <div class="card">
-      <button class="pick" id="m-export">💾 Exportera all data</button>
-      <button class="pick" id="m-import">📥 Importera data</button>
-    </div>
-    <input type="file" id="m-file" accept="application/json,.json" hidden>
     <div class="actions"><button class="btn ghost" id="m-close">Stäng</button></div>`, body => {
     body.querySelector("#m-close").onclick = closeSheet;
     body.querySelector("#m-share").onclick = () => { closeSheet(); shareList(); };
@@ -1882,11 +1933,6 @@ function listMenuSheet() {
     body.querySelector("#m-clear-all").onclick = () => {
       closeSheet(); removeItems(cur().items.map(i => i.id), "Listan tömd");
     };
-    body.querySelector("#m-export").onclick = exportData;
-    body.querySelector("#m-link").onclick = accountSheet;
-    const file = body.querySelector("#m-file");
-    body.querySelector("#m-import").onclick = () => file.click();
-    file.onchange = () => importData(file.files[0]);
   });
 }
 
@@ -2384,6 +2430,16 @@ document.addEventListener("visibilitychange", () => { if (document.visibilitySta
 $("#days").addEventListener("click", e => { const b = e.target.closest("[data-day]"); if (b) dayPickerSheet(b.dataset.day); });
 $("#recipes").addEventListener("click", e => { const b = e.target.closest("[data-recipe]"); if (b) recipeViewSheet(b.dataset.recipe); });
 $("#recipe-add").addEventListener("click", addRecipeSheet);
+$("#profile").addEventListener("click", e => {
+  const b = e.target.closest("[data-p]");
+  if (!b) return;
+  const act = {
+    login: accountSheet, invite: inviteToHousehold, leave: leaveHousehold, photo: pickRecipePhotos,
+    shortcut: shortcutSheet, export: exportData, import: () => $("#p-file").click(),
+    signout: confirmSignOut, delete: deleteAccount,
+  }[b.dataset.p];
+  if (act) act();
+});
 $("#recipes").addEventListener("click", e => {
   const w = e.target.closest("[data-websearch]");
   if (w) { openWebSearch(recipeQuery, w.dataset.websearch); return; }
