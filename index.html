@@ -295,7 +295,7 @@
   .hero { width: calc(100% + 32px); margin: -8px -16px 14px; aspect-ratio: 16 / 9; object-fit: cover; display: block; background: var(--surface-2); }
   .source { display: inline-block; margin-top: 14px; color: var(--accent); font-size: 15px; text-decoration: none; }
   .avatar { width: 48px; height: 48px; border-radius: 50%; flex: none; display: grid; place-items: center; background: var(--accent); color: #fff; font-weight: 700; font-size: 20px; }
-  #sync-dot { width: 9px; height: 9px; border-radius: 50%; flex: none; align-self: center; margin-right: 4px; background: var(--muted); opacity: .5; }
+  #sync-dot { width: 9px; height: 9px; border-radius: 50%; flex: none; align-self: center; margin: 0 10px 0 auto; background: var(--muted); opacity: .5; }
   #sync-dot[data-state="off"] { display: none; }
   #sync-dot[data-state="ok"] { background: #34a853; opacity: .9; }
   #sync-dot[data-state="offline"] { background: #f29900; opacity: .9; }
@@ -766,9 +766,10 @@ function renderList() {
 
   const total = cur().items.length;
   const done = cur().items.filter(i => i.done).length;
-  $("#list-sub").textContent = total
+  const who = whoSees(list);
+  $("#list-sub").textContent = (total
     ? (done === total ? "Allt handlat! 🎉" : `${total - done} kvar av ${total}`)
-    : "Listan är tom";
+    : "Listan är tom") + (who ? " · " + who : "");
   const prog = $("#progress");
   prog.hidden = total === 0;
   prog.firstElementChild.style.width = total ? (done / total * 100) + "%" : "0";
@@ -1142,9 +1143,10 @@ const APP_URL = "https://pontussnadhsmekaniska.github.io/ink-pslista/";
 
 let sb = null;              // Supabase-klienten (laddas bara när den behövs)
 let session = null;
-let household = null;       // { id, name, members: [{user_id, display_name, role}] }
+let household = null;       // hemmet: { id, name, members: [{user_id, display_name, role}] }
+let spaces = { private: null, shared: [] };  // egna listor och listor delade med andra
 let channel = null;
-let synced = { hid: null, docs: {}, since: null };  // senast kända läget på servern
+let synced = { hid: null, docs: {}, since: null, spaces: [] };  // senast kända läget på servern
 let syncStatus = "off";     // off | syncing | ok | offline
 let pushTimer = null, pushing = false, pushAgain = false;
 
@@ -1160,25 +1162,47 @@ function loadSynced() {
 }
 function saveSynced() { try { localStorage.setItem(SYNC_KEY, JSON.stringify(synced)); } catch (e) { /* ignorera */ } }
 
-// Tillståndet som rader: "kind:id" -> JSON
+// Alla utrymmen man är med i: hemmet, egna listor, delade listor
+const spaceIds = () => household ? [household.id, ...(spaces.private ? [spaces.private.id] : []), ...spaces.shared.map(x => x.id)] : [];
+const sharedSpace = id => spaces.shared.find(x => x.id === id) || null;
+// Vilket utrymme en lista ligger i (utan angivet: hemmet)
+function listSpace(l) {
+  if (!household) return null;
+  if (!l.space) return household.id;
+  return spaceIds().includes(l.space) ? l.space : null;
+}
+function splitKey(k) {
+  const bar = k.indexOf("|"), colon = k.indexOf(":", bar);
+  return [k.slice(0, bar), k.slice(bar + 1, colon), k.slice(colon + 1)];
+}
+
+// Tillståndet som rader: "utrymme|kind:id" -> JSON
 function flatten(st) {
-  const m = new Map();
+  const m = new Map(), H = household.id + "|";
   for (const l of st.lists) {
-    m.set("list:" + l.id, stable({ name: l.name, recipes: l.recipes || [] }));
-    for (const i of l.items) { const { id, ...rest } = i; m.set("item:" + id, stable({ ...rest, listId: l.id })); }
+    const sid = listSpace(l);
+    if (!sid) continue;
+    const P = sid + "|";
+    m.set(P + "list:" + l.id, stable({ name: l.name, recipes: l.recipes || [] }));
+    for (const i of l.items) { const { id, ...rest } = i; m.set(P + "item:" + id, stable({ ...rest, listId: l.id })); }
   }
-  for (const r of st.recipes) { const { id, ...rest } = r; m.set("recipe:" + id, stable(rest)); }
-  for (const [d, p] of Object.entries(st.plan)) m.set("plan:" + d, stable(p));
-  m.set("meta:history", stable(st.history || {}));
-  m.set("meta:catOverrides", stable(st.catOverrides || {}));
-  m.set("meta:servings", stable({ n: st.servings || 4 }));
+  for (const r of st.recipes) { const { id, ...rest } = r; m.set(H + "recipe:" + id, stable(rest)); }
+  for (const [d, p] of Object.entries(st.plan)) m.set(H + "plan:" + d, stable(p));
+  m.set(H + "meta:history", stable(st.history || {}));
+  m.set(H + "meta:catOverrides", stable(st.catOverrides || {}));
+  m.set(H + "meta:servings", stable({ n: st.servings || 4 }));
   return m;
 }
 
 // Raderna tillbaka till tillstånd; ordningen på listor, varor och recept behålls från `prev`
 function unflatten(m, prev) {
-  const rows = { list: {}, item: {}, recipe: {}, plan: {}, meta: {} };
-  for (const [k, v] of m) { const i = k.indexOf(":"); rows[k.slice(0, i)][k.slice(i + 1)] = JSON.parse(v); }
+  const rows = { list: {}, item: {}, recipe: {}, plan: {}, meta: {} }, listSid = {};
+  for (const [k, v] of m) {
+    const [sid, kind, id] = splitKey(k);
+    if (!rows[kind]) continue;
+    rows[kind][id] = JSON.parse(v);
+    if (kind === "list") listSid[id] = sid;
+  }
   const order = (ids, prevIds) => [...prevIds.filter(id => ids.includes(id)), ...ids.filter(id => !prevIds.includes(id))];
   const listIds = order(Object.keys(rows.list), prev.lists.map(l => l.id));
   const lists = listIds.map(id => {
@@ -1187,7 +1211,9 @@ function unflatten(m, prev) {
     const items = order(itemIds, old ? old.items.map(i => i.id) : []).map(i => {
       const { listId, ...rest } = rows.item[i]; return { id: i, ...rest };
     });
-    return { id, name: rows.list[id].name, items, recipes: rows.list[id].recipes || [] };
+    const l = { id, name: rows.list[id].name, items, recipes: rows.list[id].recipes || [] };
+    if (household && listSid[id] !== household.id) l.space = listSid[id];
+    return l;
   });
   const recipeIds = order(Object.keys(rows.recipe), prev.recipes.map(r => r.id));
   const st = {
@@ -1245,8 +1271,8 @@ async function pushNow() {
 }
 
 function docRow(k, data, deleted, now) {
-  const i = k.indexOf(":");
-  return { household_id: household.id, kind: k.slice(0, i), id: k.slice(i + 1), data, deleted, updated_at: now, updated_by: session.user.id };
+  const [sid, kind, id] = splitKey(k);
+  return { household_id: sid, kind, id, data, deleted, updated_at: now, updated_by: session.user.id };
 }
 
 // Ändringar från servern: tas in om man inte själv har en osynkad ändring på samma rad
@@ -1255,9 +1281,9 @@ function applyRemote(rows) {
   const cur = flatten(state);
   let changed = false;
   for (const r of rows) {
-    if (r.household_id !== household?.id) continue;
+    if (!spaceIds().includes(r.household_id)) continue;
     if (!synced.since || r.updated_at > synced.since) synced.since = r.updated_at;
-    const k = r.kind + ":" + r.id;
+    const k = r.household_id + "|" + r.kind + ":" + r.id;
     const v = r.deleted ? null : stable(r.data);
     const local = cur.has(k) ? cur.get(k) : null;
     const base = k in synced.docs ? synced.docs[k] : null;
@@ -1276,8 +1302,8 @@ function applyRemote(rows) {
   }
 }
 
-async function fetchDocs(since) {
-  let q = sb.from("shop_docs").select("*").eq("household_id", household.id).order("updated_at").limit(5000);
+async function fetchDocs(since, ids = spaceIds()) {
+  let q = sb.from("shop_docs").select("*").in("household_id", ids).order("updated_at").limit(5000);
   if (since) q = q.gte("updated_at", since);
   const { data, error } = await q;
   if (error) throw error;
@@ -1294,9 +1320,10 @@ async function pullChanges() {
 // hushållet. Listor och recept med samma namn slås ihop i stället för att bli dubbletter.
 async function mergeIntoHousehold() {
   const remote = (await fetchDocs(null)).filter(r => !r.deleted);
-  const R = new Map(remote.map(r => [r.kind + ":" + r.id, stable(r.data)]));
+  const R = new Map(remote.map(r => [r.household_id + "|" + r.kind + ":" + r.id, stable(r.data)]));
   const L = flatten(state);
-  const remoteRows = kind => remote.filter(r => r.kind === kind);
+  const H = household.id + "|";
+  const remoteRows = kind => remote.filter(r => r.kind === kind && r.household_id === household.id);
   const byName = (kind, name) => remoteRows(kind).find(r => (r.data.name || "").trim().toLowerCase() === (name || "").trim().toLowerCase());
   const listMap = {}, recipeMap = {};
   if (remote.length) {
@@ -1305,8 +1332,9 @@ async function mergeIntoHousehold() {
   }
   const merged = new Map(R);
   for (const [k, v] of L) {
-    const [kind, id] = [k.slice(0, k.indexOf(":")), k.slice(k.indexOf(":") + 1)];
+    const [sid, kind, id] = splitKey(k);
     if (R.has(k) && kind !== "meta") continue;
+    if (sid !== household.id) { merged.set(k, v); continue; }
     let data = JSON.parse(v);
     if (kind === "list" && listMap[id]) continue;
     if (kind === "recipe" && recipeMap[id]) continue;
@@ -1324,9 +1352,9 @@ async function mergeIntoHousehold() {
       else if (id === "catOverrides") data = { ...data, ...r };
       else data = r;
     }
-    merged.set(k, stable(data));
+    merged.set(H + kind + ":" + id, stable(data));
   }
-  synced = { hid: household.id, docs: Object.fromEntries(R), since: remote.reduce((m, r) => (r.updated_at > m ? r.updated_at : m), "") || null };
+  synced = { hid: household.id, docs: Object.fromEntries(R), since: remote.reduce((m, r) => (r.updated_at > m ? r.updated_at : m), "") || null, spaces: spaceIds() };
   saveSynced();
   const keepActive = state.activeList;
   state = unflatten(merged, { ...state, lists: state.lists.map(l => ({ ...l, id: listMap[l.id] || l.id })) });
@@ -1352,31 +1380,56 @@ async function loadSupabase() {
 async function loadHousehold() {
   const { data: hid, error } = await sb.rpc("ensure_household");
   if (error) throw error;
-  const [{ data: h }, { data: members }] = await Promise.all([
-    sb.from("households").select("id, name").eq("id", hid).maybeSingle(),
-    sb.from("household_members").select("user_id, display_name, role").order("joined_at"),
+  const [{ data: hs }, { data: members }] = await Promise.all([
+    sb.from("households").select("id, name, kind"),
+    sb.from("household_members").select("household_id, user_id, display_name, role").order("joined_at"),
   ]);
-  household = { id: hid, name: h?.name || "Mitt hushåll", members: members || [] };
+  const all = (hs || []).map(h => ({ id: h.id, name: h.name, kind: h.kind, members: (members || []).filter(m => m.household_id === h.id) }));
+  household = all.find(h => h.id === hid) || { id: hid, name: "Mitt hushåll", kind: "home", members: [] };
+  spaces = { private: all.find(h => h.kind === "private") || null, shared: all.filter(h => h.kind === "shared") };
+}
+
+// Utrymmen man inte längre är med i glöms på den här enheten (utan att något raderas på servern)
+function dropSpaces(ids) {
+  if (!ids.length) return;
+  for (const k of Object.keys(synced.docs)) if (ids.includes(k.slice(0, k.indexOf("|")))) delete synced.docs[k];
+  state.lists = state.lists.filter(l => !ids.includes(l.space));
+  if (!state.lists.length) state.lists = [newList("Inköpslista")];
+  if (!state.lists.some(l => l.id === state.activeList)) state.activeList = state.lists[0].id;
+  saveSynced(); save();
+}
+
+function subscribe() {
+  if (channel) sb.removeChannel(channel);
+  channel = sb.channel("shop-" + household.id + "-" + Date.now());
+  for (const id of spaceIds())
+    channel.on("postgres_changes", { event: "*", schema: "public", table: "shop_docs", filter: "household_id=eq." + id },
+      p => { if (p.new && p.new.kind) applyRemote([p.new]); });
+  channel.subscribe(status => { if (status === "SUBSCRIBED") pullChanges(); });
 }
 
 async function startSync() {
   setStatus("syncing");
   loadSynced();
   await loadHousehold();
+  const ids = spaceIds();
   if (synced.hid !== household.id) await mergeIntoHousehold();
-  else { await pullChanges(); await pushNow(); }
-  if (channel) sb.removeChannel(channel);
-  channel = sb.channel("shop-" + household.id)
-    .on("postgres_changes", { event: "*", schema: "public", table: "shop_docs", filter: "household_id=eq." + household.id },
-      p => { if (p.new && p.new.kind) applyRemote([p.new]); })
-    .subscribe(status => { if (status === "SUBSCRIBED") pullChanges(); });
+  else {
+    const known = synced.spaces || [household.id];
+    dropSpaces(known.filter(id => !ids.includes(id)));
+    const fresh = ids.filter(id => !known.includes(id));
+    if (fresh.length) applyRemote(await fetchDocs(null, fresh));
+    await pullChanges(); await pushNow();
+  }
+  synced.spaces = ids; saveSynced();
+  subscribe();
   setStatus("ok");
   render();
 }
 
 function stopSync() {
   if (channel && sb) sb.removeChannel(channel);
-  channel = null; household = null; session = null;
+  channel = null; household = null; session = null; spaces = { private: null, shared: [] };
   setStatus("off");
 }
 
@@ -1392,9 +1445,10 @@ async function initAuth() {
     history.replaceState(null, "", location.pathname);
     setTimeout(() => toast("Länken har gått ut eller redan använts. Försök igen"), 300);
   }
-  const join = new URLSearchParams(location.search).get("join");
+  const params = new URLSearchParams(location.search);
+  const join = params.get("join");
   if (join) {
-    try { sessionStorage.setItem("veckohandling.join", join.trim()); } catch (e) { /* ignorera */ }
+    try { sessionStorage.setItem("veckohandling.join", join.trim() + "|" + (params.get("t") === "list" ? "list" : "home")); } catch (e) { /* ignorera */ }
     history.replaceState(null, "", location.pathname);
   }
   if (!hadSession) { if (join) accountSheet(); return; }
@@ -1414,18 +1468,28 @@ async function maybeJoin() {
   try { code = sessionStorage.getItem("veckohandling.join") || ""; } catch (e) { /* ignorera */ }
   if (!code || !session) return;
   try { sessionStorage.removeItem("veckohandling.join"); } catch (e) { /* ignorera */ }
-  openSheet(`<h3>Gå med i hushållet?</h3>
-    <p class="hint" style="font-size:16px;margin-top:-6px">Ni delar då inköpslistor, recept och veckomeny, och ser varandras ändringar direkt. Det du har nu läggs till i hushållet.</p>
+  const kind = code.split("|")[1] || "home";
+  code = code.split("|")[0];
+  openSheet((kind === "list" ? `<h3>Öppna den delade listan?</h3>
+    <p class="hint" style="font-size:16px;margin-top:-6px">Någon har delat en inköpslista med dig. Ni ser och bockar av i samma lista. Dina andra listor påverkas inte.</p>` : `<h3>Gå med i hushållet?</h3>
+    <p class="hint" style="font-size:16px;margin-top:-6px">Ni delar då hushållets inköpslistor, recept och veckomeny, och ser varandras ändringar direkt. Det du har nu läggs till i hushållet. Dina egna och delade listor påverkas inte.</p>`) + `
     <div class="actions"><button class="btn ghost" id="j-no">Inte nu</button><button class="btn" id="j-yes">Gå med</button></div>`, body => {
     body.querySelector("#j-no").onclick = closeSheet;
     body.querySelector("#j-yes").onclick = async () => {
       body.querySelector("#j-yes").disabled = true;
-      const { error } = await sb.rpc("join_household", { invite_code: code });
+      const { data: sid, error } = await sb.rpc("join_household", { invite_code: code });
       if (error) { toast("Inbjudan gäller inte längre. Be om en ny"); closeSheet(); return; }
-      synced = { hid: null, docs: {}, since: null }; saveSynced();
       closeSheet();
-      await startSync();
-      toast("Du är med i hushållet");
+      if (kind === "list") {
+        await startSync();
+        const l = state.lists.find(x => x.space === sid);
+        if (l) { state.activeList = l.id; view = "list"; commit(); }
+        toast("Den delade listan finns nu bland dina listor");
+      } else {
+        synced = { hid: null, docs: {}, since: null, spaces: [] }; saveSynced();
+        await startSync();
+        toast("Du är med i hushållet");
+      }
     };
   });
 }
@@ -1451,7 +1515,7 @@ async function signOut() {
   try { if (sb) await sb.auth.signOut(); } catch (e) { /* ignorera */ }
   stopSync();
   try { localStorage.removeItem(SUPA_SESSION_KEY); localStorage.removeItem(SYNC_KEY); } catch (e) { /* ignorera */ }
-  synced = { hid: null, docs: {}, since: null };
+  synced = { hid: null, docs: {}, since: null, spaces: [] };
   // Utloggad: hushållets listor ligger kvar i kontot, inte på den här enheten
   state = defaultState();
   save(); render();
@@ -1538,12 +1602,94 @@ async function deleteAccount() {
   toast("Kontot är raderat");
 }
 
+// Vem som ser en lista (visas under listans namn när man är inloggad)
+function whoSees(l) {
+  if (!session || !household) return "";
+  const sid = listSpace(l);
+  if (spaces.private && sid === spaces.private.id) return "🔒 Bara jag";
+  const sh = sharedSpace(sid);
+  if (sh) {
+    const others = sh.members.filter(m => m.user_id !== session.user.id).map(m => m.display_name);
+    return "🔗 " + (others.length ? "Delad med " + others.join(", ") : "Delad – väntar på att någon går med");
+  }
+  return household.members.length > 1 ? "🏠 Hushållet" : "";
+}
+const spaceKindOf = l => !session || !household ? "local" : spaces.private && listSpace(l) === spaces.private.id ? "private" : sharedSpace(listSpace(l)) ? "shared" : "home";
+
+// Flyttar en lista: hushållet, bara jag, eller en egen delad lista
+async function moveList(l, target) {
+  if (!session || !household) { accountSheet(); return; }
+  try {
+    let sid;
+    if (target === "home") sid = undefined;
+    else if (target === "private") {
+      if (!spaces.private) { const { data, error } = await sb.rpc("ensure_private_space"); if (error) throw error; await loadHousehold(); }
+      sid = spaces.private.id;
+    } else if (target === "share") {
+      if (spaceKindOf(l) === "shared") return inviteToList(l);
+      const { data, error } = await sb.rpc("create_shared_space", { space_name: l.name });
+      if (error) throw error;
+      await loadHousehold();
+      sid = data;
+    }
+    synced.spaces = spaceIds(); saveSynced(); subscribe();
+    l.space = sid; commit();
+    if (target === "share") await inviteToList(l);
+    else toast(target === "private" ? "Listan syns nu bara för dig" : "Listan delas nu med hushållet");
+  } catch (e) { toast("Det gick inte. Försök igen"); }
+}
+
+async function inviteToList(l) {
+  const { data: code, error } = await sb.rpc("create_space_invite", { space: listSpace(l) });
+  if (error) { toast("Kunde inte skapa en inbjudan. Försök igen"); return; }
+  const link = APP_URL + "?join=" + code + "&t=list";
+  const text = `Jag delar inköpslistan "${l.name}" med dig i Veckohandling: ${link}`;
+  if (navigator.share) { try { await navigator.share({ title: l.name, text }); return; } catch (e) { if (e.name === "AbortError") return; } }
+  try { await navigator.clipboard.writeText(link); toast("Länken är kopierad – skicka den till den du vill dela med"); }
+  catch (e) { prompt("Skicka den här länken:", link); }
+}
+
+async function leaveSharedList(l) {
+  const sid = listSpace(l);
+  if (!confirm(`Sluta vara med i "${l.name}"? Listan försvinner från dina enheter. De andra behåller den.`)) return;
+  const { error } = await sb.rpc("leave_space", { space: sid });
+  if (error) { toast("Det gick inte. Försök igen"); return; }
+  await loadHousehold();
+  dropSpaces([sid]);
+  synced.spaces = spaceIds(); saveSynced(); subscribe();
+  render(); toast("Du är inte längre med i listan");
+}
+
+function listShareSheet(l) {
+  const kind = spaceKindOf(l);
+  const sh = kind === "shared" ? sharedSpace(listSpace(l)) : null;
+  const opt = (k, icon, title, desc) => `<button class="pick${kind === k ? " sel" : ""}" data-move="${k}">${icon} <b>${title}</b>${kind === k ? " ✓" : ""}<br><small style="color:var(--muted)">${desc}</small></button>`;
+  openSheet(`
+    <h3>Vem ser "${esc(l.name)}"?</h3>
+    <div class="card">
+      ${opt("home", "🏠", "Hushållet", household.members.length > 1 ? "Alla i hushållet: " + household.members.map(m => esc(m.display_name)).join(", ") : "Du och de du bjuder in till hushållet")}
+      ${opt("private", "🔒", "Bara jag", "Syns bara för dig, på alla dina enheter")}
+      ${opt("share", "🔗", kind === "shared" ? "Bjud in fler" : "Dela med någon", sh ? "Delad med " + (sh.members.filter(m => m.user_id !== session.user.id).map(m => esc(m.display_name)).join(", ") || "– ingen har gått med än") : "Skicka en länk, t.ex. till en vän inför en fest")}
+    </div>
+    ${kind === "shared" ? `<div class="card" style="margin-top:14px"><button class="pick" id="s-leave" style="color:var(--danger)">🚪 Sluta vara med i listan</button></div>` : ""}
+    <div class="actions"><button class="btn ghost" id="s-close">Stäng</button></div>`, body => {
+    body.querySelector("#s-close").onclick = closeSheet;
+    body.querySelector("#s-leave")?.addEventListener("click", () => { closeSheet(); leaveSharedList(l); });
+    body.querySelectorAll("[data-move]").forEach(b => b.onclick = () => {
+      const t = b.dataset.move;
+      if (t === kind && t !== "shared" && t !== "share") { closeSheet(); return; }
+      if (t === "home" && kind === "shared" && !confirm("Flytta listan till hushållet? De du delat den med ser den inte längre.")) return;
+      closeSheet(); moveList(l, t);
+    });
+  });
+}
+
 // Hushållets knappar (används från profilen)
 async function inviteToHousehold() {
   const { data: code, error } = await sb.rpc("create_household_invite");
   if (error) { toast("Kunde inte skapa en inbjudan. Försök igen"); return; }
-  const link = APP_URL + "?join=" + code;
-  const text = "Gå med i vårt hushåll i Veckohandling, så delar vi inköpslistan: " + link;
+  const link = APP_URL + "?join=" + code + "&t=home";
+  const text = "Gå med i vårt hushåll i Veckohandling, så delar vi inköpslistor, recept och veckomeny: " + link;
   if (navigator.share) { try { await navigator.share({ title: "Veckohandling", text }); return; } catch (e) { if (e.name === "AbortError") return; } }
   try { await navigator.clipboard.writeText(link); toast("Länken är kopierad – skicka den till den du vill bjuda in"); }
   catch (e) { prompt("Skicka den här länken:", link); }
@@ -1553,7 +1699,7 @@ async function leaveHousehold() {
   if (!confirm("Lämna hushållet? Du får en egen, tom lista. De andra behåller allt ni delat.")) return;
   const { error } = await sb.rpc("leave_household");
   if (error) { toast("Det gick inte. Försök igen"); return; }
-  synced = { hid: null, docs: {}, since: null }; saveSynced();
+  synced = { hid: null, docs: {}, since: null, spaces: [] }; saveSynced();
   state = defaultState(); save();
   await startSync(); toast("Du har lämnat hushållet");
 }
@@ -1916,7 +2062,8 @@ function listMenuSheet() {
   openSheet(`
     <h3>${esc(cur().name)}</h3>
     <div class="card">
-      <button class="pick" id="m-share">📤 Dela listan</button>
+      <button class="pick" id="m-who">${session && household ? "👥 Vem ser listan? " + (whoSees(cur()) ? "<small style='color:var(--muted)'>" + esc(whoSees(cur())) + "</small>" : "<small style='color:var(--muted)'>🏠 Hushållet</small>") : "👥 Dela listan med någon <small style='color:var(--muted)'>(logga in)</small>"}</button>
+      <button class="pick" id="m-share">📤 Skicka listan som text</button>
       <button class="pick" id="m-hide">${state.hideDone ? "👁️ Visa avbockade" : "🙈 Dölj avbockade"}</button>
       <button class="pick" id="m-clear-done"${done ? "" : " disabled style='opacity:.4'"}>✅ Rensa avbockade (${done})</button>
       <button class="pick" id="m-uncheck"${done ? "" : " disabled style='opacity:.4'"}>↩️ Avmarkera alla</button>
@@ -1925,6 +2072,7 @@ function listMenuSheet() {
     <div class="actions"><button class="btn ghost" id="m-close">Stäng</button></div>`, body => {
     body.querySelector("#m-close").onclick = closeSheet;
     body.querySelector("#m-share").onclick = () => { closeSheet(); shareList(); };
+    body.querySelector("#m-who").onclick = () => { if (session && household) listShareSheet(cur()); else accountSheet(); };
     body.querySelector("#m-hide").onclick = () => { state.hideDone = !state.hideDone; closeSheet(); commit(); };
     body.querySelector("#m-clear-done").onclick = () => {
       closeSheet(); removeItems(cur().items.filter(i => i.done).map(i => i.id), `${done} varor rensade`);
@@ -1955,17 +2103,31 @@ function bindStepper(root, initial, onChange) {
   });
 }
 
+// Listorna grupperade efter vem som ser dem (bara när man är inloggad)
+function listGroupsHtml(active) {
+  const row = l => `<button class="pick${l.id === active.id ? " sel" : ""}" data-list="${l.id}">${l.id === active.id ? "✓ " : ""}${esc(l.name)}<span class="count">${l.items.filter(i => !i.done).length}</span></button>`;
+  if (!session || !household) return `<div class="card">${state.lists.map(row).join("")}</div>`;
+  const groups = [["home", "🏠 Hushållet"], ["private", "🔒 Bara jag"], ["shared", "🔗 Delade med andra"]];
+  return groups.map(([k, title]) => {
+    const ls = state.lists.filter(l => spaceKindOf(l) === k);
+    return ls.length ? `<p class="hint" style="margin-top:12px">${title}</p><div class="card">${ls.map(row).join("")}</div>` : "";
+  }).join("");
+}
+
 function listsSheet() {
   const list = cur();
   openSheet(`
     <h3>Mina listor</h3>
-    <div class="card">
-      ${state.lists.map(l => `<button class="pick${l.id === list.id ? " sel" : ""}" data-list="${l.id}">${l.id === list.id ? "✓ " : ""}${esc(l.name)}<span class="count">${l.items.filter(i => !i.done).length}</span></button>`).join("")}
-    </div>
+    ${listGroupsHtml(list)}
     <form id="l-form" class="addbar card" style="position:static;margin-top:16px" autocomplete="off">
       <input id="l-new" placeholder="Ny lista, t.ex. Helgfest eller Apoteket" enterkeyhint="done">
       <button class="btn" type="submit">Skapa</button>
     </form>
+    ${session && household ? `<div class="chips" id="l-where" style="margin-top:8px">
+      <button type="button" class="chip on" data-where="home">🏠 Hushållet</button>
+      <button type="button" class="chip" data-where="private">🔒 Bara jag</button>
+      <button type="button" class="chip" data-where="share">🔗 Dela med någon</button>
+    </div>` : ""}
     <p class="hint" style="margin-top:16px">Vald lista: ${esc(list.name)}</p>
     <div class="card">
       <button class="pick" id="l-rename">✏️ Byt namn</button>
@@ -1974,7 +2136,12 @@ function listsSheet() {
     <div class="actions"><button class="btn ghost" id="l-close">Stäng</button></div>`, body => {
     body.querySelector("#l-close").onclick = closeSheet;
     body.querySelectorAll("[data-list]").forEach(b => b.onclick = () => { state.activeList = b.dataset.list; closeSheet(); commit(); });
-    body.querySelector("#l-form").onsubmit = e => {
+    let where = "home";
+    body.querySelectorAll("[data-where]").forEach(b => b.onclick = () => {
+      where = b.dataset.where;
+      body.querySelectorAll("[data-where]").forEach(x => x.classList.toggle("on", x === b));
+    });
+    body.querySelector("#l-form").onsubmit = async e => {
       e.preventDefault();
       const name = cap(body.querySelector("#l-new").value.trim());
       if (!name) { body.querySelector("#l-new").focus(); return; }
@@ -1982,7 +2149,8 @@ function listsSheet() {
       state.lists.push(l);
       state.activeList = l.id;
       closeSheet(); commit();
-      toast(`Listan ${name} skapad`);
+      if (where !== "home") await moveList(l, where);
+      else toast(`Listan ${name} skapad`);
     };
     body.querySelector("#l-rename").onclick = () => {
       const name = prompt("Nytt namn på listan", list.name);
