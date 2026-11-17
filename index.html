@@ -1312,7 +1312,10 @@ function unflatten(m, prev) {
     const old = prev.lists.find(l => l.id === id);
     const itemIds = Object.keys(rows.item).filter(i => rows.item[i].listId === id);
     const items = order(itemIds, old ? old.items.map(i => i.id) : []).map(i => {
-      const { listId, ...rest } = rows.item[i]; return { id: i, ...rest };
+      const { listId, ...rest } = rows.item[i];
+      // Från träningsappen kan en vara komma utan avdelning: sortera den efter namnet.
+      if (!CATEGORIES.some(c => c.id === rest.cat)) rest.cat = guessCategory(rest.name || "");
+      return { id: i, ...rest };
     });
     const l = { id, name: rows.list[id].name, items, recipes: rows.list[id].recipes || [] };
     if (household && listSid[id] !== household.id) l.space = listSid[id];
