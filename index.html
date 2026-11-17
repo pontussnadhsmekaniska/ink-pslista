@@ -344,6 +344,18 @@
     *, *::before, *::after { transition-duration: 0s !important; animation: none !important; scroll-behavior: auto !important; }
   }
   .recipe .cat-ico { float: left; margin: 2px 12px 0 0; width: 2.1em; height: 2.1em; font-size: 1em; }
+  .icon-mini { min-width: 44px; min-height: 44px; border-radius: 10px; background: var(--surface-2); font-size: 18px; }
+  .icon-mini:disabled { opacity: .3; }
+  .train-tag { display: block; color: var(--muted); font-size: .76rem; margin-top: 2px; }
+  .train-tag.hard { color: var(--accent); font-weight: 600; }
+  .cook-btn { width: 100%; margin-bottom: 14px; padding: 13px; }
+  #shopbar { display: none; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 12px 10px 16px; margin-bottom: 12px; font-weight: 600; }
+  body.shopping #shopbar { display: flex; }
+  body.shopping #add-form, body.shopping #quick-chips, body.shopping #welcome, body.shopping #list-recipes, body.shopping #list-tabs { display: none !important; }
+  body.shopping .item { min-height: 64px; font-size: 1.15rem; }
+  body.shopping .check { width: 32px; height: 32px; }
+  body.shopping .group.cart { opacity: .75; }
+  body.shopping #shop-mode { background: var(--accent); color: var(--accent-ink); }
   .avatar { width: 48px; height: 48px; border-radius: 50%; flex: none; display: grid; place-items: center; background: var(--accent); color: #fff; font-weight: 700; font-size: 1.176rem; }
   #sync-dot { width: 9px; height: 9px; border-radius: 50%; flex: none; align-self: center; margin: 0 10px 0 auto; background: var(--muted); opacity: .5; }
   #sync-dot[data-state="off"] { display: none; }
@@ -370,6 +382,7 @@
         <button class="linkbtn helpinline" data-help="list">? Hjälp om listan</button>
       </div>
       <span id="sync-dot" data-state="off" role="status"></span>
+      <button class="icon-btn" id="shop-mode" aria-label="Butiksläge"><span aria-hidden="true" style="font-size:20px">🛒</span></button>
       <button class="icon-btn" id="list-menu" aria-label="Fler val">
         <svg viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg>
       </button>
@@ -384,6 +397,7 @@
     </form>
     <datalist id="suggestions"></datalist>
     <div class="chips" id="quick-chips"></div>
+    <div id="shopbar" class="card"><span>🛒 Butiksläge <small style="display:block;font-weight:400;color:var(--muted)">Skärmen släcks inte</small></span><button class="btn" id="shop-done">Klar</button></div>
     <div id="welcome"></div>
     <div id="list-recipes"></div>
     <div id="list"></div>
@@ -489,10 +503,12 @@ const CATEGORIES = [
   { id: "dryck",   name: "Dryck",          emoji: "🧃" },
   { id: "snacks",  name: "Godis & snacks", emoji: "🍫" },
   { id: "hushall", name: "Hushåll & hygien",emoji: "🧻" },
+  { id: "apotek",  name: "Apotek & tillskott", emoji: "💊" },
   { id: "ovrigt",  name: "Övrigt",         emoji: "🛒" },
 ];
 
 const KEYWORDS = {
+  apotek: "tillskott vitamin vitaminer kreatin proteinpulver proteinbar magnesium zink omega järn elektrolyt elektrolyter sportdryck gel energigel ibuprofen alvedon ipren paracetamol värktablett plåster nässpray halstablett multivitamin",
   frukt: "äpple banan apelsin citron lime päron druv kiwi mango avokado melon jordgubb hallon blåbär tomat gurka sallad isberg ruccola spenat paprika lök vitlök purjo morot potatis sötpotatis broccoli blomkål zucchini squash aubergine champinjon svamp kål vitkål rödkål grönkål selleri ingefära chili koriander persilja basilika dill gräslök majskolv sparris bönor ärtor rädis rödbet palsternacka fänkål granatäpple frukt grönsak",
   brod: "bröd limpa knäckebröd baguette fralla frallor tortilla pitabröd hamburgerbröd korvbröd tunnbröd rostbröd surdeg bagel croissant kanelbulle",
   mejeri: "mjölk filmjölk yoghurt grädde matlagningsgrädde gräddfil crème creme fraiche smör margarin bregott ost riven parmesan mozzarella fetaost halloumi kvarg keso ägg havredryck mellanmjölk lättmjölk",
@@ -589,7 +605,10 @@ function defaultState() {
   return {
     lists: [first],      // {id, name, items: [{id, name, qty, cat, done, from}], recipes: [{recipeId, name, servings}]}
     activeList: first.id,
-    recipes: DEFAULT_RECIPES.map(r => ({ id: uid(), ...r })),
+    recipes: [],          // nya börjar tomt; exempelrecept erbjuds i Recept
+    pantry: [],           // "Har hemma": hoppas över när recept läggs i listan
+    staples: [],          // "Varje vecka": läggs till med ett tryck
+    catOrder: [],         // butikens ordning (avdelnings-id)
     plan: {},            // "2026-10-12": {recipeId?, text?}
     history: {},         // varunamn (gemener) -> {name, cat, count}
     catOverrides: {},    // varunamn (gemener) -> cat
@@ -853,9 +872,9 @@ function renderList() {
     return;
   }
 
-  const visible = cur().items.filter(i => !(state.hideDone && i.done));
+  const visible = cur().items.filter(i => !(state.hideDone && i.done) && !(shopping && i.done));
   let html = "";
-  for (const c of CATEGORIES) {
+  for (const c of orderedCats()) {
     const items = visible.filter(i => i.cat === c.id)
       .sort((a, b) => (a.done - b.done) || a.name.localeCompare(b.name, "sv"));
     if (!items.length) continue;
@@ -870,6 +889,11 @@ function renderList() {
       </div>`;
     }
     html += `</div>`;
+  }
+  if (shopping && done) {
+    const inCart = cur().items.filter(i => i.done).sort((a, b) => a.name.localeCompare(b.name, "sv"));
+    html += `<div class="group cart"><h2><span><span class="cat-ico">✅</span>I korgen</span><span>${inCart.length}</span></h2>` +
+      inCart.map(i => `<div class="item done" data-toggle="${i.id}"><span class="check">${ICON_CHECK}</span><span class="name">${esc(i.name)}</span>${i.qty ? `<span class="qty">${esc(i.qty)}</span>` : ""}</div>`).join("") + `</div>`;
   }
   html = `<div class="card groups">${html}</div>`;
   if (state.hideDone && done) html += `<p class="hint" style="text-align:center">${done} avbockade varor dolda</p>`;
@@ -897,10 +921,11 @@ function renderWeek() {
     html += `<button class="day${iso === today ? " today" : ""}" data-day="${iso}">
       <span class="date"><span>${DAYS_SHORT[d]}</span><b>${date.getDate()}</b></span>
       <span class="meal">${label ? esc(label) : `<span class="placeholder">Välj middag…</span>`}
-        ${r ? `<small>${planServings(p, r)} portioner${r.time ? " · " + fmtTime(r.time) : ""}</small>` : ""}</span>
+        ${r ? `<small>${planServings(p, r)} portioner${r.time ? " · " + fmtTime(r.time) : ""}</small>` : ""}${trainingTag(iso)}</span>
     </button>`;
   }
   $("#days").innerHTML = html;
+  loadTrainingDays(isoDate(mon));
   $("#week-to-list").disabled = planned === 0;
   $("#week-to-list").style.opacity = planned ? 1 : .5;
 }
@@ -923,8 +948,10 @@ function renderRecipes() {
     : "";
 
   const box = $("#recipes");
+  const cook = !recipeQuery ? `<button class="btn ghost cook-btn" data-cook>✨ Vad kan jag laga av det jag har?${isLinked() ? "" : " <small style='color:var(--muted)'>(logga in)</small>"}</button>` : "";
   if (!state.recipes.length && !recipeQuery) {
-    box.innerHTML = `<div class="card empty"><div class="big">📖</div>Inga recept än. Tryck på + för att lägga till.</div>`;
+    box.innerHTML = cook + `<div class="card empty"><div class="big">📖</div>Inga recept än. Tryck på + för att lägga till ett, eller börja med några vanliga.
+      <button class="btn" data-defaults style="margin-top:14px">Lägg till 7 vanliga recept</button></div>`;
     return;
   }
   if (isUrl(recipeQuery)) {
@@ -944,7 +971,7 @@ function renderRecipes() {
   const groupsUsed = RECIPE_CATS.filter(c => hits.some(r => recipeCat(r.category) === c));
   if (groupsUsed.length > hits.length / 2) {
     const sorted = [...hits].sort((a, b) => a.name.localeCompare(b.name, "sv"));
-    box.innerHTML = `<div class="card groups">${sorted.map(r => row(r).replace('<b>', `<span class="cat-ico" title="${esc(recipeCat(r.category).name)}">${recipeCat(r.category).emoji}</span><b>`)).join("")}</div>` + web;
+    box.innerHTML = cook + `<div class="card groups">${sorted.map(r => row(r).replace('<b>', `<span class="cat-ico" title="${esc(recipeCat(r.category).name)}">${recipeCat(r.category).emoji}</span><b>`)).join("")}</div>` + web;
     return;
   }
   let html = "";
@@ -955,7 +982,7 @@ function renderRecipes() {
     html += list.map(row).join("");
     html += `</div>`;
   }
-  box.innerHTML = `<div class="card groups">${html}</div>` + web;
+  box.innerHTML = cook + `<div class="card groups">${html}</div>` + web;
 }
 
 /* ---------- Recept från nätet ---------- */
@@ -1264,6 +1291,9 @@ function flatten(st) {
   m.set(H + "meta:history", stable(st.history || {}));
   m.set(H + "meta:catOverrides", stable(st.catOverrides || {}));
   m.set(H + "meta:servings", stable({ n: st.servings || 4 }));
+  m.set(H + "meta:pantry", stable({ v: st.pantry || [] }));
+  m.set(H + "meta:staples", stable({ v: st.staples || [] }));
+  m.set(H + "meta:catOrder", stable({ v: st.catOrder || [] }));
   return m;
 }
 
@@ -1297,6 +1327,9 @@ function unflatten(m, prev) {
     history: rows.meta.history || prev.history || {},
     catOverrides: rows.meta.catOverrides || prev.catOverrides || {},
     servings: rows.meta.servings?.n || prev.servings || 4,
+    pantry: rows.meta.pantry?.v || prev.pantry || [],
+    staples: rows.meta.staples?.v || prev.staples || [],
+    catOrder: rows.meta.catOrder?.v || prev.catOrder || [],
   };
   if (!st.lists.some(l => l.id === st.activeList)) st.activeList = st.lists[0].id;
   return st;
@@ -1423,6 +1456,7 @@ async function mergeIntoHousehold() {
       const r = JSON.parse(R.get(k));
       if (id === "history") { for (const [n, h] of Object.entries(data)) r[n] = r[n] ? { ...r[n], count: Math.max(r[n].count || 0, h.count || 0) } : h; data = r; }
       else if (id === "catOverrides") data = { ...data, ...r };
+      else if (id === "pantry" || id === "staples") data = { v: [...new Set([...(r.v || []), ...(data.v || [])])] };
       else data = r;
     }
     merged.set(H + kind + ":" + id, stable(data));
@@ -1820,16 +1854,24 @@ function renderProfile() {
   html += `<p class="hint" style="margin-top:16px">Recept</p>
     <div class="card">
       ${signedIn ? `<button class="pick" data-p="photo">📷 Fota recept eller välj bild</button>` : ""}
-      <button class="pick" data-p="shortcut">📲 Spara recept direkt från Safari (genväg)</button>
+      <button class="pick" data-cook-p>✨ Vad kan jag laga?</button>
     </div>
-    <p class="hint" style="margin-top:16px">Hjälp</p>
-    <div class="card"><button class="pick" data-help="">❓ Hjälp och vanliga frågor</button></div>
-    <p class="hint" style="margin-top:16px">Säkerhetskopia</p>
+    <p class="hint" style="margin-top:16px">Mina varor</p>
+    <div class="card">
+      <button class="pick" data-p="pantry">🏠 Har hemma <small style="color:var(--muted)">${(state.pantry || []).length || ""}</small></button>
+      <button class="pick" data-p="staples">🔁 Varje vecka <small style="color:var(--muted)">${(state.staples || []).length || ""}</small></button>
+      <button class="pick" data-p="order">🏪 Din butiks ordning</button>
+    </div>`;
+  if (!signedIn) html += `<p class="hint" style="margin-top:16px">Säkerhetskopia</p>
     <div class="card">
       <button class="pick" data-p="export">💾 Exportera all data</button>
       <button class="pick" data-p="import">📥 Importera data</button>
-    </div>
-    <input type="file" id="p-file" accept="application/json,.json" hidden>`;
+    </div>`;
+  html += `<input type="file" id="p-file" accept="application/json,.json" hidden>`;
+  html += `
+    <p class="hint" style="margin-top:16px">Hjälp</p>
+    <div class="card"><button class="pick" data-help="">❓ Hjälp och vanliga frågor</button></div>
+`;
   if (signedIn) html += `<div class="card" style="margin-top:16px">
       <button class="pick" data-p="signout" style="color:var(--danger)">Logga ut</button>
       <button class="pick" data-p="delete" style="color:var(--danger)">🗑️ Radera kontot</button>
@@ -2072,6 +2114,194 @@ function addRecipeSheet() {
   });
 }
 
+/* ---------- Butikens ordning ---------- */
+
+// Avdelningarna i den ordning du går i din butik (sparas och synkas)
+function orderedCats() {
+  const order = Array.isArray(state.catOrder) ? state.catOrder : [];
+  const known = order.map(id => CATEGORIES.find(c => c.id === id)).filter(Boolean);
+  return [...known, ...CATEGORIES.filter(c => !order.includes(c.id))];
+}
+
+function storeOrderSheet() {
+  const cats = orderedCats();
+  openSheet(`
+    <h3>Din butiks ordning</h3>
+    <p class="hint" style="font-size:16px;margin-top:-6px">Flytta avdelningarna i den ordning du går i butiken. Listan sorteras efter det.</p>
+    <div class="card">${cats.map((c, i) => `<div class="pick" style="display:flex;align-items:center;gap:8px;cursor:default">
+      <span style="flex:1"><span class="cat-ico">${c.emoji}</span>${esc(c.name)}</span>
+      <button class="icon-mini" data-move-cat="${c.id}" data-dir="-1" aria-label="Flytta ${esc(c.name)} upp"${i === 0 ? " disabled" : ""}>↑</button>
+      <button class="icon-mini" data-move-cat="${c.id}" data-dir="1" aria-label="Flytta ${esc(c.name)} ner"${i === cats.length - 1 ? " disabled" : ""}>↓</button>
+    </div>`).join("")}</div>
+    <div class="actions"><button class="btn ghost" id="so-reset">Återställ</button><button class="btn" id="so-done">Klar</button></div>`, body => {
+    body.querySelector("#so-done").onclick = closeSheet;
+    body.querySelector("#so-reset").onclick = () => { state.catOrder = []; commit(); storeOrderSheet(); };
+    body.querySelectorAll("[data-move-cat]").forEach(b => b.onclick = () => {
+      const ids = orderedCats().map(c => c.id);
+      const i = ids.indexOf(b.dataset.moveCat), j = i + +b.dataset.dir;
+      if (j < 0 || j >= ids.length) return;
+      [ids[i], ids[j]] = [ids[j], ids[i]];
+      state.catOrder = ids; commit();
+      const top = $("#sheet").scrollTop; storeOrderSheet(); $("#sheet").scrollTop = top;
+    });
+  });
+}
+
+/* ---------- Butiksläge ---------- */
+
+let shopping = false, shopLock = null;
+async function setShopping(on) {
+  shopping = on;
+  document.body.classList.toggle("shopping", on);
+  try {
+    if (on && "wakeLock" in navigator) shopLock = await navigator.wakeLock.request("screen");
+    else if (!on && shopLock) { await shopLock.release(); shopLock = null; }
+  } catch (e) { /* skärmen får släckas som vanligt */ }
+  view = "list"; render(); window.scrollTo(0, 0);
+}
+// Skärmlåset släpps när appen göms; ta det igen när man kommer tillbaka
+document.addEventListener("visibilitychange", () => {
+  if (shopping && document.visibilityState === "visible" && "wakeLock" in navigator)
+    navigator.wakeLock.request("screen").then(l => { shopLock = l; }).catch(() => {});
+});
+
+/* ---------- Har hemma och Varje vecka ---------- */
+
+const PANTRY_SUGGEST = ["Salt", "Peppar", "Olja", "Olivolja", "Smör", "Socker", "Vetemjöl", "Buljong", "Vitlök", "Soja"];
+const GENERIC_END = ["olja", "peppar", "salt", "socker"];
+const pantryKeys = () => (state.pantry || []).map(key);
+
+// Står varan på "Har hemma"? ("1 tsk salt", "rapsolja", "salt och peppar")
+function inPantry(name) {
+  const keys = pantryKeys();
+  if (!keys.length) return false;
+  const parts = key(name).split(/\s*(?:,| och | & )\s*/).filter(Boolean);
+  return parts.length > 0 && parts.every(p => keys.some(k => p === k || p.split(/\s+/).includes(k) || (GENERIC_END.includes(k) && p.endsWith(k))));
+}
+
+function editNamesSheet(kind) {
+  const isPantry = kind === "pantry";
+  const items = (isPantry ? state.pantry : state.staples) || [];
+  const suggestions = isPantry ? PANTRY_SUGGEST.filter(s => !pantryKeys().includes(key(s))) : Object.values(state.history).sort((a, b) => b.count - a.count).slice(0, 10).map(h => h.name).filter(n => !items.some(x => key(parseEntry(x).name) === key(n)));
+  openSheet(`
+    <h3>${isPantry ? "🏠 Har hemma" : "🔁 Varje vecka"}</h3>
+    <p class="hint" style="font-size:16px;margin-top:-6px">${isPantry
+      ? "Basvaror du alltid har. De hoppas över när ett recept eller veckans meny läggs i listan."
+      : "Det du köper varje vecka. Lägg till allt med ett tryck under ⋯ i listan."}</p>
+    <form class="addbar card" id="n-form" style="position:static" autocomplete="off">
+      <input id="n-input" placeholder="${isPantry ? "t.ex. salt, olja" : "t.ex. 2 l mjölk, bröd"}" enterkeyhint="done">
+      <button class="btn" type="submit">Lägg till</button>
+    </form>
+    ${items.length ? `<div class="card">${items.map((n, i) => `<div class="pick" style="display:flex;align-items:center;cursor:default"><span style="flex:1">${esc(n)}</span><button class="icon-mini" data-rm="${i}" aria-label="Ta bort ${esc(n)}">✕</button></div>`).join("")}</div>`
+      : `<p class="hint">Inget här än.</p>`}
+    ${suggestions.length ? `<p class="hint" style="margin-top:14px">Förslag</p><div class="chips" style="flex-wrap:wrap">${suggestions.map(s => `<button class="chip" data-add-name="${esc(s)}">+ ${esc(s)}</button>`).join("")}</div>` : ""}
+    <div class="actions"><button class="btn" id="n-done">Klar</button></div>`, body => {
+    const list = () => (isPantry ? (state.pantry = state.pantry || []) : (state.staples = state.staples || []));
+    const add = text => {
+      for (const part of text.split(/[,;\n]/).map(s => s.trim()).filter(Boolean)) {
+        const v = isPantry ? cap(parseEntry(part).name) : cap(part);
+        if (!list().some(x => key(x) === key(v))) list().push(v);
+      }
+      commit(); editNamesSheet(kind);
+    };
+    body.querySelector("#n-done").onclick = closeSheet;
+    body.querySelector("#n-form").onsubmit = e => { e.preventDefault(); const v = body.querySelector("#n-input").value; if (v.trim()) add(v); };
+    body.querySelectorAll("[data-add-name]").forEach(b => b.onclick = () => add(b.dataset.addName));
+    body.querySelectorAll("[data-rm]").forEach(b => b.onclick = () => { list().splice(+b.dataset.rm, 1); commit(); editNamesSheet(kind); });
+  });
+}
+
+function addStaples() {
+  const staples = state.staples || [];
+  if (!staples.length) { editNamesSheet("staples"); return; }
+  staples.forEach(s => addItem(s));
+  commit();
+  toast(`${staples.length} varor från Varje vecka tillagda`);
+}
+
+/* ---------- Vad kan jag laga? ---------- */
+
+function whatCanICookSheet() {
+  if (!isLinked()) { accountSheet(); return; }
+  let photos = [];
+  openSheet(`
+    <h3>✨ Vad kan jag laga?</h3>
+    <p class="hint" style="font-size:16px;margin-top:-6px">Skriv vad du har hemma, eller fota kylen och skafferiet. Du får förslag, helst bland dina egna recept.</p>
+    <textarea id="w-have" style="width:100%;min-height:110px" placeholder="t.ex. kycklingfilé, ris, paprika, grädde"></textarea>
+    <div class="card" style="margin-top:12px"><button class="pick" id="w-photo">📷 Fota kylen eller skafferiet <small id="w-count" style="color:var(--muted)"></small></button></div>
+    <div class="actions"><button class="btn ghost" id="w-close">Stäng</button><button class="btn" id="w-go">Föreslå</button></div>`, body => {
+    body.querySelector("#w-close").onclick = closeSheet;
+    body.querySelector("#w-photo").onclick = () => {
+      const input = document.createElement("input");
+      input.type = "file"; input.accept = "image/*"; input.multiple = true;
+      input.onchange = async () => {
+        photos = await Promise.all([...input.files].slice(0, 3).map(shrinkPhoto));
+        body.querySelector("#w-count").textContent = photos.length ? `(${photos.length} ${photos.length === 1 ? "bild" : "bilder"})` : "";
+      };
+      input.click();
+    };
+    body.querySelector("#w-go").onclick = async () => {
+      const have = body.querySelector("#w-have").value.trim();
+      if (!have && !photos.length) { toast("Skriv vad du har, eller fota kylen"); return; }
+      busySheet("Tänker ut middagar…", have || "Från dina foton");
+      try {
+        const { ideas } = await callShop("suggest", { have, ...(photos.length ? { images: photos } : {}), recipes: state.recipes.map(r => r.name) });
+        ideasSheet(ideas || []);
+      } catch (err) { aiFailSheet("Det gick inte att få förslag", err, whatCanICookSheet); }
+    };
+  });
+}
+
+function ideasSheet(ideas) {
+  const own = n => state.recipes.find(r => r.name === n);
+  openSheet(`
+    <h3>Förslag</h3>
+    ${ideas.map((x, i) => `<div class="card" style="padding:14px 16px;margin-bottom:12px">
+      <b>${esc(x.name)}</b>${own(x.ownRecipe) ? ` <small style="color:var(--accent)">· ditt recept</small>` : ""}
+      ${x.why ? `<div class="hint" style="margin:4px 0 0">${esc(x.why)}</div>` : ""}
+      ${x.uses.length ? `<div style="font-size:.88rem;margin-top:6px">✓ Har: ${esc(x.uses.join(", "))}</div>` : ""}
+      ${x.missing.length ? `<div style="font-size:.88rem;color:var(--muted)">🛒 Saknas: ${esc(x.missing.join(", "))}</div>` : ""}
+      <div class="chips" style="margin-top:10px;padding-bottom:0;flex-wrap:wrap">
+        ${own(x.ownRecipe) ? `<button class="chip" data-idea-open="${i}">📖 Öppna receptet</button>` : `<button class="chip" data-idea-search="${i}">🔍 Hitta ett recept</button>`}
+        ${x.missing.length ? `<button class="chip" data-idea-buy="${i}">🛒 Lägg det som saknas i listan</button>` : ""}
+      </div>
+    </div>`).join("") || `<p class="hint">Inga förslag den här gången.</p>`}
+    <div class="actions"><button class="btn ghost" id="i-again">Försök igen</button><button class="btn" id="i-close2">Klar</button></div>`, body => {
+    body.querySelector("#i-close2").onclick = closeSheet;
+    body.querySelector("#i-again").onclick = whatCanICookSheet;
+    body.querySelectorAll("[data-idea-open]").forEach(b => b.onclick = () => recipeViewSheet(own(ideas[+b.dataset.ideaOpen].ownRecipe).id));
+    body.querySelectorAll("[data-idea-search]").forEach(b => b.onclick = () => {
+      const q = ideas[+b.dataset.ideaSearch].name;
+      closeSheet(); recipeQuery = q; $("#recipe-search").value = q; recipeCatFilter = ""; view = "recipes"; render(); searchWeb(q);
+    });
+    body.querySelectorAll("[data-idea-buy]").forEach(b => b.onclick = () => {
+      const x = ideas[+b.dataset.ideaBuy];
+      x.missing.forEach(m => addItem(m, x.name));
+      commit(); toast(`${x.missing.length} varor tillagda i ${cur().name}`);
+    });
+  });
+}
+
+/* ---------- Träningsdagar i veckomenyn (från träningsappen, samma konto) ---------- */
+
+let trainingDays = { from: "", days: {} };
+async function loadTrainingDays(fromIso) {
+  if (!session || !sb || trainingDays.from === fromIso) return;
+  trainingDays = { from: fromIso, days: {} };
+  const to = new Date(fromIso + "T12:00:00"); to.setDate(to.getDate() + 6);
+  const { data, error } = await sb.rpc("my_training_days", { from_date: fromIso, to_date: isoDate(to) });
+  if (error || !data) return;
+  for (const d of data) trainingDays.days[d.day] = d.level;
+  if (view === "week" || isWide()) renderWeek();
+}
+function trainingTag(iso) {
+  const l = trainingDays.days[iso];
+  return l === "hard" ? `<small class="train-tag hard">💪 Tung träning – ät ordentligt</small>` : l === "easy" ? `<small class="train-tag">🏃 Träning</small>` : "";
+}
+
+// Safari-genvägen nås från hjälpen
+document.addEventListener("click", e => { if (e.target.closest("[data-shortcut]")) shortcutSheet(); });
+
 /* ---------- Hjälp ---------- */
 
 // Korta guider. Samma hjälp nås från "? Hjälp"-länkarna i varje vy och från Profil.
@@ -2084,6 +2314,8 @@ const HELP_SECTIONS = [
       <li>Varorna sorteras efter butikens avdelningar. Rättar du en avdelning kommer appen ihåg det nästa gång.</li>
     </ol>
     <div class="helptip">Knapparna med <b>+</b> under rutan är det du köper ofta. Ett tryck lägger till varan igen.</div>
+    <p><b>🏠 Har hemma:</b> basvaror som salt och olja hoppas över när recept läggs i listan. <b>🔁 Varje vecka:</b> det du alltid köper, läggs till med ⋯ → Lägg till Varje vecka-varorna. Båda finns under Profil, eller under ⋯ på en vara.</p>
+    <p><b>🛒 Butiksläge</b> (knappen uppe till höger): större rader, skärmen släcks inte och det du bockar av åker ner i korgen. Sortera avdelningarna i din butiks ordning under ⋯ → Din butiks ordning.</p>
     <p>Flera listor: tryck på listans namn högst upp. Där skapar du nya listor (t.ex. Apoteket eller Helgfest) och byter mellan dem. <b>⋯</b> uppe till höger har det som gäller listan: dela, dölj eller rensa avbockade, töm listan.</p>` },
   { id: "week", title: "📅 Veckomenyn", html: `
     <ol class="helpsteps">
@@ -2092,6 +2324,7 @@ const HELP_SECTIONS = [
       <li>Tryck <b>Lägg veckans ingredienser i listan</b>. Mängderna räknas om efter portionerna och läggs ihop med det som redan står på listan.</li>
     </ol>
     <div class="helptip">Trycker du på knappen igen läggs bara nya dagar till – inget dubbleras.</div>
+    <p>Är du inloggad med samma konto som träningsappen visas tunga träningsdagar i veckan (💪), så att du kan planera en rejäl middag de dagarna.</p>
     <p>Från ett recept kan du också trycka <b>📅 Välj dag</b>. På en dator syns recepten bredvid veckan, och du kan dra ett recept till en dag.</p>` },
   { id: "recipes", title: "📖 Recept", html: `
     <ol class="helpsteps">
@@ -2101,6 +2334,7 @@ const HELP_SECTIONS = [
     </ol>
     <p><b>📷 Fota recept</b> läser en kokbokssida, en lapp eller en skärmbild (upp till 3 bilder). <b>📝 Klistra in recepttext</b> fungerar med text från t.ex. ett sms eller Instagram. Båda kräver att du är inloggad.</p>
     <p>I ett recept: välj portioner, <b>Lägg i listan</b>, <b>📅 Välj dag</b>, och starta timers i stegen som har en tid.</p>
+    <p><b>✨ Vad kan jag laga?</b> överst i Recept: skriv eller fota vad du har hemma, så får du förslag – helst bland dina egna recept – och kan lägga det som saknas i listan.</p>
     <div class="helptip">Fungerar inte en länk (t.ex. från Coop)? Ta en skärmbild av receptet och använd <b>📷 Fota recept</b>.</div>` },
   { id: "account", title: "👤 Konto och delning", html: `
     <p>Utan konto sparas allt bara på den här enheten. Med ett konto (Profil → Logga in) får du samma listor på telefon och dator, och ändringar syns direkt. Har du träningsappen fungerar samma inloggning.</p>
@@ -2115,7 +2349,7 @@ const HELP_SECTIONS = [
     <details class="helpq"><summary>Hur får jag appen på hemskärmen?</summary><div>Öppna sidan i Safari, tryck på dela-knappen och välj <b>Lägg till på hemskärmen</b>. Då öppnas den som en vanlig app.</div></details>
     <details class="helpq"><summary>Fungerar appen utan nät?</summary><div>Ja. Listan, menyn och recepten fungerar som vanligt. Är du inloggad synkas ändringarna när nätet kommer tillbaka. Att hämta recept från nätet kräver nät.</div></details>
     <details class="helpq"><summary>Jag tog bort något av misstag.</summary><div>Tryck <b>Ångra</b> i rutan som dyker upp längst ner direkt efteråt.</div></details>
-    <details class="helpq"><summary>Varför fungerar inte länken till receptet?</summary><div>Vissa sajter (t.ex. Coop) laddar receptet först i webbläsaren, så det går inte att läsa från länken. Ta en skärmbild och fota in den, eller använd Safari-genvägen (Profil → Spara recept direkt från Safari).</div></details>
+    <details class="helpq"><summary>Varför fungerar inte länken till receptet?</summary><div>Vissa sajter (t.ex. Coop) laddar receptet först i webbläsaren, så det går inte att läsa från länken. Ta en skärmbild och fota in den, eller använd <button class="linkbtn" data-shortcut style="min-height:0;display:inline">Safari-genvägen</button>.</div></details>
     <details class="helpq"><summary>Kostar det något?</summary><div>Nej. Foto, inklistrad text och sök använder AI och har en gräns per dag, men kostar inget för dig.</div></details>
     <details class="helpq"><summary>Var sparas mina listor?</summary><div>Utan konto: bara i den här webbläsaren. Med konto: i ditt konto, så att de finns på alla dina enheter och hos de du delar med. Säkerhetskopia finns under Profil.</div></details>
     <details class="helpq"><summary>Hur slutar jag dela en lista?</summary><div>Öppna listan, tryck <b>⋯ → Vem ser listan?</b> och välj Hushållet eller Bara jag. Den du delat med kan också själv sluta vara med.</div></details>` },
@@ -2277,12 +2511,27 @@ function editItemSheet(id) {
     <label class="field"><span>Vara</span><input id="e-name" value="${esc(i.name)}"></label>
     <label class="field"><span>Mängd</span><input id="e-qty" value="${esc(i.qty)}" placeholder="t.ex. 2 st, 500 g"></label>
     <label class="field"><span>Kategori</span><select id="e-cat">
-      ${CATEGORIES.map(c => `<option value="${c.id}"${c.id === i.cat ? " selected" : ""}>${c.emoji} ${c.name}</option>`).join("")}
+      ${orderedCats().map(c => `<option value="${c.id}"${c.id === i.cat ? " selected" : ""}>${c.emoji} ${c.name}</option>`).join("")}
     </select></label>
+    <div class="card" style="margin-top:4px">
+      <button class="pick" id="e-pantry">🏠 Har alltid hemma <small style="color:var(--muted)">– tas bort och hoppas över i recept</small></button>
+      <button class="pick" id="e-staple">🔁 Köper varje vecka</button>
+    </div>
     <div class="actions">
       <button class="btn danger" id="e-del">Ta bort</button>
       <button class="btn" id="e-save">Spara</button>
     </div>`, body => {
+    body.querySelector("#e-pantry").onclick = () => {
+      state.pantry = state.pantry || [];
+      if (!state.pantry.some(x => key(x) === key(i.name))) state.pantry.push(i.name);
+      closeSheet(); removeItems([i.id], `${i.name} ligger nu under Har hemma`);
+    };
+    body.querySelector("#e-staple").onclick = () => {
+      state.staples = state.staples || [];
+      const entry = (i.qty ? i.qty + " " : "") + i.name.toLowerCase();
+      if (!state.staples.some(x => key(parseEntry(x).name) === key(i.name))) state.staples.push(entry);
+      closeSheet(); commit(); toast(`${i.name} finns nu under Varje vecka`);
+    };
     body.querySelector("#e-save").onclick = () => {
       const name = cap(body.querySelector("#e-name").value.trim());
       if (!name) return;
@@ -2304,6 +2553,8 @@ function listMenuSheet() {
     <h3>${esc(cur().name)}</h3>
     <div class="card">
       <button class="pick" id="m-who">${session && household ? "👥 Vem ser listan? " + (whoSees(cur()) ? "<small style='color:var(--muted)'>" + esc(whoSees(cur())) + "</small>" : "<small style='color:var(--muted)'>🏠 Hushållet</small>") : "👥 Dela listan med någon <small style='color:var(--muted)'>(logga in)</small>"}</button>
+      <button class="pick" id="m-staples">🔁 Lägg till Varje vecka-varorna${(state.staples || []).length ? ` (${state.staples.length})` : ""}</button>
+      <button class="pick" id="m-order">🏪 Din butiks ordning</button>
       <button class="pick" id="m-share">📤 Skicka listan som text</button>
       <button class="pick" id="m-hide">${state.hideDone ? "👁️ Visa avbockade" : "🙈 Dölj avbockade"}</button>
       <button class="pick" id="m-clear-done"${done ? "" : " disabled style='opacity:.4'"}>✅ Rensa avbockade (${done})</button>
@@ -2313,6 +2564,8 @@ function listMenuSheet() {
     <div class="actions"><button class="btn ghost" id="m-close">Stäng</button></div>`, body => {
     body.querySelector("#m-close").onclick = closeSheet;
     body.querySelector("#m-share").onclick = () => { closeSheet(); shareList(); };
+    body.querySelector("#m-staples").onclick = () => { closeSheet(); addStaples(); };
+    body.querySelector("#m-order").onclick = storeOrderSheet;
     body.querySelector("#m-who").onclick = () => { if (session && household) listShareSheet(cur()); else accountSheet(); };
     body.querySelector("#m-hide").onclick = () => { state.hideDone = !state.hideDone; closeSheet(); commit(); };
     body.querySelector("#m-clear-done").onclick = () => {
@@ -2490,9 +2743,10 @@ function recipeViewSheet(id) {
     body.querySelector("#v-add").onclick = () => {
       const listId = body.querySelector("#v-list")?.value;
       const list = state.lists.find(l => l.id === listId) || cur();
+      lastSkipped = 0;
       addRecipeToList(r, servings, list);
       closeSheet(); commit();
-      toast(`${r.name} för ${servings} portioner tillagt i ${list.name}`);
+      toast(`${r.name} för ${servings} portioner tillagt i ${list.name}${skippedNote()}`);
     };
   });
 }
@@ -2699,7 +2953,9 @@ function removeItems(ids, message) {
 // Lägger ett recepts ingredienser i en lista och kommer ihåg receptet i listans översikt
 function addRecipeToList(r, servings, list = cur(), day = "") {
   const factor = servings / r.servings;
-  r.ingredients.forEach(ing => addItem(ing, r.name, factor, list));
+  let skipped = 0;
+  r.ingredients.forEach(ing => { if (inPantry(parseEntry(ing).name)) skipped++; else addItem(ing, r.name, factor, list); });
+  lastSkipped += skipped;
   const entry = list.recipes.find(x => x.recipeId === r.id);
   if (entry) { entry.servings += servings; if (day) entry.days = [...(entry.days || []), day]; }
   else list.recipes.push({ recipeId: r.id, name: r.name, servings, ...(day ? { days: [day] } : {}) });
@@ -2727,7 +2983,7 @@ function listAsText() {
   const list = cur();
   let out = `🛒 ${list.name}\n`;
   if (list.recipes.length) out += "\nRecept: " + list.recipes.map(x => `${x.name} (${x.servings} port.)`).join(", ") + "\n";
-  for (const c of CATEGORIES) {
+  for (const c of orderedCats()) {
     const items = cur().items.filter(i => i.cat === c.id && !i.done);
     if (!items.length) continue;
     out += `\n${c.emoji} ${c.name}\n` + items.map(i => `• ${i.name}${i.qty ? " – " + i.qty : ""}`).join("\n") + "\n";
@@ -2765,7 +3021,11 @@ function importData(file) {
   }).catch(() => toast("Filen kunde inte läsas"));
 }
 
+let lastSkipped = 0;   // basvaror som hoppades över senast (Har hemma)
+const skippedNote = () => lastSkipped ? ` · ${lastSkipped} basvaror hoppades över (Har hemma)` : "";
+
 function addWeekToList() {
+  lastSkipped = 0;
   const mon = mondayOf(weekOffset);
   let count = 0, already = 0;
   for (let d = 0; d < 7; d++) {
@@ -2782,7 +3042,7 @@ function addWeekToList() {
   if (!count) { toast(already ? "Veckans recept finns redan i listan" : "Välj middagar först – tryck på en dag"); return; }
   view = "list";
   commit();
-  toast(`${count} recept tillagda i ${cur().name}${already ? ` (${already} fanns redan)` : ""}`);
+  toast(`${count} recept tillagda i ${cur().name}${already ? ` (${already} fanns redan)` : ""}${skippedNote()}`);
 }
 
 /* ---------- Händelser ---------- */
@@ -2851,6 +3111,8 @@ $("#list").addEventListener("click", e => {
 });
 
 $("#list-menu").addEventListener("click", listMenuSheet);
+$("#shop-mode").addEventListener("click", () => setShopping(!shopping));
+$("#shop-done").addEventListener("click", () => setShopping(false));
 $("#list-switch").addEventListener("click", listsSheet);
 $("#list-tabs").addEventListener("click", e => {
   const b = e.target.closest("[data-list]");
@@ -2880,11 +3142,12 @@ $("#days").addEventListener("click", e => { const b = e.target.closest("[data-da
 $("#recipes").addEventListener("click", e => { const b = e.target.closest("[data-recipe]"); if (b) recipeViewSheet(b.dataset.recipe); });
 $("#recipe-add").addEventListener("click", addRecipeSheet);
 $("#profile").addEventListener("click", e => {
+  if (e.target.closest("[data-cook-p]")) { whatCanICookSheet(); return; }
   const b = e.target.closest("[data-p]");
   if (!b) return;
   const act = {
     login: accountSheet, invite: inviteToHousehold, leave: leaveHousehold, photo: pickRecipePhotos,
-    shortcut: shortcutSheet, export: exportData, import: () => $("#p-file").click(),
+    shortcut: shortcutSheet, export: exportData, pantry: () => editNamesSheet("pantry"), staples: () => editNamesSheet("staples"), order: storeOrderSheet, import: () => $("#p-file").click(),
     signout: confirmSignOut, delete: deleteAccount,
   }[b.dataset.p];
   if (act) act();
@@ -2893,6 +3156,11 @@ $("#recipes").addEventListener("click", e => {
   const w = e.target.closest("[data-websearch]");
   if (w) { openWebSearch(recipeQuery, w.dataset.websearch); return; }
   if (e.target.closest("[data-aisearch]")) { searchWeb(recipeQuery); return; }
+  if (e.target.closest("[data-cook]")) { whatCanICookSheet(); return; }
+  if (e.target.closest("[data-defaults]")) {
+    for (const d of DEFAULT_RECIPES) if (!state.recipes.some(r => r.name === d.name)) state.recipes.push({ id: uid(), ...d });
+    commit(); toast("7 recept tillagda"); return;
+  }
   const imp = e.target.closest("[data-import]");
   if (imp) importRecipe(imp.dataset.import);
 });
