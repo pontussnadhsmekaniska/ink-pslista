@@ -343,6 +343,7 @@
   @media (prefers-reduced-motion: reduce) {
     *, *::before, *::after { transition-duration: 0s !important; animation: none !important; scroll-behavior: auto !important; }
   }
+  .recipe .cat-ico { float: left; margin: 2px 12px 0 0; width: 2.1em; height: 2.1em; font-size: 1em; }
   .avatar { width: 48px; height: 48px; border-radius: 50%; flex: none; display: grid; place-items: center; background: var(--accent); color: #fff; font-weight: 700; font-size: 1.176rem; }
   #sync-dot { width: 9px; height: 9px; border-radius: 50%; flex: none; align-self: center; margin: 0 10px 0 auto; background: var(--muted); opacity: .5; }
   #sync-dot[data-state="off"] { display: none; }
@@ -937,13 +938,21 @@ function renderRecipes() {
     box.innerHTML = `<div class="card empty" style="padding:28px 24px"><div class="big">🔍</div>Du har inget sparat recept som matchar.</div>` + web;
     return;
   }
+  const row = r => `<button class="recipe" data-recipe="${r.id}" draggable="${isWide() ? "true" : "false"}"><b>${esc(r.name)}</b>
+      <small>${r.time ? `⏱ ${fmtTime(r.time)} · ` : ""}${r.servings} portioner · ${r.ingredients.length} ingredienser</small></button>`;
+  // Få recept per kategori: en enkel lista med kategorin som liten bild, utan rubriker
+  const groupsUsed = RECIPE_CATS.filter(c => hits.some(r => recipeCat(r.category) === c));
+  if (groupsUsed.length > hits.length / 2) {
+    const sorted = [...hits].sort((a, b) => a.name.localeCompare(b.name, "sv"));
+    box.innerHTML = `<div class="card groups">${sorted.map(r => row(r).replace('<b>', `<span class="cat-ico" title="${esc(recipeCat(r.category).name)}">${recipeCat(r.category).emoji}</span><b>`)).join("")}</div>` + web;
+    return;
+  }
   let html = "";
   for (const c of RECIPE_CATS) {
     const list = hits.filter(r => recipeCat(r.category) === c).sort((a, b) => a.name.localeCompare(b.name, "sv"));
     if (!list.length) continue;
     html += `<div class="group"><h2><span><span class="cat-ico">${c.emoji}</span>${esc(c.name)}</span><span>${list.length}</span></h2>`;
-    html += list.map(r => `<button class="recipe" data-recipe="${r.id}" draggable="${isWide() ? "true" : "false"}"><b>${esc(r.name)}</b>
-      <small>${r.time ? `⏱ ${fmtTime(r.time)} · ` : ""}${r.servings} portioner · ${r.ingredients.length} ingredienser</small></button>`).join("");
+    html += list.map(row).join("");
     html += `</div>`;
   }
   box.innerHTML = `<div class="card groups">${html}</div>` + web;
@@ -2071,7 +2080,7 @@ const HELP_SECTIONS = [
     <ol class="helpsteps">
       <li>Skriv varor i rutan överst. Flera på en gång med komma: <b>2 l mjölk, ägg, bröd</b>.</li>
       <li>Mängden kan stå före eller efter: <b>500 g kycklingfilé</b> och <b>kycklingfilé 500 g</b> blir samma sak.</li>
-      <li>Tryck på en vara för att bocka av den. <b>⋮</b> bredvid ändrar namn, mängd eller avdelning.</li>
+      <li>Tryck på en vara för att bocka av den. <b>⋯</b> bredvid ändrar namn, mängd eller avdelning. Svep vänster på en vara för att ta bort den.</li>
       <li>Varorna sorteras efter butikens avdelningar. Rättar du en avdelning kommer appen ihåg det nästa gång.</li>
     </ol>
     <div class="helptip">Knapparna med <b>+</b> under rutan är det du köper ofta. Ett tryck lägger till varan igen.</div>
