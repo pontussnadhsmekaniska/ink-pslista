@@ -1,6 +1,6 @@
 // Offline-cache. Själva sidan hämtas från nätet först (så att nya versioner syns direkt)
 // och från cachen när nätet saknas; ikoner och manifest tas från cachen.
-const CACHE = "veckohandling-v7";
+const CACHE = "veckohandling-v8";
 const FILES = ["./", "index.html", "manifest.webmanifest", "icons/icon-192.png", "icons/icon-512.png", "icons/apple-touch-icon.png"];
 
 self.addEventListener("install", e => {

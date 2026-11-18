@@ -16,7 +16,7 @@
 <link rel="manifest" href="manifest.webmanifest">
 <style>
   :root {
-    --bg: #f4f1ea;
+    --bg: #f4f4f2;
     --surface: #ffffff;
     --surface-2: #ece8de;
     --text: #1d1f23;
@@ -117,8 +117,8 @@
   /* List */
   .group { margin-bottom: 14px; overflow: hidden; }
   .group h2 {
-    margin: 0; padding: 12px 16px 6px; font-size: 0.765rem; text-transform: uppercase;
-    letter-spacing: .06em; color: var(--muted); display: flex; justify-content: space-between;
+    margin: 0; padding: 14px 16px 4px; font-size: 0.82rem; font-weight: 600;
+    color: var(--muted); display: flex; justify-content: space-between;
   }
   .item {
     display: flex; align-items: center; gap: 12px; padding: 10px 16px; min-height: 52px;
@@ -328,6 +328,7 @@
     .app.wide-week #view-recipes { position: sticky; top: 12px; max-height: calc(100vh - var(--tabbar-h) - 24px); overflow-y: auto; padding-bottom: 12px; }
     .app.wide-week #view-recipes .recipe { cursor: grab; }
   }
+  .text-btn { background: none; border: 0; color: var(--accent); font: inherit; font-weight: 600; font-size: 1rem; padding: 10px 6px; cursor: pointer; }
   .cat-ico { display: inline-grid; place-items: center; width: 1.5em; height: 1.5em; border-radius: 50%; background: var(--surface-2); margin-right: 8px; font-size: 1.05em; vertical-align: -0.35em; text-transform: none; }
   .item.pop .check { animation: pop .28s ease-out; }
   @keyframes pop { 0% { transform: scale(.8); } 60% { transform: scale(1.15); } 100% { transform: scale(1); } }
@@ -382,7 +383,7 @@
         <button class="linkbtn helpinline" data-help="list">? Hjälp om listan</button>
       </div>
       <span id="sync-dot" data-state="off" role="status"></span>
-      <button class="icon-btn" id="shop-mode" aria-label="Butiksläge"><span aria-hidden="true" style="font-size:20px">🛒</span></button>
+      <button class="text-btn" id="shop-mode">Handla</button>
       <button class="icon-btn" id="list-menu" aria-label="Fler val">
         <svg viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg>
       </button>
@@ -397,7 +398,7 @@
     </form>
     <datalist id="suggestions"></datalist>
     <div class="chips" id="quick-chips"></div>
-    <div id="shopbar" class="card"><span>🛒 Butiksläge <small style="display:block;font-weight:400;color:var(--muted)">Skärmen släcks inte</small></span><button class="btn" id="shop-done">Klar</button></div>
+    <div id="shopbar" class="card"><span>Butiksläge <small style="display:block;font-weight:400;color:var(--muted)">Skärmen släcks inte</small></span><button class="btn" id="shop-done">Klar</button></div>
     <div id="welcome"></div>
     <div id="list-recipes"></div>
     <div id="list"></div>
@@ -443,7 +444,7 @@
     <header class="top">
       <div>
         <h1>Recept</h1>
-        <div class="sub" id="recipes-sub">Sök bland dina recept eller hitta nya på nätet</div>
+        <div class="sub" id="recipes-sub"></div>
         <button class="linkbtn helpinline" data-help="recipes">? Hjälp om recept</button>
       </div>
       <button class="icon-btn" id="recipe-add" aria-label="Lägg till recept">
@@ -822,7 +823,7 @@ function render() {
 
   if (view === "list") renderList();
   if (view === "week") renderWeek();
-  $("#recipes-sub").textContent = side ? "Dra ett recept till en dag i veckan" : "Sök bland dina recept eller hitta nya på nätet";
+  $("#recipes-sub").textContent = side ? "Dra ett recept till en dag i veckan" : "";
   if (view === "recipes" || side) renderRecipes();
   if (view === "profile") renderProfile();
 }
@@ -838,7 +839,7 @@ function renderList() {
   }).join("");
 
   $("#list-recipes").innerHTML = list.recipes.length ? `<div class="card in-list">
-    <h2 style="margin:0;padding:12px 16px 6px;font-size: 0.765rem;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)">🍽️ Recept i listan</h2>
+    <h2 style="margin:0;padding:12px 16px 6px;font-size: 0.765rem;color:var(--muted)">Recept i listan</h2>
     ${list.recipes.map(x => `<div class="row">
       <button class="open" data-open-recipe="${x.recipeId}">${esc(x.name)}<small>${x.servings} port.</small></button>
       <button class="x" data-remove-recipe="${x.recipeId}" aria-label="Ta bort ${esc(x.name)} ur listan">✕</button>
@@ -848,7 +849,7 @@ function renderList() {
   const done = cur().items.filter(i => i.done).length;
   const who = whoSees(list);
   $("#list-sub").textContent = (total
-    ? (done === total ? "Allt handlat! 🎉" : `${total - done} kvar av ${total}`)
+    ? (done === total ? "Allt handlat!" : `${total - done} kvar av ${total}`)
     : "Listan är tom") + (who ? " · " + who : "");
   const prog = $("#progress");
   prog.hidden = total === 0;
@@ -868,7 +869,7 @@ function renderList() {
   $("#welcome").innerHTML = welcomeHtml();
   const box = $("#list");
   if (!total) {
-    box.innerHTML = `<div class="empty"><div class="big">🧺</div>Skriv in det du behöver ovan,<br>eller planera veckan under <b>Veckomeny</b>.</div>`;
+    box.innerHTML = `<div class="empty">Skriv in det du behöver ovan,<br>eller planera veckan under <b>Veckomeny</b>.</div>`;
     return;
   }
 
@@ -879,7 +880,7 @@ function renderList() {
       .sort((a, b) => (a.done - b.done) || a.name.localeCompare(b.name, "sv"));
     if (!items.length) continue;
     const remaining = items.filter(i => !i.done).length;
-    html += `<div class="group"><h2><span><span class="cat-ico">${c.emoji}</span>${c.name}</span><span>${remaining || "✓"}</span></h2>`;
+    html += `<div class="group"><h2><span>${c.name}</span><span>${remaining || "✓"}</span></h2>`;
     for (const i of items) {
       html += `<div class="item${i.done ? " done" : ""}${i.id === justToggled ? " pop" : ""}" data-toggle="${i.id}">
         <span class="check">${ICON_CHECK}</span>
@@ -892,7 +893,7 @@ function renderList() {
   }
   if (shopping && done) {
     const inCart = cur().items.filter(i => i.done).sort((a, b) => a.name.localeCompare(b.name, "sv"));
-    html += `<div class="group cart"><h2><span><span class="cat-ico">✅</span>I korgen</span><span>${inCart.length}</span></h2>` +
+    html += `<div class="group cart"><h2><span>I korgen</span><span>${inCart.length}</span></h2>` +
       inCart.map(i => `<div class="item done" data-toggle="${i.id}"><span class="check">${ICON_CHECK}</span><span class="name">${esc(i.name)}</span>${i.qty ? `<span class="qty">${esc(i.qty)}</span>` : ""}</div>`).join("") + `</div>`;
   }
   html = `<div class="card groups">${html}</div>`;
@@ -944,41 +945,41 @@ function renderRecipes() {
   if (recipeCatFilter && !used.some(c => c.name === recipeCatFilter)) recipeCatFilter = "";
   $("#recipe-cats").innerHTML = used.length > 1
     ? `<button class="chip${recipeCatFilter ? "" : " on"}" data-rcat="">Alla</button>` +
-      used.map(c => `<button class="chip${recipeCatFilter === c.name ? " on" : ""}" data-rcat="${esc(c.name)}">${c.emoji} ${esc(c.name)}</button>`).join("")
+      used.map(c => `<button class="chip${recipeCatFilter === c.name ? " on" : ""}" data-rcat="${esc(c.name)}">${esc(c.name)}</button>`).join("")
     : "";
 
   const box = $("#recipes");
-  const cook = !recipeQuery ? `<button class="btn ghost cook-btn" data-cook>✨ Vad kan jag laga av det jag har?${isLinked() ? "" : " <small style='color:var(--muted)'>(logga in)</small>"}</button>` : "";
+  const cook = !recipeQuery ? `<button class="btn ghost cook-btn" data-cook>Vad kan jag laga av det jag har?${isLinked() ? "" : " <small style='color:var(--muted)'>(logga in)</small>"}</button>` : "";
   if (!state.recipes.length && !recipeQuery) {
-    box.innerHTML = cook + `<div class="card empty"><div class="big">📖</div>Inga recept än. Tryck på + för att lägga till ett, eller börja med några vanliga.
+    box.innerHTML = cook + `<div class="card empty">Inga recept än. Tryck på + för att lägga till ett, eller börja med några vanliga.
       <button class="btn" data-defaults style="margin-top:14px">Lägg till 7 vanliga recept</button></div>`;
     return;
   }
   if (isUrl(recipeQuery)) {
     box.innerHTML = `<div class="card web"><p>Det där ser ut som en länk till ett recept.</p>
-      <button class="btn" data-import="${esc(recipeQuery)}" style="width:100%">🔗 Hämta receptet</button></div>`;
+      <button class="btn" data-import="${esc(recipeQuery)}" style="width:100%">Hämta receptet</button></div>`;
     return;
   }
   const hits = state.recipes.filter(r => (!recipeCatFilter || r.category === recipeCatFilter) && recipeMatches(r, recipeQuery));
   const web = recipeQuery ? webResultsHtml(recipeQuery) + webSearchHtml(recipeQuery) : "";
   if (!hits.length) {
-    box.innerHTML = `<div class="card empty" style="padding:28px 24px"><div class="big">🔍</div>Du har inget sparat recept som matchar.</div>` + web;
+    box.innerHTML = `<div class="card empty" style="padding:28px 24px">Du har inget sparat recept som matchar.</div>` + web;
     return;
   }
   const row = r => `<button class="recipe" data-recipe="${r.id}" draggable="${isWide() ? "true" : "false"}"><b>${esc(r.name)}</b>
-      <small>${r.time ? `⏱ ${fmtTime(r.time)} · ` : ""}${r.servings} portioner · ${r.ingredients.length} ingredienser</small></button>`;
+      <small>${r.time ? `${fmtTime(r.time)} · ` : ""}${r.servings} portioner · ${r.ingredients.length} ingredienser</small></button>`;
   // Få recept per kategori: en enkel lista med kategorin som liten bild, utan rubriker
   const groupsUsed = RECIPE_CATS.filter(c => hits.some(r => recipeCat(r.category) === c));
   if (groupsUsed.length > hits.length / 2) {
     const sorted = [...hits].sort((a, b) => a.name.localeCompare(b.name, "sv"));
-    box.innerHTML = cook + `<div class="card groups">${sorted.map(r => row(r).replace('<b>', `<span class="cat-ico" title="${esc(recipeCat(r.category).name)}">${recipeCat(r.category).emoji}</span><b>`)).join("")}</div>` + web;
+    box.innerHTML = cook + `<div class="card groups">${sorted.map(r => row(r)).join("")}</div>` + web;
     return;
   }
   let html = "";
   for (const c of RECIPE_CATS) {
     const list = hits.filter(r => recipeCat(r.category) === c).sort((a, b) => a.name.localeCompare(b.name, "sv"));
     if (!list.length) continue;
-    html += `<div class="group"><h2><span><span class="cat-ico">${c.emoji}</span>${esc(c.name)}</span><span>${list.length}</span></h2>`;
+    html += `<div class="group"><h2><span>${esc(c.name)}</span><span>${list.length}</span></h2>`;
     html += list.map(row).join("");
     html += `</div>`;
   }
@@ -998,7 +999,7 @@ const isUrl = t => /^https?:\/\/\S+\.\S+/i.test(t || "");
 
 function webSearchHtml(q) {
   const ai = isLinked() && webResults.q !== q
-    ? `<button class="btn" data-aisearch style="width:100%;margin-bottom:12px">✨ Hitta recept på ${esc(q)}</button>` : "";
+    ? `<button class="btn" data-aisearch style="width:100%;margin-bottom:12px">Hitta recept på ${esc(q)}</button>` : "";
   return `<div class="card web">
     ${ai}<p>${ai ? "Eller sök själv" : "Sök <b>" + esc(q) + "</b> på nätet"}:</p>
     <div class="chips">
@@ -1176,7 +1177,7 @@ function shortcutSheet() {
       <li>Tryck på namnet längst upp, välj <b>Byt namn</b> och skriv <b>Spara i Handla</b>.</li>
       <li>Tryck på <b>ⓘ</b> eller namnet → <b>Detaljer</b> och slå på <b>Visa i delningsblad</b>. Tryck på <b>Klar</b>.</li>
     </ol></div>
-    <button class="btn" id="s-copy" style="width:100%;margin-top:12px;padding:13px">📋 Kopiera koden</button>
+    <button class="btn" id="s-copy" style="width:100%;margin-top:12px;padding:13px">Kopiera koden</button>
     <h4>3. Så använder du den</h4>
     <div class="card"><ol class="steps">
       <li>Öppna ett recept i Safari, tryck på <b>dela-knappen</b> och välj <b>Spara i Handla</b>. (Första gången frågar iPhone om lov – välj <b>Tillåt alltid</b>.)</li>
@@ -1213,9 +1214,9 @@ async function importRecipe(url) {
     openSheet(`<h3>Det gick inte att hämta receptet</h3>
       <p class="hint" style="font-size: 0.941rem">${esc(e.message)}.</p>
       ${linked ? `<p class="hint" style="font-size: 0.941rem">Ta en skärmbild av receptet och läs in den med <b>Fota recept</b>, eller kopiera texten och välj <b>Klistra in recepttext</b>.</p>
-      <div class="card" style="margin-bottom:8px"><button class="pick" id="i-photo">📷 Fota recept eller välj bild</button><button class="pick" id="i-text">📝 Klistra in recepttext</button></div>` : ""}
+      <div class="card" style="margin-bottom:8px"><button class="pick" id="i-photo">Fota recept eller välj bild</button><button class="pick" id="i-text">Klistra in recepttext</button></div>` : ""}
       <p class="hint" style="font-size: 0.941rem">Använd genvägen <b>Spara i Handla</b> i Safaris dela-meny istället – den läser receptet direkt från sidan och fungerar även när länken inte gör det.</p>
-      <div class="card" style="margin-bottom:8px"><button class="pick" id="i-shortcut">📲 Visa hur du skapar genvägen</button></div>
+      <div class="card" style="margin-bottom:8px"><button class="pick" id="i-shortcut">Visa hur du skapar genvägen</button></div>
       <div class="actions"><button class="btn ghost" id="i-close">Stäng</button><button class="btn" id="i-manual">Skriv själv</button></div>`, body => {
       body.querySelector("#i-close").onclick = closeSheet;
       body.querySelector("#i-shortcut").onclick = shortcutSheet;
@@ -1642,8 +1643,8 @@ function accountSheet() {
       <button class="btn" type="submit" style="width:100%;margin-top:12px;padding:13px">Logga in</button>
     </form>
     <div class="card" style="margin-top:12px">
-      <button class="pick" id="u-new">✨ Skapa konto med e-posten och lösenordet ovan</button>
-      <button class="pick" id="u-forgot">🔑 Glömt lösenordet?</button>
+      <button class="pick" id="u-new">Skapa konto med e-posten och lösenordet ovan</button>
+      <button class="pick" id="u-forgot">Glömt lösenordet?</button>
     </div>
     <p class="hint" style="margin-top:12px">Har du träningsappen? Samma inloggning fungerar här.</p>
     <div class="actions"><button class="btn ghost" id="u-close">Stäng</button></div>`, body => {
@@ -1716,13 +1717,13 @@ async function deleteAccount() {
 function whoSees(l) {
   if (!session || !household) return "";
   const sid = listSpace(l);
-  if (spaces.private && sid === spaces.private.id) return "🔒 Bara jag";
+  if (spaces.private && sid === spaces.private.id) return "Bara jag";
   const sh = sharedSpace(sid);
   if (sh) {
     const others = sh.members.filter(m => m.user_id !== session.user.id).map(m => m.display_name);
-    return "🔗 " + (others.length ? "Delad med " + others.join(", ") : "Delad – väntar på att någon går med");
+    return "" + (others.length ? "Delad med " + others.join(", ") : "Delad – väntar på att någon går med");
   }
-  return household.members.length > 1 ? "🏠 Hushållet" : "";
+  return household.members.length > 1 ? "Hushållet" : "";
 }
 const spaceKindOf = l => !session || !household ? "local" : spaces.private && listSpace(l) === spaces.private.id ? "private" : sharedSpace(listSpace(l)) ? "shared" : "home";
 
@@ -1773,15 +1774,15 @@ async function leaveSharedList(l) {
 function listShareSheet(l) {
   const kind = spaceKindOf(l);
   const sh = kind === "shared" ? sharedSpace(listSpace(l)) : null;
-  const opt = (k, icon, title, desc) => `<button class="pick${kind === k ? " sel" : ""}" data-move="${k}">${icon} <b>${title}</b>${kind === k ? " ✓" : ""}<br><small style="color:var(--muted)">${desc}</small></button>`;
+  const opt = (k, icon, title, desc) => `<button class="pick${kind === k ? " sel" : ""}" data-move="${k}"><b>${title}</b>${kind === k ? " ✓" : ""}<br><small style="color:var(--muted)">${desc}</small></button>`;
   openSheet(`
     <h3>Vem ser "${esc(l.name)}"?</h3>
     <div class="card">
-      ${opt("home", "🏠", "Hushållet", household.members.length > 1 ? "Alla i hushållet: " + household.members.map(m => esc(m.display_name)).join(", ") : "Du och de du bjuder in till hushållet")}
-      ${opt("private", "🔒", "Bara jag", "Syns bara för dig, på alla dina enheter")}
-      ${opt("share", "🔗", kind === "shared" ? "Bjud in fler" : "Dela med någon", sh ? "Delad med " + (sh.members.filter(m => m.user_id !== session.user.id).map(m => esc(m.display_name)).join(", ") || "– ingen har gått med än") : "Skicka en länk, t.ex. till en vän inför en fest")}
+      ${opt("home", "", "Hushållet", household.members.length > 1 ? "Alla i hushållet: " + household.members.map(m => esc(m.display_name)).join(", ") : "Du och de du bjuder in till hushållet")}
+      ${opt("private", "", "Bara jag", "Syns bara för dig, på alla dina enheter")}
+      ${opt("share", "", kind === "shared" ? "Bjud in fler" : "Dela med någon", sh ? "Delad med " + (sh.members.filter(m => m.user_id !== session.user.id).map(m => esc(m.display_name)).join(", ") || "– ingen har gått med än") : "Skicka en länk, t.ex. till en vän inför en fest")}
     </div>
-    ${kind === "shared" ? `<div class="card" style="margin-top:14px"><button class="pick" id="s-leave" style="color:var(--danger)">🚪 Sluta vara med i listan</button></div>` : ""}
+    ${kind === "shared" ? `<div class="card" style="margin-top:14px"><button class="pick" id="s-leave" style="color:var(--danger)">Sluta vara med i listan</button></div>` : ""}
     <div class="actions"><button class="btn ghost" id="s-close">Stäng</button></div>`, body => {
     body.querySelector("#s-close").onclick = closeSheet;
     body.querySelector("#s-leave")?.addEventListener("click", () => { closeSheet(); leaveSharedList(l); });
@@ -1833,7 +1834,7 @@ function renderProfile() {
   if (!signedIn) {
     html += `<div class="card" style="padding:18px 16px">
       <div style="display:flex;gap:14px;align-items:center;margin-bottom:12px">
-        <div class="avatar">👤</div>
+        <div class="avatar" style="background:var(--surface-2);color:var(--muted)"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.6-7 8-7s8 3 8 7"/></svg></div>
         <div><b>Logga in eller skapa konto</b><div class="hint" style="margin:2px 0 0">Samma listor, recept och veckomeny på telefon och dator, dela med hushållet och läs in recept från foton.</div></div>
       </div>
       <button class="btn" data-p="login" style="width:100%;padding:13px">Logga in</button>
@@ -1848,36 +1849,36 @@ function renderProfile() {
     </div>
     <p class="hint" style="margin-top:16px">Hushåll</p>
     <div class="card">
-      ${household.members.map(m => `<div class="pick" style="cursor:default">👤 ${esc(m.display_name || "Medlem")}${m.user_id === me.id ? " <small style='color:var(--muted)'>(du)</small>" : ""}</div>`).join("")}
-      <button class="pick" data-p="invite">➕ Bjud in någon till hushållet</button>
-      ${household.members.length > 1 ? `<button class="pick" data-p="leave">🚪 Lämna hushållet</button>` : ""}
+      ${household.members.map(m => `<div class="pick" style="cursor:default">${esc(m.display_name || "Medlem")}${m.user_id === me.id ? " <small style='color:var(--muted)'>(du)</small>" : ""}</div>`).join("")}
+      <button class="pick" data-p="invite">Bjud in någon till hushållet</button>
+      ${household.members.length > 1 ? `<button class="pick" data-p="leave">Lämna hushållet</button>` : ""}
     </div>
     <p class="hint">Alla i hushållet delar listor, recept och veckomeny och ser ändringar direkt.</p>`;
   }
   html += `<p class="hint" style="margin-top:16px">Recept</p>
     <div class="card">
-      ${signedIn ? `<button class="pick" data-p="photo">📷 Fota recept eller välj bild</button>` : ""}
-      <button class="pick" data-cook-p>✨ Vad kan jag laga?</button>
+      ${signedIn ? `<button class="pick" data-p="photo">Fota recept eller välj bild</button>` : ""}
+      <button class="pick" data-cook-p>Vad kan jag laga?</button>
     </div>
     <p class="hint" style="margin-top:16px">Mina varor</p>
     <div class="card">
-      <button class="pick" data-p="pantry">🏠 Har hemma <small style="color:var(--muted)">${(state.pantry || []).length || ""}</small></button>
-      <button class="pick" data-p="staples">🔁 Varje vecka <small style="color:var(--muted)">${(state.staples || []).length || ""}</small></button>
-      <button class="pick" data-p="order">🏪 Din butiks ordning</button>
+      <button class="pick" data-p="pantry">Har hemma <small style="color:var(--muted)">${(state.pantry || []).length || ""}</small></button>
+      <button class="pick" data-p="staples">Varje vecka <small style="color:var(--muted)">${(state.staples || []).length || ""}</small></button>
+      <button class="pick" data-p="order">Din butiks ordning</button>
     </div>`;
   if (!signedIn) html += `<p class="hint" style="margin-top:16px">Säkerhetskopia</p>
     <div class="card">
-      <button class="pick" data-p="export">💾 Exportera all data</button>
-      <button class="pick" data-p="import">📥 Importera data</button>
+      <button class="pick" data-p="export">Exportera all data</button>
+      <button class="pick" data-p="import">Importera data</button>
     </div>`;
   html += `<input type="file" id="p-file" accept="application/json,.json" hidden>`;
   html += `
     <p class="hint" style="margin-top:16px">Hjälp</p>
-    <div class="card"><button class="pick" data-help="">❓ Hjälp och vanliga frågor</button></div>
+    <div class="card"><button class="pick" data-help="">Hjälp och vanliga frågor</button></div>
 `;
   if (signedIn) html += `<div class="card" style="margin-top:16px">
       <button class="pick" data-p="signout" style="color:var(--danger)">Logga ut</button>
-      <button class="pick" data-p="delete" style="color:var(--danger)">🗑️ Radera kontot</button>
+      <button class="pick" data-p="delete" style="color:var(--danger)">Radera kontot</button>
     </div>`;
   html += `<p class="hint" style="margin-top:16px;text-align:center">Har du träningsappen? Samma inloggning fungerar här.</p>`;
   box.innerHTML = html;
@@ -1953,7 +1954,7 @@ function busySheet(title, detail) {
 function aiFailSheet(title, err, retry) {
   openSheet(`<h3>${esc(title)}</h3>
     <p class="hint" style="font-size: 0.941rem">${esc(err.message)}.</p>
-    ${err.code === "unauthorized" ? `<div class="card" style="margin-bottom:8px"><button class="pick" id="f-link">👤 Logga in</button></div>` : ""}
+    ${err.code === "unauthorized" ? `<div class="card" style="margin-bottom:8px"><button class="pick" id="f-link">Logga in</button></div>` : ""}
     <div class="actions"><button class="btn ghost" id="f-close">Stäng</button>${retry ? `<button class="btn" id="f-retry">Försök igen</button>` : ""}</div>`, body => {
     body.querySelector("#f-close").onclick = closeSheet;
     body.querySelector("#f-link")?.addEventListener("click", accountSheet);
@@ -1967,7 +1968,7 @@ function linkSheet() {
   openSheet(`
     <h3>Koppla till träningsappen</h3>
     <p class="hint" style="font-size: 0.941rem;margin-top:-6px">Med kopplingen kan Veckohandling läsa recept från foton, inklistrad text och fler länkar, och söka recept på nätet. Träningsappens hälsodata följer aldrig med.</p>
-    ${linked ? `<div class="card" style="padding:14px 16px">✅ Kopplad på den här telefonen</div>
+    ${linked ? `<div class="card" style="padding:14px 16px">Kopplad på den här telefonen</div>
       <div class="actions"><button class="btn ghost" id="l-close">Stäng</button><button class="btn" id="l-unlink" style="background:var(--danger)">Koppla från</button></div>` : `
     <div class="card"><ol class="steps">
       <li>Öppna träningsappen → <b>Profil</b> → <b>Kopplingar</b> → <b>Veckohandling</b> och tryck <b>Skapa kopplingskod</b>.</li>
@@ -2076,7 +2077,7 @@ function webResultsHtml(q) {
   if (webResults.error) return `<div class="card web"><p>${esc(webResults.error)}.</p></div>`;
   if (!webResults.hits) return "";
   if (!webResults.hits.length) return `<div class="card web"><p>Hittade inga recept på nätet för <b>${esc(q)}</b>.</p></div>`;
-  return `<div class="group card"><h2><span>🌐 Från nätet</span><span>${webResults.hits.length}</span></h2>` +
+  return `<div class="group card"><h2><span>Från nätet</span><span>${webResults.hits.length}</span></h2>` +
     webResults.hits.map(h => `<button class="recipe" data-import="${esc(h.url)}"><b>${esc(h.title)}</b><small>${esc(h.site)} · tryck för att hämta</small></button>`).join("") +
     `</div>`;
 }
@@ -2091,9 +2092,9 @@ function addRecipeSheet() {
     </form>
     <p class="hint">Länkar fungerar från de flesta receptsajter, t.ex. ICA, Arla och Köket.</p>
     <div class="card" style="margin-bottom:14px">
-      <button class="pick" id="a-photo">📷 Fota recept eller välj bild${ai ? "" : " <small style='color:var(--muted)'>(logga in)</small>"}</button>
-      <button class="pick" id="a-text">📝 Klistra in recepttext${ai ? "" : " <small style='color:var(--muted)'>(logga in)</small>"}</button>
-      <button class="pick" id="a-manual">✍️ Skriv ett eget recept</button>
+      <button class="pick" id="a-photo">Fota recept eller välj bild${ai ? "" : " <small style='color:var(--muted)'>(logga in)</small>"}</button>
+      <button class="pick" id="a-text">Klistra in recepttext${ai ? "" : " <small style='color:var(--muted)'>(logga in)</small>"}</button>
+      <button class="pick" id="a-manual">Skriv ett eget recept</button>
     </div>
     <div class="actions"><button class="btn ghost" id="a-close">Stäng</button></div>
     <p class="helpline"><button class="linkbtn" data-help="recipes">? Hjälp om att lägga till recept</button></p>`, body => {
@@ -2132,7 +2133,7 @@ function storeOrderSheet() {
     <h3>Din butiks ordning</h3>
     <p class="hint" style="font-size:16px;margin-top:-6px">Flytta avdelningarna i den ordning du går i butiken. Listan sorteras efter det.</p>
     <div class="card">${cats.map((c, i) => `<div class="pick" style="display:flex;align-items:center;gap:8px;cursor:default">
-      <span style="flex:1"><span class="cat-ico">${c.emoji}</span>${esc(c.name)}</span>
+      <span style="flex:1">${esc(c.name)}</span>
       <button class="icon-mini" data-move-cat="${c.id}" data-dir="-1" aria-label="Flytta ${esc(c.name)} upp"${i === 0 ? " disabled" : ""}>↑</button>
       <button class="icon-mini" data-move-cat="${c.id}" data-dir="1" aria-label="Flytta ${esc(c.name)} ner"${i === cats.length - 1 ? " disabled" : ""}>↓</button>
     </div>`).join("")}</div>
@@ -2187,7 +2188,7 @@ function editNamesSheet(kind) {
   const items = (isPantry ? state.pantry : state.staples) || [];
   const suggestions = isPantry ? PANTRY_SUGGEST.filter(s => !pantryKeys().includes(key(s))) : Object.values(state.history).sort((a, b) => b.count - a.count).slice(0, 10).map(h => h.name).filter(n => !items.some(x => key(parseEntry(x).name) === key(n)));
   openSheet(`
-    <h3>${isPantry ? "🏠 Har hemma" : "🔁 Varje vecka"}</h3>
+    <h3>${isPantry ? "Har hemma" : "Varje vecka"}</h3>
     <p class="hint" style="font-size:16px;margin-top:-6px">${isPantry
       ? "Basvaror du alltid har. De hoppas över när ett recept eller veckans meny läggs i listan."
       : "Det du köper varje vecka. Lägg till allt med ett tryck under ⋯ i listan."}</p>
@@ -2228,10 +2229,10 @@ function whatCanICookSheet() {
   if (!isLinked()) { accountSheet(); return; }
   let photos = [];
   openSheet(`
-    <h3>✨ Vad kan jag laga?</h3>
+    <h3>Vad kan jag laga?</h3>
     <p class="hint" style="font-size:16px;margin-top:-6px">Skriv vad du har hemma, eller fota kylen och skafferiet. Du får förslag, helst bland dina egna recept.</p>
     <textarea id="w-have" style="width:100%;min-height:110px" placeholder="t.ex. kycklingfilé, ris, paprika, grädde"></textarea>
-    <div class="card" style="margin-top:12px"><button class="pick" id="w-photo">📷 Fota kylen eller skafferiet <small id="w-count" style="color:var(--muted)"></small></button></div>
+    <div class="card" style="margin-top:12px"><button class="pick" id="w-photo">Fota kylen eller skafferiet <small id="w-count" style="color:var(--muted)"></small></button></div>
     <div class="actions"><button class="btn ghost" id="w-close">Stäng</button><button class="btn" id="w-go">Föreslå</button></div>`, body => {
     body.querySelector("#w-close").onclick = closeSheet;
     body.querySelector("#w-photo").onclick = () => {
@@ -2263,10 +2264,10 @@ function ideasSheet(ideas) {
       <b>${esc(x.name)}</b>${own(x.ownRecipe) ? ` <small style="color:var(--accent)">· ditt recept</small>` : ""}
       ${x.why ? `<div class="hint" style="margin:4px 0 0">${esc(x.why)}</div>` : ""}
       ${x.uses.length ? `<div style="font-size:.88rem;margin-top:6px">✓ Har: ${esc(x.uses.join(", "))}</div>` : ""}
-      ${x.missing.length ? `<div style="font-size:.88rem;color:var(--muted)">🛒 Saknas: ${esc(x.missing.join(", "))}</div>` : ""}
+      ${x.missing.length ? `<div style="font-size:.88rem;color:var(--muted)">Saknas: ${esc(x.missing.join(", "))}</div>` : ""}
       <div class="chips" style="margin-top:10px;padding-bottom:0;flex-wrap:wrap">
-        ${own(x.ownRecipe) ? `<button class="chip" data-idea-open="${i}">📖 Öppna receptet</button>` : `<button class="chip" data-idea-search="${i}">🔍 Hitta ett recept</button>`}
-        ${x.missing.length ? `<button class="chip" data-idea-buy="${i}">🛒 Lägg det som saknas i listan</button>` : ""}
+        ${own(x.ownRecipe) ? `<button class="chip" data-idea-open="${i}">Öppna receptet</button>` : `<button class="chip" data-idea-search="${i}">Hitta ett recept</button>`}
+        ${x.missing.length ? `<button class="chip" data-idea-buy="${i}">Lägg det som saknas i listan</button>` : ""}
       </div>
     </div>`).join("") || `<p class="hint">Inga förslag den här gången.</p>`}
     <div class="actions"><button class="btn ghost" id="i-again">Försök igen</button><button class="btn" id="i-close2">Klar</button></div>`, body => {
@@ -2299,7 +2300,7 @@ async function loadTrainingDays(fromIso) {
 }
 function trainingTag(iso) {
   const l = trainingDays.days[iso];
-  return l === "hard" ? `<small class="train-tag hard">💪 Tung träning – ät ordentligt</small>` : l === "easy" ? `<small class="train-tag">🏃 Träning</small>` : "";
+  return l === "hard" ? `<small class="train-tag hard">Tung träning – ät ordentligt</small>` : l === "easy" ? `<small class="train-tag">Träning</small>` : "";
 }
 
 // Safari-genvägen nås från hjälpen
@@ -2309,7 +2310,7 @@ document.addEventListener("click", e => { if (e.target.closest("[data-shortcut]"
 
 // Korta guider. Samma hjälp nås från "? Hjälp"-länkarna i varje vy och från Profil.
 const HELP_SECTIONS = [
-  { id: "list", title: "🧺 Inköpslistan", html: `
+  { id: "list", title: "Inköpslistan", html: `
     <ol class="helpsteps">
       <li>Skriv varor i rutan överst. Flera på en gång med komma: <b>2 l mjölk, ägg, bröd</b>.</li>
       <li>Mängden kan stå före eller efter: <b>500 g kycklingfilé</b> och <b>kycklingfilé 500 g</b> blir samma sak.</li>
@@ -2317,38 +2318,38 @@ const HELP_SECTIONS = [
       <li>Varorna sorteras efter butikens avdelningar. Rättar du en avdelning kommer appen ihåg det nästa gång.</li>
     </ol>
     <div class="helptip">Knapparna med <b>+</b> under rutan är det du köper ofta. Ett tryck lägger till varan igen.</div>
-    <p><b>🏠 Har hemma:</b> basvaror som salt och olja hoppas över när recept läggs i listan. <b>🔁 Varje vecka:</b> det du alltid köper, läggs till med ⋯ → Lägg till Varje vecka-varorna. Båda finns under Profil, eller under ⋯ på en vara.</p>
-    <p><b>🛒 Butiksläge</b> (knappen uppe till höger): större rader, skärmen släcks inte och det du bockar av åker ner i korgen. Sortera avdelningarna i din butiks ordning under ⋯ → Din butiks ordning.</p>
+    <p><b>Har hemma:</b> basvaror som salt och olja hoppas över när recept läggs i listan. <b>Varje vecka:</b> det du alltid köper, läggs till med ⋯ → Lägg till Varje vecka-varorna. Båda finns under Profil, eller under ⋯ på en vara.</p>
+    <p><b>Butiksläge</b> (knappen uppe till höger): större rader, skärmen släcks inte och det du bockar av åker ner i korgen. Sortera avdelningarna i din butiks ordning under ⋯ → Din butiks ordning.</p>
     <p>Flera listor: tryck på listans namn högst upp. Där skapar du nya listor (t.ex. Apoteket eller Helgfest) och byter mellan dem. <b>⋯</b> uppe till höger har det som gäller listan: dela, dölj eller rensa avbockade, töm listan.</p>` },
-  { id: "week", title: "📅 Veckomenyn", html: `
+  { id: "week", title: "Veckomenyn", html: `
     <ol class="helpsteps">
       <li>Tryck på en dag och välj ett recept. Ställ in antal portioner med − och +.</li>
       <li>Ingen middag hemma? Skriv fritt, t.ex. <b>Rester</b> eller <b>Äter ute</b>.</li>
       <li>Tryck <b>Lägg veckans ingredienser i listan</b>. Mängderna räknas om efter portionerna och läggs ihop med det som redan står på listan.</li>
     </ol>
     <div class="helptip">Trycker du på knappen igen läggs bara nya dagar till – inget dubbleras.</div>
-    <p>Är du inloggad med samma konto som träningsappen visas tunga träningsdagar i veckan (💪), så att du kan planera en rejäl middag de dagarna.</p>
-    <p>Från ett recept kan du också trycka <b>📅 Välj dag</b>. På en dator syns recepten bredvid veckan, och du kan dra ett recept till en dag.</p>` },
-  { id: "recipes", title: "📖 Recept", html: `
+    <p>Är du inloggad med samma konto som träningsappen visas tunga träningsdagar i veckan, så att du kan planera en rejäl middag de dagarna.</p>
+    <p>Från ett recept kan du också trycka <b>Välj dag</b>. På en dator syns recepten bredvid veckan, och du kan dra ett recept till en dag.</p>` },
+  { id: "recipes", title: "Recept", html: `
     <ol class="helpsteps">
       <li>Tryck <b>+</b> under Recept.</li>
       <li>Klistra in en länk från t.ex. ICA, Arla eller Köket och tryck <b>Hämta</b>. Skriver du ord i stället söks recept fram.</li>
       <li>Kolla receptet och tryck <b>Spara</b>.</li>
     </ol>
-    <p><b>📷 Fota recept</b> läser en kokbokssida, en lapp eller en skärmbild (upp till 3 bilder). <b>📝 Klistra in recepttext</b> fungerar med text från t.ex. ett sms eller Instagram. Båda kräver att du är inloggad.</p>
-    <p>I ett recept: välj portioner, <b>Lägg i listan</b>, <b>📅 Välj dag</b>, och starta timers i stegen som har en tid.</p>
-    <p><b>✨ Vad kan jag laga?</b> överst i Recept: skriv eller fota vad du har hemma, så får du förslag – helst bland dina egna recept – och kan lägga det som saknas i listan.</p>
-    <div class="helptip">Fungerar inte en länk (t.ex. från Coop)? Ta en skärmbild av receptet och använd <b>📷 Fota recept</b>.</div>` },
-  { id: "account", title: "👤 Konto och delning", html: `
+    <p><b>Fota recept</b> läser en kokbokssida, en lapp eller en skärmbild (upp till 3 bilder). <b>Klistra in recepttext</b> fungerar med text från t.ex. ett sms eller Instagram. Båda kräver att du är inloggad.</p>
+    <p>I ett recept: välj portioner, <b>Lägg i listan</b>, <b>Välj dag</b>, och starta timers i stegen som har en tid.</p>
+    <p><b>Vad kan jag laga?</b> överst i Recept: skriv eller fota vad du har hemma, så får du förslag – helst bland dina egna recept – och kan lägga det som saknas i listan.</p>
+    <div class="helptip">Fungerar inte en länk (t.ex. från Coop)? Ta en skärmbild av receptet och använd <b>Fota recept</b>.</div>` },
+  { id: "account", title: "Konto och delning", html: `
     <p>Utan konto sparas allt bara på den här enheten. Med ett konto (Profil → Logga in) får du samma listor på telefon och dator, och ändringar syns direkt. Har du träningsappen fungerar samma inloggning.</p>
     <ul class="helpsteps">
-      <li><b>🏠 Hushållet</b>: listor, recept och veckomeny som alla i hushållet delar. Bjud in under Profil → Bjud in.</li>
-      <li><b>🔒 Bara jag</b>: listor som bara du ser, på alla dina enheter.</li>
-      <li><b>🔗 Delad lista</b>: en enskild lista du delar med någon via en länk, t.ex. inför en fest. Den personen ser bara den listan.</li>
+      <li><b>Hushållet</b>: listor, recept och veckomeny som alla i hushållet delar. Bjud in under Profil → Bjud in.</li>
+      <li><b>Bara jag</b>: listor som bara du ser, på alla dina enheter.</li>
+      <li><b>Delad lista</b>: en enskild lista du delar med någon via en länk, t.ex. inför en fest. Den personen ser bara den listan.</li>
     </ul>
     <p>Vem som ser en lista står under listans namn. Ändra det under <b>⋯ → Vem ser listan?</b>.</p>
     <div class="helptip">Den gröna pricken uppe till höger betyder att allt är synkat. Orange: du saknar nät just nu – ändringarna skickas när nätet kommer tillbaka.</div>` },
-  { id: "faq", title: "❓ Vanliga frågor", html: `
+  { id: "faq", title: "Vanliga frågor", html: `
     <details class="helpq"><summary>Hur får jag appen på hemskärmen?</summary><div>Öppna sidan i Safari, tryck på dela-knappen och välj <b>Lägg till på hemskärmen</b>. Då öppnas den som en vanlig app.</div></details>
     <details class="helpq"><summary>Fungerar appen utan nät?</summary><div>Ja. Listan, menyn och recepten fungerar som vanligt. Är du inloggad synkas ändringarna när nätet kommer tillbaka. Att hämta recept från nätet kräver nät.</div></details>
     <details class="helpq"><summary>Jag tog bort något av misstag.</summary><div>Tryck <b>Ångra</b> i rutan som dyker upp längst ner direkt efteråt.</div></details>
@@ -2381,18 +2382,8 @@ document.addEventListener("click", e => {
 /* ---------- Välkomst för nya ---------- */
 
 const WELCOME_KEY = "veckohandling.welcomed";
-function welcomeHtml() {
-  try { if (localStorage.getItem(WELCOME_KEY)) return ""; } catch (e) { return ""; }
-  return `<div class="card welcome">
-    <b>Välkommen till Veckohandling 👋</b>
-    <ul>
-      <li>Skriv flera varor på en gång: <b>mjölk, 2 l fil, bröd</b></li>
-      <li>Planera middagarna under <b>Veckomeny</b> – ingredienserna hamnar i listan med ett tryck</li>
-      <li>Logga in under <b>Profil</b> för samma lista på telefon och dator, och för att dela med hushållet</li>
-    </ul>
-    <div class="welcome-actions"><button class="btn ghost" data-help="list">Snabbguide</button><button class="btn" id="welcome-ok">Jag fattar</button></div>
-  </div>`;
-}
+// No welcome box: the list itself shows what to do, and the help is behind "?".
+function welcomeHtml() { return ""; }
 document.addEventListener("click", e => {
   if (!e.target.closest("#welcome-ok")) return;
   try { localStorage.setItem(WELCOME_KEY, "1"); } catch (err) { /* ignorera */ }
@@ -2514,11 +2505,11 @@ function editItemSheet(id) {
     <label class="field"><span>Vara</span><input id="e-name" value="${esc(i.name)}"></label>
     <label class="field"><span>Mängd</span><input id="e-qty" value="${esc(i.qty)}" placeholder="t.ex. 2 st, 500 g"></label>
     <label class="field"><span>Kategori</span><select id="e-cat">
-      ${orderedCats().map(c => `<option value="${c.id}"${c.id === i.cat ? " selected" : ""}>${c.emoji} ${c.name}</option>`).join("")}
+      ${orderedCats().map(c => `<option value="${c.id}"${c.id === i.cat ? " selected" : ""}>${c.name}</option>`).join("")}
     </select></label>
     <div class="card" style="margin-top:4px">
-      <button class="pick" id="e-pantry">🏠 Har alltid hemma <small style="color:var(--muted)">– tas bort och hoppas över i recept</small></button>
-      <button class="pick" id="e-staple">🔁 Köper varje vecka</button>
+      <button class="pick" id="e-pantry">Har alltid hemma <small style="color:var(--muted)">– tas bort och hoppas över i recept</small></button>
+      <button class="pick" id="e-staple">Köper varje vecka</button>
     </div>
     <div class="actions">
       <button class="btn danger" id="e-del">Ta bort</button>
@@ -2555,14 +2546,14 @@ function listMenuSheet() {
   openSheet(`
     <h3>${esc(cur().name)}</h3>
     <div class="card">
-      <button class="pick" id="m-who">${session && household ? "👥 Vem ser listan? " + (whoSees(cur()) ? "<small style='color:var(--muted)'>" + esc(whoSees(cur())) + "</small>" : "<small style='color:var(--muted)'>🏠 Hushållet</small>") : "👥 Dela listan med någon <small style='color:var(--muted)'>(logga in)</small>"}</button>
-      <button class="pick" id="m-staples">🔁 Lägg till Varje vecka-varorna${(state.staples || []).length ? ` (${state.staples.length})` : ""}</button>
-      <button class="pick" id="m-order">🏪 Din butiks ordning</button>
-      <button class="pick" id="m-share">📤 Skicka listan som text</button>
-      <button class="pick" id="m-hide">${state.hideDone ? "👁️ Visa avbockade" : "🙈 Dölj avbockade"}</button>
-      <button class="pick" id="m-clear-done"${done ? "" : " disabled style='opacity:.4'"}>✅ Rensa avbockade (${done})</button>
-      <button class="pick" id="m-uncheck"${done ? "" : " disabled style='opacity:.4'"}>↩️ Avmarkera alla</button>
-      <button class="pick" id="m-clear-all" style="color:var(--danger)"${cur().items.length ? "" : " disabled"}>🗑️ Töm hela listan</button>
+      <button class="pick" id="m-who">${session && household ? "Vem ser listan? " + (whoSees(cur()) ? "<small style='color:var(--muted)'>" + esc(whoSees(cur())) + "</small>" : "<small style='color:var(--muted)'>Hushållet</small>") : "Dela listan med någon <small style='color:var(--muted)'>(logga in)</small>"}</button>
+      <button class="pick" id="m-staples">Lägg till Varje vecka-varorna${(state.staples || []).length ? ` (${state.staples.length})` : ""}</button>
+      <button class="pick" id="m-order">Din butiks ordning</button>
+      <button class="pick" id="m-share">Skicka listan som text</button>
+      <button class="pick" id="m-hide">${state.hideDone ? "Visa avbockade" : "Dölj avbockade"}</button>
+      <button class="pick" id="m-clear-done"${done ? "" : " disabled style='opacity:.4'"}>Rensa avbockade (${done})</button>
+      <button class="pick" id="m-uncheck"${done ? "" : " disabled style='opacity:.4'"}>Avmarkera alla</button>
+      <button class="pick" id="m-clear-all" style="color:var(--danger)"${cur().items.length ? "" : " disabled"}>Töm hela listan</button>
     </div>
     <div class="actions"><button class="btn ghost" id="m-close">Stäng</button></div>`, body => {
     body.querySelector("#m-close").onclick = closeSheet;
@@ -2604,7 +2595,7 @@ function bindStepper(root, initial, onChange) {
 function listGroupsHtml(active) {
   const row = l => `<button class="pick${l.id === active.id ? " sel" : ""}" data-list="${l.id}">${l.id === active.id ? "✓ " : ""}${esc(l.name)}<span class="count">${l.items.filter(i => !i.done).length}</span></button>`;
   if (!session || !household) return `<div class="card">${state.lists.map(row).join("")}</div>`;
-  const groups = [["home", "🏠 Hushållet"], ["private", "🔒 Bara jag"], ["shared", "🔗 Delade med andra"]];
+  const groups = [["home", "Hushållet"], ["private", "Bara jag"], ["shared", "Delade med andra"]];
   return groups.map(([k, title]) => {
     const ls = state.lists.filter(l => spaceKindOf(l) === k);
     return ls.length ? `<p class="hint" style="margin-top:12px">${title}</p><div class="card">${ls.map(row).join("")}</div>` : "";
@@ -2621,14 +2612,14 @@ function listsSheet() {
       <button class="btn" type="submit">Skapa</button>
     </form>
     ${session && household ? `<div class="chips" id="l-where" style="margin-top:8px">
-      <button type="button" class="chip on" data-where="home">🏠 Hushållet</button>
-      <button type="button" class="chip" data-where="private">🔒 Bara jag</button>
-      <button type="button" class="chip" data-where="share">🔗 Dela med någon</button>
+      <button type="button" class="chip on" data-where="home">Hushållet</button>
+      <button type="button" class="chip" data-where="private">Bara jag</button>
+      <button type="button" class="chip" data-where="share">Dela med någon</button>
     </div>` : ""}
     <p class="hint" style="margin-top:16px">Vald lista: ${esc(list.name)}</p>
     <div class="card">
-      <button class="pick" id="l-rename">✏️ Byt namn</button>
-      ${state.lists.length > 1 ? `<button class="pick" id="l-delete" style="color:var(--danger)">🗑️ Ta bort listan</button>` : ""}
+      <button class="pick" id="l-rename">Byt namn</button>
+      ${state.lists.length > 1 ? `<button class="pick" id="l-delete" style="color:var(--danger)">Ta bort listan</button>` : ""}
     </div>
     <div class="actions"><button class="btn ghost" id="l-close">Stäng</button></div>`, body => {
     body.querySelector("#l-close").onclick = closeSheet;
@@ -2670,7 +2661,7 @@ function dayPickerSheet(iso) {
   const dayName = DAYS[(d.getDay() + 6) % 7];
   const sorted = [...state.recipes].sort((a, b) => a.name.localeCompare(b.name, "sv"));
   const options = q => sorted.filter(r => recipeMatches(r, q)).map(r =>
-    `<button class="pick${p.recipeId === r.id ? " sel" : ""}" data-pick="${r.id}">${recipeCat(r.category).emoji} ${esc(r.name)}</button>`
+    `<button class="pick${p.recipeId === r.id ? " sel" : ""}" data-pick="${r.id}">${esc(r.name)}</button>`
   ).join("") || `<div class="pick" style="color:var(--muted)">Inga recept hittades</div>`;
   openSheet(`
     <h3>${dayName} ${d.getDate()} ${MONTHS[d.getMonth()]}</h3>
@@ -2723,7 +2714,7 @@ function recipeViewSheet(id) {
   openSheet(`
     ${r.image ? `<img class="hero" src="${esc(r.image)}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()">` : ""}
     <h3>${esc(r.name)}</h3>
-    <div class="recipe-meta">${c.emoji} ${esc(c.name)}${r.time ? ` · ⏱ ${fmtTime(r.time)}` : ""} · grundrecept för ${r.servings} portioner</div>
+    <div class="recipe-meta">${esc(c.name)}${r.time ? ` · ${fmtTime(r.time)}` : ""} · grundrecept för ${r.servings} portioner</div>
     ${stepperHtml(servings)}
     <h4>Ingredienser</h4>
     <div class="card" id="v-ing">${ingredientRows(r, servings)}</div>
@@ -2731,13 +2722,13 @@ function recipeViewSheet(id) {
       const min = stepMinutes(s);
       return `<li>${esc(s)}${min ? timerHtml(`${r.id}:${n}`, min) : ""}</li>`;
     }).join("")}</ol></div>` : ""}
-    ${r.source ? `<a class="source" href="${esc(r.source)}" target="_blank" rel="noopener">🔗 Originalrecept på ${esc(new URL(r.source).hostname.replace(/^www\./, ""))}</a>` : ""}
+    ${r.source ? `<a class="source" href="${esc(r.source)}" target="_blank" rel="noopener">Originalrecept på ${esc(new URL(r.source).hostname.replace(/^www\./, ""))}</a>` : ""}
     ${state.lists.length > 1 ? `<label class="field" style="margin-top:16px"><span>Lägg i lista</span><select id="v-list">
       ${state.lists.map(l => `<option value="${l.id}"${l.id === state.activeList ? " selected" : ""}>${esc(l.name)}</option>`).join("")}
     </select></label>` : ""}
     <div class="actions">
       <button class="btn ghost" id="v-edit">Redigera</button>
-      <button class="btn ghost" id="v-day">📅 Välj dag</button>
+      <button class="btn ghost" id="v-day">Välj dag</button>
       <button class="btn" id="v-add">Lägg i listan</button>
     </div>`, body => {
     bindStepper(body, servings, n => { servings = n; body.querySelector("#v-ing").innerHTML = ingredientRows(r, n); });
@@ -2761,7 +2752,7 @@ function recipeEditSheet(id, assignTo, assignServings, draft) {
     <label class="field"><span>Namn</span><input id="r-name" value="${esc(r.name)}" placeholder="t.ex. Lasagne"></label>
     <div class="field-row">
       <label class="field"><span>Kategori</span><select id="r-cat">
-        ${RECIPE_CATS.map(c => `<option value="${esc(c.name)}"${c.name === r.category ? " selected" : ""}>${c.emoji} ${esc(c.name)}</option>`).join("")}
+        ${RECIPE_CATS.map(c => `<option value="${esc(c.name)}"${c.name === r.category ? " selected" : ""}>${esc(c.name)}</option>`).join("")}
       </select></label>
     </div>
     <div class="field-row">
@@ -2837,14 +2828,14 @@ function timerHtml(tid, defMin) {
     const m = timerDrafts[tid] ?? defMin;
     return `<div class="timer" data-tid="${tid}" data-def="${defMin}">
       <button data-t="minus" aria-label="En minut mindre">−</button><span class="t-time">${m} min</span><button data-t="plus" aria-label="En minut mer">+</button>
-      <button class="t-go" data-t="start">▶ Starta timer</button></div>`;
+      <button class="t-go" data-t="start">Starta timer</button></div>`;
   }
   if (t.done) {
     return `<div class="timer done" data-tid="${tid}" data-def="${defMin}"><span class="t-time">Klar!</span><button class="t-go" data-t="reset">OK</button></div>`;
   }
   return `<div class="timer${t.endAt ? " running" : ""}" data-tid="${tid}" data-def="${defMin}">
     <button data-t="minus" aria-label="En minut mindre">−</button><span class="t-time">${fmtClock(leftMs(t))}</span><button data-t="plus" aria-label="En minut mer">+</button>
-    <button class="t-go" data-t="${t.endAt ? "pause" : "resume"}">${t.endAt ? "❚❚ Pausa" : "▶ Fortsätt"}</button>
+    <button class="t-go" data-t="${t.endAt ? "pause" : "resume"}">${t.endAt ? "❚❚ Pausa" : "Fortsätt"}</button>
     <button data-t="reset" aria-label="Stoppa timern">✕</button></div>`;
 }
 
@@ -2883,7 +2874,7 @@ function updateTimers(full) {
   const active = Object.entries(timers);
   document.body.classList.toggle("has-timers", active.length > 0);
   $("#timerbar").innerHTML = active.map(([tid, t]) => `<div class="tb${t.done ? " done" : ""}">
-    <button class="lbl" data-open-recipe="${t.recipeId}">${t.done ? "🔔 Klar: " : "⏱ "}${esc(t.label)}</button>
+    <button class="lbl" data-open-recipe="${t.recipeId}">${t.done ? "Klar: " : ""}${esc(t.label)}</button>
     ${t.done ? "" : `<span class="tt">${fmtClock(leftMs(t))}${t.endAt ? "" : " ❚❚"}</span>`}
     <button class="x" data-tb-reset="${tid}" aria-label="Stoppa timern">✕</button></div>`).join("");
   const ringing = active.some(([, t]) => t.done);
@@ -2910,7 +2901,7 @@ function beep() {
   });
 }
 function alarm(label) {
-  toast(`🔔 ${label} är klar!`);
+  toast(`${label} är klar!`);
   if (navigator.vibrate) navigator.vibrate([300, 150, 300, 150, 300]);
   if (alarmLoop) return;
   beep();
@@ -2984,12 +2975,12 @@ function removeRecipeFromList(recipeId) {
 
 function listAsText() {
   const list = cur();
-  let out = `🛒 ${list.name}\n`;
+  let out = `${list.name}\n`;
   if (list.recipes.length) out += "\nRecept: " + list.recipes.map(x => `${x.name} (${x.servings} port.)`).join(", ") + "\n";
   for (const c of orderedCats()) {
     const items = cur().items.filter(i => i.cat === c.id && !i.done);
     if (!items.length) continue;
-    out += `\n${c.emoji} ${c.name}\n` + items.map(i => `• ${i.name}${i.qty ? " – " + i.qty : ""}`).join("\n") + "\n";
+    out += `\n${c.name}\n` + items.map(i => `• ${i.name}${i.qty ? " – " + i.qty : ""}`).join("\n") + "\n";
   }
   return out.trim();
 }
@@ -3110,7 +3101,7 @@ $("#list").addEventListener("click", e => {
   justToggled = i.id;
   commit();
   justToggled = null;
-  if (i.done && cur().items.length > 1 && cur().items.every(x => x.done)) toast("Allt handlat! 🎉 Bra jobbat");
+  if (i.done && cur().items.length > 1 && cur().items.every(x => x.done)) toast("Allt handlat! Bra jobbat");
 });
 
 $("#list-menu").addEventListener("click", listMenuSheet);
