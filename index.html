@@ -714,6 +714,16 @@ function roundNice(n, unit) {
   return Math.max(.25, Math.round(n * 4) / 4);
 }
 
+// Styckenheter i singular och plural: "1 burk" + "1 burk" -> "2 burkar"
+const UNIT_FORMS = [["burk", "burkar"], ["påse", "påsar"], ["flaska", "flaskor"], ["kruka", "krukor"], ["knippe", "knippen"],
+  ["bit", "bitar"], ["skiva", "skivor"], ["klyfta", "klyftor"], ["näve", "nävar"]];
+const unitForm = unit => UNIT_FORMS.find(f => f.includes((unit || "").toLowerCase()));
+const sameUnit = (a, b) => a.toLowerCase() === b.toLowerCase() || (!!unitForm(a) && unitForm(a) === unitForm(b));
+function unitFor(unit, n) {
+  const f = unitForm(unit);
+  return f ? (n > 1 ? f[1] : f[0]) : unit;
+}
+
 function scaleQty(qty, factor) {
   if (!qty || factor === 1) return qty;
   const p = parseQty(qty);
@@ -721,9 +731,10 @@ function scaleQty(qty, factor) {
   if (p.hi == null && /^(g|ml)$/i.test(p.unit) && p.lo * factor >= 1000) {
     return fromBase(roundNice(p.lo * factor, p.unit), p.unit.toLowerCase());
   }
-  const lo = fmtNum(roundNice(p.lo * factor, p.unit));
-  const hi = p.hi != null ? "-" + fmtNum(roundNice(p.hi * factor, p.unit)) : "";
-  return lo + hi + (p.unit ? " " + p.unit : "");
+  const loN = roundNice(p.lo * factor, p.unit);
+  const hiN = p.hi != null ? roundNice(p.hi * factor, p.unit) : null;
+  const unit = unitFor(p.unit, hiN ?? loN);
+  return fmtNum(loN) + (hiN != null ? "-" + fmtNum(hiN) : "") + (unit ? " " + unit : "");
 }
 
 // Vikt och volym räknas om till gram/milliliter så att t.ex. "1 kg" + "500 g" kan slås ihop
@@ -741,9 +752,39 @@ function mergeQty(a, b) {
   if (pa && pb && pa.hi == null && pb.hi == null) {
     const ua = BASE_UNITS[pa.unit.toLowerCase()], ub = BASE_UNITS[pb.unit.toLowerCase()];
     if (ua && ub && ua[0] === ub[0]) return fromBase(pa.lo * ua[1] + pb.lo * ub[1], ua[0]);
-    if (pa.unit.toLowerCase() === pb.unit.toLowerCase()) return fmtNum(pa.lo + pb.lo) + (pa.unit ? " " + pa.unit : "");
+    if (sameUnit(pa.unit, pb.unit)) {
+      const n = pa.lo + pb.lo, unit = unitFor(pa.unit, n);
+      return fmtNum(n) + (unit ? " " + unit : "");
+    }
   }
   return a + " + " + b;
+}
+
+// Drar av en mängd, t.ex. när ett recept tas bort ur listan: "1 kg" - "500 g" -> "500 g".
+// "" betyder att inget blir kvar; null att det inte gick att räkna ut.
+function subtractQty(a, b) {
+  if (!b) return a;
+  if (!a) return null;
+  const parts = a.split(" + ");
+  if (parts.length > 1) {
+    for (let i = 0; i < parts.length; i++) {
+      const rest = subtractQty(parts[i], b);
+      if (rest == null) continue;
+      const left = parts.slice(); if (rest) left[i] = rest; else left.splice(i, 1);
+      return left.join(" + ");
+    }
+    return null;
+  }
+  const pa = parseQty(a), pb = parseQty(b);
+  if (!pa || !pb || pa.hi != null || pb.hi != null) return null;
+  const ua = BASE_UNITS[pa.unit.toLowerCase()], ub = BASE_UNITS[pb.unit.toLowerCase()];
+  if (ua && ub && ua[0] === ub[0]) {
+    const n = pa.lo * ua[1] - pb.lo * ub[1];
+    return n > 1e-6 ? fromBase(+n.toFixed(4), ua[0]) : "";
+  }
+  if (!sameUnit(pa.unit, pb.unit)) return null;
+  const n = pa.lo - pb.lo, unit = unitFor(pa.unit, n);
+  return n > 1e-6 ? fmtNum(n) + (unit ? " " + unit : "") : "";
 }
 
 function guessCategory(name) {
@@ -2962,11 +3003,23 @@ function removeRecipeFromList(recipeId) {
   if (!entry) return;
   const before = JSON.parse(JSON.stringify({ items: list.items, recipes: list.recipes }));
   list.recipes = list.recipes.filter(x => x !== entry);
+  // Receptets mängder (för de portioner som lades i listan), per vara
+  const r = recipeById(recipeId);
+  const amounts = {};
+  if (r) for (const ing of r.ingredients) {
+    const e = parseEntry(ing);
+    if (e.name) amounts[key(e.name)] = scaleQty(e.qty, entry.servings / r.servings);
+  }
   list.items = list.items.filter(i => {
     const from = (i.from || "").split(", ").filter(Boolean);
     if (!from.includes(entry.name)) return true;
     if (from.length === 1) return i.done; // avbockade varor får vara kvar
     i.from = from.filter(f => f !== entry.name).join(", ");
+    // Varan behövs till andra recept också: dra bara av det här receptets mängd
+    if (!i.done) {
+      const rest = subtractQty(i.qty, amounts[key(i.name)]);
+      if (rest) i.qty = rest;
+    }
     return true;
   });
   commit();
@@ -3045,7 +3098,7 @@ $("#add-form").addEventListener("submit", e => {
   e.preventDefault();
   const input = $("#add-input");
   // Flera varor på en gång: "mjölk, ägg, bröd"
-  const parts = input.value.split(/[,;\n]/).map(s => s.trim()).filter(Boolean);
+  const parts = input.value.split(/[;\n]|,(?!\d)/).map(s => s.trim()).filter(Boolean); // "2,5 dl" är ett decimaltal
   parts.forEach(p => addItem(p));
   input.value = "";
   commit();
