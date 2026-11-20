@@ -1,0 +1,1056 @@
+<!doctype html>
+<html lang="sv">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>Dubbelagenten</title>
+<meta name="description" content="Socialt bluffspel för 3–6 spelare på en delad iPad.">
+<meta name="theme-color" content="#0b0d14">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Dubbelagenten">
+<style>
+  :root {
+    --bg: #0b0d14;
+    --bg-2: #121624;
+    --card: #181d2e;
+    --card-2: #20263b;
+    --line: #2c3450;
+    --text: #eef1fa;
+    --muted: #8d96b3;
+    --gold: #f2c14e;
+    --gold-ink: #1b1505;
+    --red: #ff4d5e;
+    --red-soft: #3a1620;
+    --green: #3ddc97;
+    --blue: #5aa9ff;
+    --radius: 22px;
+    color-scheme: dark;
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { margin: 0; height: 100%; }
+  body {
+    background:
+      radial-gradient(1200px 700px at 80% -10%, #1d2442 0%, transparent 60%),
+      radial-gradient(900px 600px at -10% 110%, #2a1424 0%, transparent 55%),
+      var(--bg);
+    background-attachment: fixed;
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Rounded", "Segoe UI", Roboto, sans-serif;
+    -webkit-user-select: none; user-select: none;
+    -webkit-touch-callout: none;
+    overscroll-behavior: none;
+  }
+  input, textarea { -webkit-user-select: text; user-select: text; }
+  #app {
+    min-height: 100%;
+    max-width: 860px;
+    margin: 0 auto;
+    padding: max(20px, env(safe-area-inset-top)) max(18px, env(safe-area-inset-right)) max(24px, env(safe-area-inset-bottom)) max(18px, env(safe-area-inset-left));
+    display: flex; flex-direction: column;
+  }
+  .screen { flex: 1; display: flex; flex-direction: column; gap: 18px; animation: fadeIn .35s ease; }
+  .center { justify-content: center; align-items: center; text-align: center; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+
+  h1, h2, h3 { margin: 0; letter-spacing: -.01em; }
+  .logo { font-size: clamp(44px, 9vw, 76px); font-weight: 900; line-height: 1; text-align: center; }
+  .logo span { color: var(--gold); }
+  .logo .two { display: inline-block; color: var(--red); transform: rotate(-4deg); }
+  .tagline { text-align: center; color: var(--muted); font-size: 19px; margin-top: 8px; }
+  .muted { color: var(--muted); }
+  .big { font-size: clamp(26px, 5vw, 40px); font-weight: 800; }
+  .huge { font-size: clamp(44px, 10vw, 88px); font-weight: 900; line-height: 1.05; }
+  .label { font-size: 14px; text-transform: uppercase; letter-spacing: .14em; color: var(--muted); font-weight: 700; }
+
+  .card {
+    background: linear-gradient(180deg, var(--card), var(--bg-2));
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 20px;
+  }
+  .row { display: flex; gap: 12px; align-items: center; }
+  .grow { flex: 1; }
+  .stack { display: flex; flex-direction: column; gap: 12px; }
+  .spacer { flex: 1; }
+
+  button {
+    font: inherit; color: inherit; border: 0; cursor: pointer;
+    min-height: 68px; padding: 14px 24px; border-radius: 20px;
+    font-size: 22px; font-weight: 800;
+    background: var(--card-2); border: 1px solid var(--line);
+    transition: transform .08s ease, filter .15s, opacity .2s;
+    touch-action: manipulation;
+  }
+  button:active { transform: scale(.97); filter: brightness(1.15); }
+  button:disabled { opacity: .35; pointer-events: none; }
+  .btn-primary { background: linear-gradient(180deg, #ffd56b, var(--gold)); color: var(--gold-ink); border: 0; box-shadow: 0 8px 30px rgba(242,193,78,.25); }
+  .btn-danger { background: linear-gradient(180deg, #ff6b79, var(--red)); color: #1d0307; border: 0; }
+  .btn-ghost { background: transparent; }
+  .btn-wide { width: 100%; }
+  .btn-small { min-height: 52px; font-size: 18px; padding: 10px 18px; border-radius: 16px; }
+  .icon-btn { min-height: 64px; min-width: 64px; padding: 0; font-size: 28px; }
+  .btn-row { display: flex; gap: 12px; flex-wrap: wrap; }
+  .btn-row > button { flex: 1 1 200px; }
+
+  input[type=text], textarea {
+    font: inherit; color: var(--text); font-size: 22px;
+    background: var(--bg); border: 1px solid var(--line); border-radius: 16px;
+    padding: 16px 18px; width: 100%; min-height: 64px; outline: none;
+  }
+  input[type=text]:focus, textarea:focus { border-color: var(--gold); }
+  textarea { font-size: 17px; min-height: 160px; resize: vertical; line-height: 1.45; }
+
+  .seg { display: flex; background: var(--bg); border: 1px solid var(--line); border-radius: 18px; padding: 4px; gap: 4px; }
+  .seg button { flex: 1; min-height: 56px; border: 0; background: transparent; font-size: 19px; border-radius: 14px; }
+  .seg button.on { background: var(--gold); color: var(--gold-ink); }
+
+  /* Pass / hold */
+  .pass-name { font-size: clamp(48px, 11vw, 96px); font-weight: 900; color: var(--gold); line-height: 1.05; word-break: break-word; }
+  .hold {
+    position: relative; width: 100%; min-height: 380px; border-radius: 30px;
+    border: 2px dashed var(--line); background: var(--bg-2);
+    display: flex; align-items: center; justify-content: center; text-align: center;
+    padding: 28px; touch-action: none; overflow: hidden;
+  }
+  .hold .cover { display: flex; flex-direction: column; align-items: center; gap: 14px; transition: opacity .15s; }
+  .hold .fp { width: 120px; height: 120px; border-radius: 50%; display: grid; place-items: center; font-size: 60px;
+    background: radial-gradient(circle, #2a3354, #161b2c); border: 2px solid var(--line); animation: pulse 2s infinite; }
+  @keyframes pulse { 0%,100% { box-shadow: 0 0 0 0 rgba(242,193,78,.35);} 50% { box-shadow: 0 0 0 22px rgba(242,193,78,0);} }
+  .hold .secret { position: absolute; inset: 0; padding: 28px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; opacity: 0; pointer-events: none; transition: opacity .12s; }
+  .hold.active { border-style: solid; border-color: var(--gold); }
+  .hold.active .cover { opacity: 0; }
+  .hold.active .secret { opacity: 1; }
+  .hold.agent.active { border-color: var(--red); background: radial-gradient(circle at 50% 30%, #3a1620, var(--bg-2)); }
+  .secret .word { font-size: clamp(46px, 10vw, 84px); font-weight: 900; color: var(--gold); line-height: 1; }
+  .secret .agent-title { font-size: clamp(38px, 8vw, 64px); font-weight: 900; color: var(--red); letter-spacing: .02em; }
+  .secret .mission { font-size: clamp(20px, 3.6vw, 26px); font-weight: 600; max-width: 620px; line-height: 1.35; }
+  .secret .mission b { color: var(--gold); }
+  .pill { display: inline-block; padding: 6px 14px; border-radius: 999px; background: var(--card-2); border: 1px solid var(--line); font-weight: 700; font-size: 16px; }
+  .pill.red { background: var(--red-soft); border-color: #6b2333; color: #ffb3bc; }
+
+  /* Players setup */
+  .player-row { display: flex; gap: 10px; align-items: center; }
+  .player-row .num { width: 44px; height: 44px; flex: none; border-radius: 50%; display: grid; place-items: center; background: var(--card-2); font-weight: 800; color: var(--gold); }
+
+  /* Timer */
+  .timer-wrap { position: relative; width: min(78vw, 440px); aspect-ratio: 1; margin: 0 auto; }
+  .timer-wrap svg { width: 100%; height: 100%; transform: rotate(-90deg); }
+  .timer-wrap .t { position: absolute; inset: 0; display: grid; place-items: center; font-size: clamp(64px, 15vw, 120px); font-weight: 900; font-variant-numeric: tabular-nums; }
+  .timer-wrap.low .t { color: var(--red); animation: beat 1s infinite; }
+  @keyframes beat { 50% { transform: scale(1.05); } }
+  .ring-bg { stroke: var(--card-2); }
+  .ring { stroke: var(--gold); transition: stroke-dashoffset .3s linear, stroke .3s; stroke-linecap: round; }
+  .low .ring { stroke: var(--red); }
+
+  /* Event overlay */
+  .overlay { position: fixed; inset: 0; z-index: 50; display: flex; align-items: center; justify-content: center; padding: 24px;
+    background: rgba(8,9,14,.92); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); animation: flash .9s ease; }
+  @keyframes flash { 0% { background: rgba(255,77,94,.95);} 30% { background: rgba(8,9,14,.92);} 45% { background: rgba(255,77,94,.6);} 100% { background: rgba(8,9,14,.92);} }
+  .overlay .box { width: min(720px, 100%); text-align: center; display: flex; flex-direction: column; gap: 20px; animation: shake .5s ease; }
+  @keyframes shake { 0%,100% { transform: none; } 20% { transform: translateX(-14px) rotate(-1deg);} 40% { transform: translateX(12px) rotate(1deg);} 60% { transform: translateX(-8px);} 80% { transform: translateX(6px);} }
+  .ev-icon { font-size: 90px; line-height: 1; }
+  .ev-title { font-size: clamp(40px, 9vw, 72px); font-weight: 900; color: var(--red); text-transform: uppercase; letter-spacing: .03em; }
+  .ev-text { font-size: clamp(22px, 4vw, 30px); font-weight: 600; line-height: 1.35; }
+  .ev-text b { color: var(--gold); }
+  .countdown { font-size: clamp(120px, 30vw, 220px); font-weight: 900; color: var(--gold); line-height: 1; animation: pop .9s ease; }
+  @keyframes pop { 0% { transform: scale(2.2); opacity: 0;} 40% { transform: scale(1); opacity: 1;} 100% { transform: scale(.9); opacity: .9; } }
+
+  /* Voting */
+  .vote-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; }
+  .vote-grid button { min-height: 110px; font-size: 28px; }
+  .vote-grid button.sel { background: var(--red); color: #1d0307; border-color: var(--red); box-shadow: 0 0 0 4px rgba(255,77,94,.3); }
+
+  /* Reveal */
+  .bars { display: flex; flex-direction: column; gap: 12px; width: 100%; }
+  .bar { display: grid; grid-template-columns: 150px 1fr 40px; gap: 12px; align-items: center; font-size: 22px; font-weight: 700; text-align: left; }
+  .bar .name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .bar .track { height: 30px; background: var(--card-2); border-radius: 999px; overflow: hidden; }
+  .bar .fill { height: 100%; width: 0; background: linear-gradient(90deg, var(--blue), #8b7bff); border-radius: 999px; transition: width 1s cubic-bezier(.2,.8,.2,1); }
+  .bar.top .fill { background: linear-gradient(90deg, #ff8a5b, var(--red)); }
+  .flip { perspective: 1200px; width: min(520px, 100%); height: 300px; margin: 0 auto; }
+  .flip .inner { position: relative; width: 100%; height: 100%; transform-style: preserve-3d; transition: transform 1.1s cubic-bezier(.3,1.4,.4,1); }
+  .flip.go .inner { transform: rotateY(180deg); }
+  .flip .face { position: absolute; inset: 0; backface-visibility: hidden; -webkit-backface-visibility: hidden; border-radius: 28px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; border: 2px solid var(--line); }
+  .flip .front { background: repeating-linear-gradient(45deg, #1a2036 0 18px, #151a2c 18px 36px); font-size: 100px; }
+  .flip .back { transform: rotateY(180deg); background: radial-gradient(circle at 50% 20%, #4a1a26, #170a10); border-color: var(--red); }
+  .flip .back .who { font-size: clamp(44px, 10vw, 76px); font-weight: 900; }
+  .stamp { display: inline-block; font-size: clamp(30px, 7vw, 52px); font-weight: 900; padding: 6px 20px; border: 6px solid currentColor; border-radius: 14px; text-transform: uppercase; transform: rotate(-8deg) scale(3); opacity: 0; }
+  .stamp.show { animation: stamp .45s cubic-bezier(.2,1.6,.4,1) forwards; }
+  @keyframes stamp { to { transform: rotate(-8deg) scale(1); opacity: 1; } }
+  .stamp.caught { color: var(--green); }
+  .stamp.escaped { color: var(--red); }
+  .suspense { font-size: 28px; font-weight: 800; animation: blink 1s infinite; }
+  @keyframes blink { 50% { opacity: .35; } }
+
+  /* Missions check & scoreboard */
+  .check-item { display: flex; gap: 14px; align-items: center; padding: 16px; border-radius: 18px; background: var(--bg-2); border: 1px solid var(--line); }
+  .check-item .txt { flex: 1; }
+  .check-item .who { font-size: 22px; font-weight: 800; }
+  .check-item .what { color: var(--muted); font-size: 17px; margin-top: 4px; line-height: 1.35; }
+  .toggle { min-width: 120px; min-height: 60px; font-size: 18px; }
+  .toggle.on { background: var(--green); color: #032015; border-color: var(--green); }
+  .score-row { display: grid; grid-template-columns: 54px 1fr auto auto; gap: 14px; align-items: center; padding: 14px 18px; border-radius: 18px; background: var(--bg-2); border: 1px solid var(--line); font-size: 24px; font-weight: 800; animation: fadeIn .4s ease both; }
+  .score-row .rank { font-size: 28px; text-align: center; }
+  .score-row .delta { color: var(--green); font-size: 20px; }
+  .score-row .delta.zero { color: var(--muted); }
+  .score-row .pts { font-size: 32px; color: var(--gold); min-width: 60px; text-align: right; font-variant-numeric: tabular-nums; }
+  .score-row.lead { border-color: var(--gold); box-shadow: 0 0 0 2px rgba(242,193,78,.2); }
+
+  .topbar { display: flex; align-items: center; gap: 12px; }
+  .topbar h2 { flex: 1; font-size: 26px; }
+  .rules p, .rules li { font-size: 18px; line-height: 1.5; }
+  .rules h3 { color: var(--gold); margin-top: 8px; }
+  .toast { position: fixed; left: 50%; bottom: max(24px, env(safe-area-inset-bottom)); transform: translateX(-50%); background: var(--card-2); border: 1px solid var(--line); padding: 14px 22px; border-radius: 16px; font-size: 18px; font-weight: 700; z-index: 99; animation: fadeIn .3s ease; }
+  @media (max-width: 520px) {
+    .bar { grid-template-columns: 100px 1fr 30px; font-size: 18px; }
+    button { font-size: 20px; }
+  }
+</style>
+</head>
+<body>
+<div id="app"></div>
+
+<script>
+"use strict";
+
+/* =========================================================
+   INNEHÅLL
+   ========================================================= */
+const WORDS = {
+  "Mat & dryck": ["Pizza","Tacos","Kanelbulle","Surströmming","Köttbullar","Pannkaka","Glass","Sushi","Räksmörgås","Lakrits","Prinsesstårta","Popcorn"],
+  "Djur": ["Älg","Pingvin","Giraff","Igelkott","Bläckfisk","Krokodil","Fladdermus","Sengångare","Flamingo","Hamster"],
+  "Platser": ["Flygplats","Bibliotek","Sjukhus","Fjällstuga","Nöjesfält","Bastu","Tunnelbana","Möbelvaruhus","Camping","Ubåt"],
+  "Sport & spel": ["Bowling","Curling","Golf","Skidskytte","Sumobrottning","Fallskärmshopp","Schack","Tennis","Simhopp","Minigolf"],
+  "Saker i hemmet": ["Paraply","Dammsugare","Tandborste","Ficklampa","Brandsläckare","Hängmatta","Diskborste","Kassaskåp","Brödrost","Väckarklocka"],
+  "Yrken": ["Astronaut","Tandläkare","Brandman","Pirat","Trollkarl","Lokförare","Frisör","Detektiv","Bonde","Clown"],
+  "Högtider & fester": ["Midsommar","Bröllop","Kräftskiva","Lucia","Studentfest","Födelsedag","Nyårsafton","Påsk","Loppis","Skolavslutning"],
+  "Natur & väder": ["Vulkan","Norrsken","Åska","Regnbåge","Snöstorm","Öken","Vattenfall","Grotta","Glaciär","Tsunami"],
+  "Nöje & musik": ["Karaoke","Cirkus","Trumset","Dragspel","Opera","Biograf","Spökhus","Fyrverkeri","Schlager","Dansband"],
+  "Fordon": ["Tandem","Helikopter","Traktor","Husbil","Luftballong","Spårvagn","Moped","Kanot","Rymdraket","Ångbåt"]
+};
+
+const MISSIONS = [
+  "Få någon annan att säga ordet <b>{ORD}</b> högt.",
+  "Få alla vid bordet att skåla.",
+  "Nämn ordet <b>{ORD}</b> i en mening utan att någon märker det.",
+  "Få någon att räcka upp handen.",
+  "Få någon att berätta om sin senaste semester.",
+  "Få någon att nynna eller sjunga en rad ur en låt.",
+  "Få två andra spelare att ge varandra en high five.",
+  "Få någon att resa sig upp.",
+  "Säg ordet ”absolut” tre gånger utan att någon kommenterar det.",
+  "Få någon att skratta högt.",
+  "Få någon att fråga dig ”vad menar du?”.",
+  "Få någon att härma ett djurläte.",
+  "Få någon att titta på klockan eller sin telefon.",
+  "Dra en ordvits som anspelar på <b>{ORD}</b>.",
+  "Få hela gruppen att vara helt tysta i fem sekunder.",
+  "Få någon att ge dig en komplimang.",
+  "Få någon att säga ditt namn två gånger.",
+  "Få någon att peka på dig.",
+  "Få någon att ta en klunk av sin dryck.",
+  "Få någon att säga ”jag håller med”.",
+  "Rita <b>{ORD}</b> i luften med fingret utan att någon frågar varför.",
+  "Få någon att lägga armarna i kors.",
+  "Viska något till en annan spelare utan att bli avbruten.",
+  "Få någon att nämna en färg som passar till <b>{ORD}</b>.",
+  "Få någon att klappa händerna.",
+  "Få någon att berätta ett minne från sin barndom.",
+  "Få någon att säga ett ord som rimmar på <b>{ORD}</b>.",
+  "Få två andra spelare att säga emot varandra.",
+  "Säg ordet ”banan” i ett sammanhang utan att någon reagerar.",
+  "Få någon att gäspa.",
+  "Få någon att ställa en direkt fråga till dig.",
+  "Få någon att svara ”ja” tre gånger i rad på dina frågor.",
+  "Få någon att visa något på sin telefon.",
+  "Få någon att säga ordet ”exakt”.",
+  "Prata med en annan dialekt i en hel mening utan att bli kommenterad.",
+  "Få någon att nämna en känd person.",
+  "Få någon att räkna högt till minst tre.",
+  "Få gruppen att rösta om något helt orelaterat (t.ex. pizza eller tacos).",
+  "Få någon att lova dig något.",
+  "Få någon att säga <b>{ORD}</b> två gånger.",
+  "Få någon att röra vid sin egen näsa eller sitt hår.",
+  "Få någon att räcka dig ett föremål.",
+  "Säg ”när jag var liten …” och få någon att fråga mer om det.",
+  "Få någon att byta sittställning eller flytta sin stol.",
+  "Få minst två personer att säga ”hm” eller ”hmm” samtidigt.",
+  "Använd tre ord som börjar på samma bokstav som <b>{ORD}</b> i rad.",
+  "Få någon att säga ordet ”hemlig” eller ”hemligt”."
+];
+
+const SABOTAGE = [
+  "Få en oskyldig spelare att bli anklagad av minst två personer.",
+  "Få någon att säga ”jag litar på dig” eller liknande till dig.",
+  "Gissa ordet i en vanlig mening – utan att någon fattar att du gissar.",
+  "Starta en diskussion om något helt annat som håller på i minst 20 sekunder.",
+  "Anklaga någon för att vara dubbelagent – innan någon hinner misstänka dig.",
+  "Få två andra spelare att misstänka varandra.",
+  "Utbrist ”Yes!” som om du just klarat ett uppdrag.",
+  "Försvara den spelare som flest misstänker.",
+  "Få någon att säga ditt namn tre gånger.",
+  "Få alla att skåla – precis som om det vore ditt civila uppdrag.",
+  "Upprepa någon annans ledtråd med andra ord, som om den vore din egen.",
+  "Få någon att säga ”det är inte du” till dig.",
+  "Få minst en annan spelare att rösta på samma person som du.",
+  "Ställ tre frågor om ordet utan att bli misstänkt.",
+  "Påstå att du såg någon titta väldigt länge på sin hemliga roll.",
+  "Få någon att ändra sin misstanke till en annan spelare.",
+  "Få någon att skratta åt ett av dina skämt.",
+  "Säg ett ord från din kategori högt och se nöjd ut, som om du var säker.",
+  "Få någon att förklara vad hen menade med sin senaste ledtråd.",
+  "Härma en annan spelares kroppsspråk i en minut utan att bli påkommen.",
+  "Få en spelare att säga högt att någon ”beter sig misstänkt”.",
+  "Låtsas att du har ett uppdrag om att få någon att resa sig upp – och lyckas.",
+  "Få gruppen att prata om dig i positiva ordalag.",
+  "Säg ”det där var väldigt misstänkt” om något en oskyldig sa."
+];
+
+/* =========================================================
+   LAGRING
+   ========================================================= */
+const STORE_KEY = "dubbelagenten.v1";
+function load() {
+  try { return JSON.parse(localStorage.getItem(STORE_KEY)) || {}; } catch (e) { return {}; }
+}
+function save() {
+  try {
+    localStorage.setItem(STORE_KEY, JSON.stringify({
+      names: S.players.map(p => p.name),
+      customWords: S.customWords, customMissions: S.customMissions, customSabotage: S.customSabotage,
+      duration: S.duration, useBuiltIn: S.useBuiltIn
+    }));
+  } catch (e) {}
+}
+
+const saved = load();
+const S = {
+  players: (saved.names && saved.names.length ? saved.names : ["", "", ""]).map(n => ({ name: n, score: 0 })),
+  customWords: saved.customWords || [],      // [{w, c}]
+  customMissions: saved.customMissions || [],
+  customSabotage: saved.customSabotage || [],
+  duration: saved.duration || 300,
+  useBuiltIn: saved.useBuiltIn !== false,
+  round: 0,
+  usedWords: new Set(),
+  r: null,
+  history: []
+};
+
+/* =========================================================
+   HJÄLPARE
+   ========================================================= */
+const $app = document.getElementById("app");
+const esc = s => String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const rnd = n => Math.floor(Math.random() * n);
+const pick = a => a[rnd(a.length)];
+function shuffle(a) { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = rnd(i + 1); [a[i], a[j]] = [a[j], a[i]]; } return a; }
+const fmt = s => { s = Math.max(0, Math.ceil(s)); return Math.floor(s / 60) + ":" + String(s % 60).padStart(2, "0"); };
+function render(html) { $app.innerHTML = `<div class="screen">${html}</div>`; $app.scrollTop = 0; window.scrollTo(0, 0); return $app.firstElementChild; }
+function on(sel, ev, fn, root = $app) { root.querySelectorAll(sel).forEach(el => el.addEventListener(ev, fn)); }
+function toast(msg) { const t = document.createElement("div"); t.className = "toast"; t.textContent = msg; document.body.appendChild(t); setTimeout(() => t.remove(), 2200); }
+const name = i => esc(S.players[i].name);
+
+function wordPool() {
+  const pool = [];
+  if (S.useBuiltIn) for (const c in WORDS) WORDS[c].forEach(w => pool.push({ w, c }));
+  S.customWords.forEach(x => pool.push(x));
+  return pool;
+}
+const missionPool = () => (S.useBuiltIn ? MISSIONS : []).concat(S.customMissions.map(escMission));
+const sabotagePool = () => (S.useBuiltIn ? SABOTAGE : []).concat(S.customSabotage.map(escMission));
+function escMission(m) { return esc(m).replace(/\{ORD\}/gi, "<b>{ORD}</b>"); }
+
+/* =========================================================
+   LJUD, VIBRATION, SKÄRMLÅS
+   ========================================================= */
+let actx = null;
+function audio() {
+  try {
+    if (!actx) actx = new (window.AudioContext || window.webkitAudioContext)();
+    if (actx.state === "suspended") actx.resume();
+  } catch (e) {}
+  return actx;
+}
+document.addEventListener("pointerdown", audio, { once: true });
+function tone(freq, dur = .15, type = "sine", vol = .25, delay = 0) {
+  const ctx = audio(); if (!ctx) return;
+  const t = ctx.currentTime + delay;
+  const o = ctx.createOscillator(), g = ctx.createGain();
+  o.type = type; o.frequency.setValueAtTime(freq, t);
+  g.gain.setValueAtTime(0.0001, t);
+  g.gain.exponentialRampToValueAtTime(vol, t + .01);
+  g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+  o.connect(g).connect(ctx.destination); o.start(t); o.stop(t + dur + .05);
+}
+const sfx = {
+  alarm() { for (let i = 0; i < 6; i++) { tone(i % 2 ? 660 : 880, .16, "square", .2, i * .18); } },
+  tick() { tone(1000, .05, "square", .12); },
+  beep() { tone(740, .18, "triangle", .3); },
+  go() { tone(523, .12, "square", .25); tone(784, .12, "square", .25, .12); tone(1046, .35, "square", .25, .24); },
+  drum() { for (let i = 0; i < 18; i++) tone(90 + rnd(30), .07, "triangle", .3, i * .09); },
+  reveal(good) { (good ? [523, 659, 784, 1046] : [392, 330, 262, 196]).forEach((f, i) => tone(f, .3, good ? "triangle" : "sawtooth", .22, i * .16)); },
+  click() { tone(520, .04, "triangle", .1); },
+  end() { [880, 0, 880, 0, 880, 0, 1175].forEach((f, i) => f && tone(f, .25, "square", .22, i * .14)); }
+};
+function vibrate(p) { try { navigator.vibrate && navigator.vibrate(p); } catch (e) {} }
+let wakeLock = null;
+async function keepAwake(onOff) {
+  try {
+    if (onOff && "wakeLock" in navigator && !wakeLock) { wakeLock = await navigator.wakeLock.request("screen"); wakeLock.addEventListener("release", () => wakeLock = null); }
+    if (!onOff && wakeLock) { await wakeLock.release(); wakeLock = null; }
+  } catch (e) {}
+}
+document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible" && S.r && S.r.running) keepAwake(true); });
+
+/* =========================================================
+   STARTSKÄRM
+   ========================================================= */
+function showHome() {
+  stopTimer();
+  const names = S.players.map((p, i) => `
+    <div class="player-row">
+      <div class="num">${i + 1}</div>
+      <input type="text" class="grow pname" data-i="${i}" value="${esc(p.name)}" placeholder="Spelare ${i + 1}" maxlength="16" autocomplete="off" autocorrect="off" spellcheck="false">
+      ${S.players.length > 3 ? `<button class="icon-btn btn-ghost rm" data-i="${i}" aria-label="Ta bort">✕</button>` : ""}
+    </div>`).join("");
+  render(`
+    <div style="margin-top:12px">
+      <div class="logo">Dubbel<span class="two">agenten</span></div>
+      <div class="tagline">Ett bluffspel för 3–6 spelare – en iPad, en förrädare.</div>
+    </div>
+    <div class="card stack">
+      <div class="label">Spelare</div>
+      ${names}
+      ${S.players.length < 6 ? `<button class="btn-small" id="add">＋ Lägg till spelare</button>` : ""}
+    </div>
+    <div class="card stack">
+      <div class="label">Rundans längd</div>
+      <div class="seg" id="dur">
+        ${[180, 300, 420, 600].map(d => `<button data-d="${d}" class="${S.duration === d ? "on" : ""}">${d / 60} min</button>`).join("")}
+      </div>
+    </div>
+    <button class="btn-primary btn-wide" id="start">Starta spelet</button>
+    <div class="btn-row">
+      <button class="btn-small" id="rules">📖 Regler</button>
+      <button class="btn-small" id="custom">✏️ Egna ord & uppdrag</button>
+    </div>
+  `);
+  const sync = () => document.querySelectorAll(".pname").forEach(el => S.players[+el.dataset.i].name = el.value.trim());
+  on(".pname", "input", () => { sync(); save(); });
+  on(".pname", "keydown", e => { if (e.key === "Enter") e.target.blur(); });
+  on(".rm", "click", e => { sync(); S.players.splice(+e.currentTarget.dataset.i, 1); save(); showHome(); });
+  on("#add", "click", () => { sync(); S.players.push({ name: "", score: 0 }); save(); showHome(); setTimeout(() => { const all = document.querySelectorAll(".pname"); all[all.length - 1].focus(); }, 50); });
+  on("#dur button", "click", e => { S.duration = +e.currentTarget.dataset.d; save(); document.querySelectorAll("#dur button").forEach(b => b.classList.toggle("on", b === e.currentTarget)); });
+  on("#rules", "click", showRules);
+  on("#custom", "click", showCustom);
+  on("#start", "click", () => {
+    sync();
+    const names = S.players.map(p => p.name);
+    if (names.some(n => !n)) return toast("Fyll i alla namn");
+    if (new Set(names.map(n => n.toLowerCase())).size !== names.length) return toast("Två spelare har samma namn");
+    if (wordPool().length < 1) return toast("Det finns inga ord – lägg till egna eller slå på de inbyggda");
+    if (missionPool().length < S.players.length) return toast("För få uppdrag – lägg till fler");
+    if (sabotagePool().length < 2) return toast("Minst två sabotageuppdrag behövs");
+    audio();
+    S.players.forEach(p => p.score = 0);
+    S.round = 0; S.usedWords.clear(); S.history = [];
+    save();
+    startRound();
+  });
+}
+
+/* =========================================================
+   REGLER
+   ========================================================= */
+function showRules() {
+  render(`
+    <div class="topbar"><button class="icon-btn" id="back">‹</button><h2>Så spelar ni</h2></div>
+    <div class="card rules">
+      <h3>Rollerna</h3>
+      <p>Varje runda blir en slumpad spelare <b>Dubbelagent</b>. Alla andra får samma <b>hemliga ord</b> och ett eget <b>hemligt verklighetsuppdrag</b>, t.ex. att få någon att skåla eller att säga ordet. Dubbelagenten får bara ordets <b>kategori</b> och två egna <b>sabotageuppdrag</b>.</p>
+      <h3>Visa rollen i smyg</h3>
+      <p>Skicka runt iPaden. Tryck och håll på rutan för att se din roll – släpp så döljs den. Tryck sedan <i>Dölj & skicka vidare</i>.</p>
+      <h3>Rundan</h3>
+      <p>Prata fritt om ordet – men inte för tydligt, då kan agenten lista ut det! Försök klara ditt uppdrag och hitta förrädaren. Timern kan avbrytas av händelser:</p>
+      <ul>
+        <li><b>Förhör</b> – en spelare grillas med frågor i 30 sekunder.</li>
+        <li><b>Byt platser</b> – två spelare byter plats.</li>
+        <li><b>Snabbröstning</b> – om 3 sekunder pekar alla på den de misstänker. Den med flest fingrar på sig försvarar sig.</li>
+        <li><b>Extra ledtråd</b> – iPaden skickas runt och alla håller in. Bara agenten ser något.</li>
+      </ul>
+      <h3>Röstning & poäng</h3>
+      <ul>
+        <li>Alla röstar i hemlighet i tur och ordning.</li>
+        <li>Fick agenten <b>flest röster</b> (ensam) är hen avslöjad: alla som röstade rätt får <b>+2</b>. Agenten får en chans att gissa ordet – rätt gissning ger agenten <b>+3</b>.</li>
+        <li>Kom agenten undan får agenten <b>+3</b>.</li>
+        <li>Klarade uppdrag: <b>+1</b> per uppdrag (gruppen avgör).</li>
+      </ul>
+    </div>
+    <button class="btn-primary btn-wide" id="back2">Uppfattat</button>
+  `);
+  on("#back,#back2", "click", showHome);
+}
+
+/* =========================================================
+   EGNA ORD & UPPDRAG
+   ========================================================= */
+function showCustom() {
+  const total = Object.values(WORDS).reduce((a, b) => a + b.length, 0);
+  render(`
+    <div class="topbar"><button class="icon-btn" id="back">‹</button><h2>Egna ord & uppdrag</h2></div>
+    <div class="card stack">
+      <div class="row"><div class="grow"><div class="label">Inbyggt innehåll</div><div class="muted">${total} ord · ${MISSIONS.length} uppdrag · ${SABOTAGE.length} sabotage</div></div>
+      <div class="seg" id="bi" style="min-width:220px"><button data-v="1" class="${S.useBuiltIn ? "on" : ""}">På</button><button data-v="0" class="${!S.useBuiltIn ? "on" : ""}">Av</button></div></div>
+    </div>
+    <div class="card stack">
+      <div class="label">Egna ord</div>
+      <div class="muted">Ett per rad, med kategori efter kommatecken – t.ex. <i>Kebabpizza, Mat & dryck</i>. Kategorin är det dubbelagenten får se.</div>
+      <textarea id="w" placeholder="Kebabpizza, Mat & dryck&#10;Mormor, Familj">${esc(S.customWords.map(x => x.w + ", " + x.c).join("\n"))}</textarea>
+    </div>
+    <div class="card stack">
+      <div class="label">Egna verklighetsuppdrag</div>
+      <div class="muted">Ett per rad. Skriv <b>{ORD}</b> där det hemliga ordet ska stå.</div>
+      <textarea id="m" placeholder="Få någon att säga {ORD} med brittisk accent">${esc(S.customMissions.join("\n"))}</textarea>
+    </div>
+    <div class="card stack">
+      <div class="label">Egna sabotageuppdrag</div>
+      <textarea id="s" placeholder="Få någon att byta plats med dig">${esc(S.customSabotage.join("\n"))}</textarea>
+    </div>
+    <button class="btn-primary btn-wide" id="save">Spara</button>
+  `);
+  on("#bi button", "click", e => { S.useBuiltIn = e.currentTarget.dataset.v === "1"; document.querySelectorAll("#bi button").forEach(b => b.classList.toggle("on", b === e.currentTarget)); });
+  const lines = id => document.getElementById(id).value.split("\n").map(s => s.trim()).filter(Boolean);
+  const doSave = () => {
+    S.customWords = lines("w").map(l => {
+      const m = l.split(/[,;]/); const w = m.shift().trim(); const c = m.join(",").trim() || "Hemlig kategori";
+      return { w, c };
+    }).filter(x => x.w);
+    S.customMissions = lines("m");
+    S.customSabotage = lines("s");
+    save();
+  };
+  on("#save", "click", () => { doSave(); toast("Sparat!"); showHome(); });
+  on("#back", "click", () => { doSave(); showHome(); });
+}
+
+/* =========================================================
+   NY RUNDA
+   ========================================================= */
+function startRound() {
+  S.round++;
+  const n = S.players.length;
+  let pool = wordPool().filter(x => !S.usedWords.has(x.w));
+  if (!pool.length) { S.usedWords.clear(); pool = wordPool(); }
+  const wd = pick(pool); S.usedWords.add(wd.w);
+  const agent = rnd(n);
+  const ms = shuffle(missionPool());
+  const missions = {};
+  let k = 0;
+  for (let i = 0; i < n; i++) if (i !== agent) missions[i] = ms[k++ % ms.length].replace(/\{ORD\}/g, esc(wd.w));
+  const sab = shuffle(sabotagePool()).slice(0, 2);
+  const start = (S.round - 1) % n;
+  const order = Array.from({ length: n }, (_, i) => (start + i) % n);
+
+  S.r = {
+    word: wd.w, cat: wd.c, agent, missions, sabotage: sab,
+    order, timeLeft: S.duration, running: false, paused: false,
+    events: scheduleEvents(S.duration), hints: [], votes: {}, done: {}, guessed: false
+  };
+  showRoundIntro();
+}
+
+function scheduleEvents(dur) {
+  const count = Math.max(2, Math.round(dur / 80));
+  const types = shuffle(["forhor", "byt", "snabb", "ledtrad", pick(["forhor", "byt", "snabb"]), pick(["forhor", "snabb"]), "byt", "forhor"]);
+  // se till att ledtråd max förekommer en gång och alltid om möjligt
+  let list = types.filter((t, i) => t !== "ledtrad" || types.indexOf("ledtrad") === i).slice(0, count);
+  if (!list.includes("ledtrad")) list[rnd(list.length)] = "ledtrad";
+  const times = [];
+  const minT = 35, maxT = dur - 30, gap = Math.min(45, (maxT - minT) / count);
+  let tries = 0;
+  while (times.length < list.length && tries++ < 500) {
+    const t = minT + Math.random() * (maxT - minT);
+    if (times.every(x => Math.abs(x - t) >= gap)) times.push(t);
+  }
+  times.sort((a, b) => a - b);
+  return times.map((t, i) => ({ at: dur - t, type: list[i], fired: false })); // at = timeLeft då händelsen sker
+}
+
+function showRoundIntro() {
+  render(`
+    <div class="screen center">
+      <div class="label">Runda ${S.round}</div>
+      <div class="huge">Rollerna delas ut</div>
+      <p class="muted" style="font-size:20px;max-width:560px">Skicka runt iPaden. Var och en håller in för att se sin roll i hemlighet. Titta inte på någon annans skärm!</p>
+      <div class="spacer"></div>
+      <button class="btn-primary btn-wide" id="go">Börja med ${name(S.r.order[0])}</button>
+      <button class="btn-ghost btn-small" id="quit">Avsluta spelet</button>
+    </div>`);
+  on("#go", "click", () => passAround(S.r.order, roleContent, showReady));
+  on("#quit", "click", confirmQuit);
+}
+
+function roleContent(i) {
+  const r = S.r;
+  if (i === r.agent) return {
+    agent: true,
+    html: `<div class="agent-title">🕶️ DU ÄR DUBBELAGENTEN</div>
+      <div class="pill red">Kategori: ${esc(r.cat)}</div>
+      <div class="mission">Smält in – lista ut ordet. Dina sabotageuppdrag:</div>
+      ${r.sabotage.map((s, k) => `<div class="mission">${k + 1}. ${s}</div>`).join("")}`
+  };
+  return {
+    html: `<div class="label">Det hemliga ordet</div>
+      <div class="word">${esc(r.word)}</div>
+      <div class="pill">🎯 Ditt hemliga uppdrag</div>
+      <div class="mission">${r.missions[i]}</div>`
+  };
+}
+
+/* =========================================================
+   SKICKA RUNT (tryck och håll)
+   ========================================================= */
+function passAround(order, contentFn, done, opts = {}) {
+  let step = 0;
+  const next = () => {
+    if (step >= order.length) return done();
+    const i = order[step++];
+    showPass(i, () => showHold(i, contentFn(i), next, step >= order.length, opts));
+  };
+  next();
+}
+
+function showPass(i, cont) {
+  render(`
+    <div class="screen center">
+      <div class="label">Ge iPaden till</div>
+      <div class="pass-name">${name(i)}</div>
+      <p class="muted" style="font-size:20px">Se till att ingen annan tittar.</p>
+      <div class="spacer"></div>
+      <button class="btn-primary btn-wide" id="me">Jag är ${name(i)}</button>
+    </div>`);
+  on("#me", "click", () => { sfx.click(); cont(); });
+}
+
+function showHold(i, content, next, last, opts) {
+  render(`
+    <div class="screen center">
+      <div class="label">${name(i)}</div>
+      <div class="hold ${content.agent ? "agent" : ""}" id="hold">
+        <div class="cover">
+          <div class="fp">👆</div>
+          <div class="big">Tryck och håll</div>
+          <div class="muted" style="font-size:18px">${opts.holdText || "för att se din hemliga roll"}</div>
+        </div>
+        <div class="secret">${content.html}</div>
+      </div>
+      <button class="btn-wide" id="nx" disabled>${last ? (opts.lastText || "Dölj & fortsätt") : "Dölj & skicka vidare"}</button>
+    </div>`);
+  const hold = document.getElementById("hold"), btn = document.getElementById("nx");
+  let shown = 0;
+  const show = e => { e.preventDefault(); hold.classList.add("active"); shown = Date.now(); vibrate(20); };
+  const hide = () => { if (!hold.classList.contains("active")) return; hold.classList.remove("active"); if (Date.now() - shown > 250) btn.disabled = false; };
+  hold.addEventListener("pointerdown", show);
+  ["pointerup", "pointercancel", "pointerleave"].forEach(ev => hold.addEventListener(ev, hide));
+  hold.addEventListener("contextmenu", e => e.preventDefault());
+  hold.addEventListener("touchstart", e => e.preventDefault(), { passive: false });
+  btn.addEventListener("click", () => { sfx.click(); next(); });
+}
+
+/* =========================================================
+   RUNDAN & TIMER
+   ========================================================= */
+function showReady() {
+  render(`
+    <div class="screen center">
+      <div class="label">Runda ${S.round}</div>
+      <div class="huge">Alla har sin roll</div>
+      <p class="muted" style="font-size:20px;max-width:560px">Lägg iPaden mitt på bordet. När timern startar kan händelser avbryta när som helst.</p>
+      <div class="spacer"></div>
+      <button class="btn-primary btn-wide" id="go">▶ Starta timern</button>
+    </div>`);
+  on("#go", "click", () => { sfx.go(); showTimer(); startTimer(); });
+}
+
+const R = 46, C = 2 * Math.PI * R;
+function showTimer() {
+  render(`
+    <div class="topbar"><div class="label grow">Runda ${S.round} · ${S.players.length} spelare</div>
+      <button class="btn-small" id="pause">⏸ Paus</button></div>
+    <div class="spacer"></div>
+    <div class="timer-wrap" id="tw">
+      <svg viewBox="0 0 100 100"><circle class="ring-bg" cx="50" cy="50" r="${R}" fill="none" stroke-width="6"/>
+      <circle class="ring" id="ring" cx="50" cy="50" r="${R}" fill="none" stroke-width="6" stroke-dasharray="${C}" stroke-dashoffset="0"/></svg>
+      <div class="t" id="t">${fmt(S.r.timeLeft)}</div>
+    </div>
+    <p class="muted center" style="text-align:center;font-size:19px" id="hint">Prata om ordet – men avslöja det inte. Vem är förrädaren?</p>
+    <div class="spacer"></div>
+    <button class="btn-danger btn-wide" id="end">🗳️ Avsluta & rösta nu</button>
+  `);
+  updateTimer();
+  on("#pause", "click", togglePause);
+  on("#end", "click", () => { if (confirm("Avsluta rundan och gå till röstning?")) endRound(); });
+}
+
+let tickH = null, lastTs = 0;
+function startTimer() {
+  S.r.running = true; S.r.paused = false; lastTs = Date.now();
+  keepAwake(true);
+  clearInterval(tickH);
+  tickH = setInterval(tick, 200);
+}
+function stopTimer() { clearInterval(tickH); tickH = null; if (S.r) S.r.running = false; keepAwake(false); }
+function tick() {
+  const r = S.r, now = Date.now(), dt = (now - lastTs) / 1000; lastTs = now;
+  if (r.paused) return;
+  const prev = r.timeLeft;
+  r.timeLeft = Math.max(0, r.timeLeft - dt);
+  if (r.timeLeft <= 10 && Math.ceil(prev) !== Math.ceil(r.timeLeft) && r.timeLeft > 0) sfx.tick();
+  updateTimer();
+  const ev = r.events.find(e => !e.fired && r.timeLeft <= e.at);
+  if (ev) { ev.fired = true; fireEvent(ev.type); return; }
+  if (r.timeLeft <= 0) { stopTimer(); sfx.end(); vibrate([400, 150, 400, 150, 600]); timeUp(); }
+}
+function updateTimer() {
+  const t = document.getElementById("t"); if (!t) return;
+  t.textContent = fmt(S.r.timeLeft);
+  document.getElementById("ring").style.strokeDashoffset = C * (1 - S.r.timeLeft / S.duration);
+  document.getElementById("tw").classList.toggle("low", S.r.timeLeft <= 30);
+}
+function togglePause() {
+  S.r.paused = !S.r.paused; lastTs = Date.now();
+  const b = document.getElementById("pause"); if (b) b.textContent = S.r.paused ? "▶ Fortsätt" : "⏸ Paus";
+  const h = document.getElementById("hint"); if (h) h.textContent = S.r.paused ? "Pausat" : "Prata om ordet – men avslöja det inte. Vem är förrädaren?";
+}
+function timeUp() {
+  render(`
+    <div class="screen center">
+      <div class="ev-icon">⏰</div>
+      <div class="huge" style="color:var(--red)">Tiden är ute!</div>
+      <p class="muted" style="font-size:20px">Sluta prata. Dags för hemlig röstning.</p>
+      <div class="spacer"></div>
+      <button class="btn-primary btn-wide" id="v">Till röstningen</button>
+    </div>`);
+  on("#v", "click", endRound);
+}
+
+/* =========================================================
+   HÄNDELSER
+   ========================================================= */
+function overlay(html) {
+  closeOverlay();
+  const o = document.createElement("div"); o.className = "overlay"; o.id = "ov";
+  o.innerHTML = `<div class="box">${html}</div>`;
+  document.body.appendChild(o);
+  return o;
+}
+function closeOverlay() { const o = document.getElementById("ov"); if (o) o.remove(); }
+function resume() { closeOverlay(); clearInterval(evH); showTimer(); S.r.paused = false; lastTs = Date.now(); }
+let evH = null;
+
+function eventCountdown(o, secs, onDone) {
+  const el = o.querySelector(".ev-count"); let left = secs;
+  el.textContent = fmt(left);
+  clearInterval(evH);
+  evH = setInterval(() => {
+    left--; el.textContent = fmt(left);
+    if (left <= 5 && left > 0) sfx.tick();
+    if (left <= 0) { clearInterval(evH); sfx.beep(); vibrate(300); onDone && onDone(); }
+  }, 1000);
+}
+
+function fireEvent(type) {
+  const r = S.r; r.paused = true;
+  sfx.alarm(); vibrate([250, 100, 250, 100, 500]);
+  const others = S.players.map((_, i) => i);
+  if (type === "forhor") {
+    const v = pick(others);
+    const o = overlay(`
+      <div class="ev-icon">🔦</div><div class="ev-title">Förhör!</div>
+      <div class="ev-text"><b>${name(v)}</b> sätts i förhör. Alla andra får ställa frågor om ordet. ${name(v)} svarar med max tre ord per fråga.</div>
+      <div class="big ev-count" style="font-variant-numeric:tabular-nums">0:30</div>
+      <button class="btn-primary btn-wide" id="c">Fortsätt rundan</button>`);
+    eventCountdown(o, 30, () => { o.querySelector(".ev-count").textContent = "Klart!"; });
+    on("#c", "click", resume, o);
+  } else if (type === "byt") {
+    const [a, b] = shuffle(others);
+    const variant = rnd(3);
+    const txt = variant === 0
+      ? `<b>${name(a)}</b> och <b>${name(b)}</b> byter platser – nu!`
+      : variant === 1
+        ? `Alla flyttar <b>en plats åt vänster</b>! Den som sist sitter ner måste säga något om ordet.`
+        : `<b>${name(a)}</b> och <b>${name(b)}</b> byter platser – och måste sitta bredvid varandra resten av rundan.`;
+    const o = overlay(`
+      <div class="ev-icon">🔀</div><div class="ev-title">Byt platser!</div>
+      <div class="ev-text">${txt}</div>
+      <button class="btn-primary btn-wide" id="c">Klart – fortsätt</button>`);
+    on("#c", "click", resume, o);
+  } else if (type === "snabb") {
+    const o = overlay(`
+      <div class="ev-icon">⚡</div><div class="ev-title">Snabbröstning!</div>
+      <div class="ev-text">Om 3 sekunder pekar <b>alla</b> på den de misstänker.</div>
+      <div class="countdown" id="cd">3</div>`);
+    let n = 3; sfx.beep();
+    clearInterval(evH);
+    evH = setInterval(() => {
+      n--;
+      const cd = o.querySelector("#cd");
+      if (n > 0) { cd.textContent = n; cd.style.animation = "none"; void cd.offsetWidth; cd.style.animation = ""; sfx.beep(); vibrate(80); }
+      else {
+        clearInterval(evH); sfx.go(); vibrate([500]);
+        o.querySelector(".box").innerHTML = `
+          <div class="countdown" style="color:var(--red)">PEKA!</div>
+          <div class="ev-text">Den som fick flest fingrar på sig har <b>20 sekunder</b> att försvara sig. Vid lika – alla med flest försvarar sig.</div>
+          <div class="big ev-count">0:20</div>
+          <button class="btn-primary btn-wide" id="c">Fortsätt rundan</button>`;
+        eventCountdown(o, 20, () => { o.querySelector(".ev-count").textContent = "Tiden ute!"; });
+        on("#c", "click", resume, o);
+      }
+    }, 1000);
+  } else if (type === "ledtrad") {
+    const hint = makeHint();
+    const o = overlay(`
+      <div class="ev-icon">🕵️</div><div class="ev-title">Läckt ledtråd!</div>
+      <div class="ev-text">Dubbelagenten får en <b>extra ledtråd</b>. iPaden skickas runt – <b>alla</b> håller in, så ingen vet vem som faktiskt fick något.</div>
+      <button class="btn-primary btn-wide" id="c">Skicka runt</button>`);
+    on("#c", "click", () => {
+      closeOverlay();
+      const order = shuffle(S.players.map((_, i) => i));
+      passAround(order, i => i === r.agent
+        ? { agent: true, html: `<div class="agent-title">🔓 Extra ledtråd</div><div class="mission" style="font-size:30px">${hint}</div><div class="pill red">Kategori: ${esc(r.cat)}</div>` }
+        : { html: `<div class="big">Ingen ledtråd till dig</div><div class="mission muted">Håll kvar en stund och se fundersam ut, så ingen kan avslöja agenten på tiden.</div>` },
+        () => { render(`<div class="screen center"><div class="huge">Alla har tittat</div><div class="spacer"></div><button class="btn-primary btn-wide" id="g">Lägg iPaden på bordet & fortsätt</button></div>`); on("#g", "click", resume); },
+        { holdText: "för att se om du fick en ledtråd", lastText: "Dölj & fortsätt rundan" });
+    }, o);
+  }
+}
+
+function makeHint() {
+  const r = S.r, w = r.word, given = r.hints;
+  const opts = [
+    ["first", `Ordet börjar på <b>${esc(w[0].toUpperCase())}</b>`],
+    ["len", `Ordet har <b>${w.replace(/\s/g, "").length}</b> bokstäver`],
+    ["last", `Ordet slutar på <b>${esc(w[w.length - 1].toLowerCase())}</b>`],
+    ["vowel", `Ordet innehåller <b>${(w.toLowerCase().match(/[aeiouyåäö]/g) || []).length}</b> vokaler`]
+  ].filter(o => !given.includes(o[0]));
+  const h = pick(opts.length ? opts : [["first", `Ordet börjar på <b>${esc(w[0].toUpperCase())}</b>`]]);
+  given.push(h[0]);
+  return h[1];
+}
+
+/* =========================================================
+   RÖSTNING
+   ========================================================= */
+function endRound() {
+  stopTimer(); closeOverlay(); clearInterval(evH);
+  const r = S.r; r.votes = {};
+  render(`
+    <div class="screen center">
+      <div class="ev-icon">🗳️</div>
+      <div class="huge">Hemlig röstning</div>
+      <p class="muted" style="font-size:20px;max-width:560px">iPaden skickas runt. Var och en röstar på den de tror är dubbelagenten. Dubbelagenten röstar också – för att smälta in.</p>
+      <div class="spacer"></div>
+      <button class="btn-primary btn-wide" id="go">Börja med ${name(r.order[0])}</button>
+    </div>`);
+  on("#go", "click", () => voteStep(0));
+}
+
+function voteStep(k) {
+  const r = S.r;
+  if (k >= r.order.length) return showReveal();
+  const v = r.order[k];
+  showPass(v, () => {
+    let sel = null;
+    render(`
+      <div class="label center" style="text-align:center">${name(v)} röstar</div>
+      <div class="big" style="text-align:center">Vem är dubbelagenten?</div>
+      <div class="vote-grid">
+        ${S.players.map((p, i) => i === v ? "" : `<button data-i="${i}">${name(i)}</button>`).join("")}
+      </div>
+      <div class="spacer"></div>
+      <button class="btn-danger btn-wide" id="ok" disabled>Lägg rösten i hemlighet</button>`);
+    on(".vote-grid button", "click", e => {
+      sel = +e.currentTarget.dataset.i; sfx.click();
+      document.querySelectorAll(".vote-grid button").forEach(b => b.classList.toggle("sel", b === e.currentTarget));
+      document.getElementById("ok").disabled = false;
+    });
+    on("#ok", "click", () => {
+      r.votes[v] = sel; sfx.beep(); vibrate(40);
+      render(`<div class="screen center"><div class="ev-icon">✅</div><div class="big">Rösten är lagd</div><div class="spacer"></div>
+        <button class="btn-primary btn-wide" id="n">${k + 1 < r.order.length ? "Skicka vidare" : "Alla har röstat – avslöja!"}</button></div>`);
+      on("#n", "click", () => voteStep(k + 1));
+    });
+  });
+}
+
+/* =========================================================
+   AVSLÖJANDE
+   ========================================================= */
+function tally() {
+  const counts = S.players.map(() => 0);
+  Object.values(S.r.votes).forEach(i => counts[i]++);
+  return counts;
+}
+
+function showReveal() {
+  const r = S.r, counts = tally(), max = Math.max(...counts, 1);
+  const top = counts.reduce((a, c, i) => c === Math.max(...counts) ? a.concat(i) : a, []);
+  r.caught = top.length === 1 && top[0] === r.agent && counts[r.agent] > 0;
+  const order = S.players.map((_, i) => i).sort((a, b) => counts[a] - counts[b]);
+  render(`
+    <div class="screen center">
+      <div class="label">Rösterna räknas</div>
+      <div class="bars card">
+        ${order.map(i => `<div class="bar ${top.includes(i) && counts[i] > 0 ? "top" : ""}" data-i="${i}"><div class="name">${name(i)}</div><div class="track"><div class="fill"></div></div><div class="n">0</div></div>`).join("")}
+      </div>
+      <div class="suspense" id="sus">Och dubbelagenten var …</div>
+      <div class="flip" id="flip">
+        <div class="inner">
+          <div class="face front">❓</div>
+          <div class="face back">
+            <div class="label" style="color:#ffb3bc">Dubbelagenten</div>
+            <div class="who">${name(r.agent)}</div>
+            <div class="stamp ${r.caught ? "caught" : "escaped"}" id="stamp">${r.caught ? "Avslöjad!" : "Kom undan!"}</div>
+          </div>
+        </div>
+      </div>
+      <div class="muted" style="font-size:20px;opacity:0;transition:opacity .5s" id="wordline">Ordet var <b style="color:var(--gold)">${esc(r.word)}</b> (${esc(r.cat)})</div>
+      <div class="spacer"></div>
+      <button class="btn-primary btn-wide" id="nx" style="visibility:hidden">Fortsätt</button>
+    </div>`);
+  const bars = [...document.querySelectorAll(".bar")];
+  bars.forEach((b, k) => setTimeout(() => {
+    const i = +b.dataset.i;
+    b.querySelector(".fill").style.width = (counts[i] / max * 100) + "%";
+    b.querySelector(".n").textContent = counts[i];
+    sfx.tick();
+  }, 500 + k * 450));
+  const t0 = 600 + bars.length * 450;
+  setTimeout(() => sfx.drum(), t0);
+  setTimeout(() => {
+    document.getElementById("flip").classList.add("go");
+    document.getElementById("sus").style.animation = "none";
+  }, t0 + 1700);
+  setTimeout(() => {
+    document.getElementById("stamp").classList.add("show");
+    sfx.reveal(r.caught); vibrate(r.caught ? [100, 60, 100, 60, 300] : [600]);
+  }, t0 + 2700);
+  setTimeout(() => {
+    if (!r.caught) document.getElementById("wordline").style.opacity = 1;
+    const b = document.getElementById("nx"); b.style.visibility = "visible";
+    b.textContent = r.caught ? `${S.players[r.agent].name} får gissa ordet` : "Kolla uppdragen";
+    b.onclick = r.caught ? showGuess : showMissions;
+  }, t0 + 3400);
+}
+
+function showGuess() {
+  const r = S.r;
+  render(`
+    <div class="screen center">
+      <div class="ev-icon">🎯</div>
+      <div class="label">Sista chansen</div>
+      <div class="huge">${name(r.agent)}, gissa ordet!</div>
+      <p class="muted" style="font-size:20px">Säg din gissning högt. Kategori: ${esc(r.cat)}</p>
+      <div class="spacer"></div>
+      <button class="btn-wide" id="show">Visa det hemliga ordet</button>
+    </div>`);
+  on("#show", "click", () => {
+    render(`
+      <div class="screen center">
+        <div class="label">Ordet var</div>
+        <div class="huge" style="color:var(--gold)">${esc(r.word)}</div>
+        <p class="muted" style="font-size:20px">Gissade ${name(r.agent)} rätt?</p>
+        <div class="spacer"></div>
+        <div class="btn-row" style="width:100%">
+          <button class="btn-danger" id="no">Nej, fel</button>
+          <button class="btn-primary" id="yes">Ja, rätt!</button>
+        </div>
+      </div>`);
+    on("#yes", "click", () => { r.guessed = true; sfx.reveal(false); showMissions(); });
+    on("#no", "click", () => { r.guessed = false; sfx.reveal(true); showMissions(); });
+  });
+}
+
+/* =========================================================
+   UPPDRAG & POÄNG
+   ========================================================= */
+function showMissions() {
+  const r = S.r;
+  const items = [];
+  S.players.forEach((p, i) => {
+    if (i === r.agent) r.sabotage.forEach((s, k) => items.push({ key: `a${k}`, who: i, what: "🕶️ " + s }));
+    else items.push({ key: `p${i}`, who: i, what: r.missions[i] });
+  });
+  render(`
+    <div class="topbar"><h2>Klarade ni era uppdrag?</h2></div>
+    <p class="muted" style="margin:0;font-size:18px">Läs upp uppdragen. Gruppen avgör – varje klarat uppdrag ger +1.</p>
+    <div class="stack">
+      ${items.map(it => `<div class="check-item"><div class="txt"><div class="who">${name(it.who)}${it.who === r.agent ? ' <span class="pill red">agent</span>' : ""}</div><div class="what">${it.what}</div></div>
+        <button class="toggle ${r.done[it.key] ? "on" : ""}" data-k="${it.key}">${r.done[it.key] ? "✓ Klarat" : "Nej"}</button></div>`).join("")}
+    </div>
+    <button class="btn-primary btn-wide" id="sc">Visa poängtavlan</button>`);
+  on(".toggle", "click", e => {
+    const b = e.currentTarget, k = b.dataset.k; r.done[k] = !r.done[k]; sfx.click();
+    b.classList.toggle("on", r.done[k]); b.textContent = r.done[k] ? "✓ Klarat" : "Nej";
+  });
+  on("#sc", "click", () => { scoreRound(); showScores(); });
+}
+
+function scoreRound() {
+  const r = S.r;
+  const d = S.players.map(() => 0);
+  if (r.caught) {
+    Object.entries(r.votes).forEach(([v, t]) => { if (+t === r.agent && +v !== r.agent) d[+v] += 2; });
+    if (r.guessed) d[r.agent] += 3;
+  } else d[r.agent] += 3;
+  S.players.forEach((_, i) => {
+    if (i === r.agent) r.sabotage.forEach((_, k) => { if (r.done[`a${k}`]) d[i]++; });
+    else if (r.done[`p${i}`]) d[i]++;
+  });
+  d.forEach((x, i) => S.players[i].score += x);
+  r.delta = d;
+  S.history.push({ round: S.round, agent: S.players[r.agent].name, word: r.word, caught: r.caught });
+}
+
+function showScores(final = false) {
+  const r = S.r;
+  const idx = S.players.map((_, i) => i).sort((a, b) => S.players[b].score - S.players[a].score);
+  const best = S.players[idx[0]].score;
+  const medal = k => ["🥇", "🥈", "🥉"][k] || (k + 1);
+  render(`
+    <div class="center" style="text-align:center">
+      <div class="label">${final ? "Slutresultat" : `Efter runda ${S.round}`}</div>
+      <div class="big">${final ? `🏆 ${idx.filter(i => S.players[i].score === best).map(name).join(" & ")} vinner!` : "Poängtavla"}</div>
+    </div>
+    <div class="stack">
+      ${idx.map((i, k) => `<div class="score-row ${S.players[i].score === best ? "lead" : ""}" style="animation-delay:${k * .12}s">
+        <div class="rank">${medal(k)}</div><div>${name(i)}${r && i === r.agent && !final ? ' <span class="pill red">agent</span>' : ""}</div>
+        <div class="delta ${final || !(r && r.delta && r.delta[i]) ? "zero" : ""}">${!final && r && r.delta && r.delta[i] ? "+" + r.delta[i] : ""}</div>
+        <div class="pts">${S.players[i].score}</div></div>`).join("")}
+    </div>
+    ${S.history.length ? `<div class="card stack"><div class="label">Rundor</div>
+      ${S.history.slice().reverse().map(h => `<div class="row" style="font-size:17px"><span class="muted">#${h.round}</span><span class="grow"><b>${esc(h.agent)}</b> · ${esc(h.word)}</span><span>${h.caught ? "🟢 avslöjad" : "🔴 kom undan"}</span></div>`).join("")}
+    </div>` : ""}
+    <div class="spacer"></div>
+    ${final ? `<button class="btn-primary btn-wide" id="home">Nytt spel</button>` : `
+      <button class="btn-primary btn-wide" id="next">Nästa runda ▶</button>
+      <button class="btn-small btn-ghost" id="fin">Avsluta spelet</button>`}
+  `);
+  on("#next", "click", startRound);
+  on("#fin", "click", () => showScores(true));
+  on("#home", "click", showHome);
+}
+
+function confirmQuit() {
+  if (!confirm("Avsluta spelet och visa slutresultat?")) return;
+  stopTimer(); closeOverlay();
+  if (S.history.length) showScores(true); else showHome();
+}
+
+showHome();
+</script>
+</body>
+</html>

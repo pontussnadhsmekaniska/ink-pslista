@@ -32,3 +32,7 @@ Data sparas lokalt i webbläsaren på telefonen.
 1. Öppna adressen i **Safari**.
 2. Tryck på dela-knappen → **Lägg till på hemskärmen**.
 3. Appen "Handla" hamnar på hemskärmen och i appbiblioteket och öppnas i helskärm.
+
+## Dubbelagenten (spel)
+
+`dubbelagenten.html` är ett fristående bluffspel för 3–6 spelare som delar en iPad. Öppna `https://<användarnamn>.github.io/ink-pslista/dubbelagenten.html` i Safari och lägg gärna till det på hemskärmen.
