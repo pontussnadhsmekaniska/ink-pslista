@@ -111,20 +111,22 @@
   .hold {
     position: relative; width: 100%; min-height: 380px; border-radius: 30px;
     border: 2px dashed var(--line); background: var(--bg-2);
-    display: flex; align-items: center; justify-content: center; text-align: center;
-    padding: 28px; touch-action: none; overflow: hidden;
+    display: grid; align-items: center; justify-items: center; text-align: center;
+    padding: 24px; touch-action: none;
   }
+  .hold > .cover, .hold > .secret { grid-area: 1 / 1; width: 100%; }
   .hold .cover { display: flex; flex-direction: column; align-items: center; gap: 14px; transition: opacity .15s; }
   .hold .fp { width: 120px; height: 120px; border-radius: 50%; display: grid; place-items: center; font-size: 60px;
     background: radial-gradient(circle, #2a3354, #161b2c); border: 2px solid var(--line); animation: pulse 2s infinite; }
   @keyframes pulse { 0%,100% { box-shadow: 0 0 0 0 rgba(242,193,78,.35);} 50% { box-shadow: 0 0 0 22px rgba(242,193,78,0);} }
-  .hold .secret { position: absolute; inset: 0; padding: 28px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; opacity: 0; pointer-events: none; transition: opacity .12s; }
+  .hold .secret { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; opacity: 0; pointer-events: none; transition: opacity .12s; }
   .hold.active { border-style: solid; border-color: var(--gold); }
   .hold.active .cover { opacity: 0; }
   .hold.active .secret { opacity: 1; }
   .hold.agent.active { border-color: var(--red); background: radial-gradient(circle at 50% 30%, #3a1620, var(--bg-2)); }
   .secret .word { font-size: clamp(46px, 10vw, 84px); font-weight: 900; color: var(--gold); line-height: 1; }
-  .secret .agent-title { font-size: clamp(38px, 8vw, 64px); font-weight: 900; color: var(--red); letter-spacing: .02em; }
+  .secret .agent-title { font-size: clamp(30px, 6.5vw, 54px); font-weight: 900; color: var(--red); letter-spacing: .02em; line-height: 1.1; }
+  .hold.agent .secret .mission { font-size: clamp(18px, 3.2vw, 23px); }
   .secret .mission { font-size: clamp(20px, 3.6vw, 26px); font-weight: 600; max-width: 620px; line-height: 1.35; }
   .secret .mission b { color: var(--gold); }
   .pill { display: inline-block; padding: 6px 14px; border-radius: 999px; background: var(--card-2); border: 1px solid var(--line); font-weight: 700; font-size: 16px; }
