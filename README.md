@@ -13,6 +13,9 @@ En liten webbapp för veckans matplanering och inköpslista. Ren HTML/CSS/JS uta
 - **Recept** med mängder, tillvägagångssätt och kategorier – sök på namn eller ingrediens
 - Tillagningstid på recepten och **timers** i stegen som kräver det (justerbara)
 - **Recept från nätet**: sök på ICA, Arla, Köket, Coop m.fl. och importera ett recept genom att klistra in länken
+- **Recept med AI** (när appen är kopplad till träningsappen): fota en kokbokssida eller en skärmbild, klistra in recepttext, sök recept direkt i appen, och läs sidor som saknar receptformat
+- **Har hemma** (basvaror hoppas över), **Varje vecka** (stående varor med ett tryck) och **butiksläge** med din butiks ordning
+- **Vad kan jag laga?** – förslag utifrån det du har hemma
 - Välj antal portioner – mängderna räknas om automatiskt, både i receptet och i inköpslistan
 - Dela listan (via iOS delningsmeny), ångra borttagning, mörkt läge
 - Exportera/importera all data som säkerhetskopia

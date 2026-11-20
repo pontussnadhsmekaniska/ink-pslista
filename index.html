@@ -16,13 +16,14 @@
 <link rel="manifest" href="manifest.webmanifest">
 <style>
   :root {
-    --bg: #f4f1ea;
+    --bg: #f4f4f2;
     --surface: #ffffff;
     --surface-2: #ece8de;
     --text: #1d1f23;
     --muted: #6d6a63;
     --line: #e2ddd1;
-    --accent: #2f7d4f;
+    --ring: #8f897c;
+    --accent: #2a7247;
     --accent-ink: #ffffff;
     --accent-soft: #dcefe2;
     --danger: #b3403a;
@@ -39,6 +40,7 @@
       --text: #eceae4;
       --muted: #9a978f;
       --line: #30343c;
+      --ring: #767b85;
       --accent: #5cc285;
       --accent-ink: #0f1a13;
       --accent-soft: #1f3a2a;
@@ -50,10 +52,15 @@
 
   * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
   html, body { margin: 0; height: 100%; }
+  html { font-size: 17px; }
+  /* Följ iPhones textstorlek (Inställningar → Skärm → Textstorlek) */
+  @media (hover: none) and (pointer: coarse) {
+    @supports (font: -apple-system-body) { html { font: -apple-system-body; } }
+  }
   body {
     background: var(--bg);
     color: var(--text);
-    font: 17px/1.4 -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, sans-serif;
+    font: 1rem/1.4 -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, sans-serif;
     -webkit-font-smoothing: antialiased;
     overscroll-behavior-y: none;
   }
@@ -66,12 +73,12 @@
     padding: calc(env(safe-area-inset-top) + 12px) 16px calc(var(--tabbar-h) + env(safe-area-inset-bottom) + 24px);
   }
 
-  header.top { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; margin: 8px 0 16px; }
-  header.top h1 { font-size: 32px; line-height: 1.1; margin: 0; letter-spacing: -.02em; }
-  header.top .sub { color: var(--muted); font-size: 14px; margin-top: 4px; }
+  header.top { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 8px 0 16px; }
+  header.top h1 { font-size: 1.882rem; line-height: 1.1; margin: 0; letter-spacing: -.02em; }
+  header.top .sub { color: var(--muted); font-size: 0.824rem; margin-top: 4px; }
 
   .icon-btn {
-    width: 40px; height: 40px; border-radius: 50%;
+    width: 44px; height: 44px; border-radius: 50%;
     display: grid; place-items: center;
     background: var(--surface); box-shadow: var(--shadow);
     flex: none;
@@ -88,7 +95,7 @@
   .addbar { display: flex; gap: 8px; padding: 6px; margin-bottom: 12px; position: sticky; top: calc(env(safe-area-inset-top) + 6px); z-index: 5; }
   .addbar input {
     flex: 1; min-width: 0; border: 0; outline: 0; background: transparent;
-    padding: 10px 10px; font-size: 17px;
+    padding: 10px 10px; font-size: 1rem;
   }
   .btn {
     background: var(--accent); color: var(--accent-ink);
@@ -102,15 +109,16 @@
   .chips { display: flex; gap: 8px; overflow-x: auto; padding: 2px 2px 12px; scrollbar-width: none; }
   .chips::-webkit-scrollbar { display: none; }
   .chip {
-    flex: none; background: var(--surface); border: 1px solid var(--line);
-    border-radius: 999px; padding: 6px 12px; font-size: 15px; white-space: nowrap;
+    flex: none; background: var(--surface); border: 1px solid transparent; box-shadow: var(--shadow);
+    min-height: 44px; display: inline-flex; align-items: center;
+    border-radius: 999px; padding: 6px 14px; font-size: 0.882rem; white-space: nowrap;
   }
 
   /* List */
   .group { margin-bottom: 14px; overflow: hidden; }
   .group h2 {
-    margin: 0; padding: 12px 16px 6px; font-size: 13px; text-transform: uppercase;
-    letter-spacing: .06em; color: var(--muted); display: flex; justify-content: space-between;
+    margin: 0; padding: 14px 16px 4px; font-size: 0.82rem; font-weight: 600;
+    color: var(--muted); display: flex; justify-content: space-between;
   }
   .item {
     display: flex; align-items: center; gap: 12px; padding: 10px 16px; min-height: 52px;
@@ -118,44 +126,44 @@
   }
   .group h2 + .item { border-top: 0; }
   .check {
-    width: 26px; height: 26px; border-radius: 50%; border: 2px solid var(--line); flex: none;
+    width: 26px; height: 26px; border-radius: 50%; border: 2px solid var(--ring); flex: none;
     display: grid; place-items: center; transition: background .15s, border-color .15s;
   }
   .check svg { width: 15px; height: 15px; opacity: 0; color: var(--accent-ink); }
   .item.done .check { background: var(--accent); border-color: var(--accent); }
   .item.done .check svg { opacity: 1; }
   .item .name { flex: 1; min-width: 0; overflow-wrap: anywhere; }
-  .item .qty { color: var(--muted); font-size: 15px; white-space: nowrap; }
-  .item .from { display: block; color: var(--muted); font-size: 13px; }
+  .item .qty { color: var(--muted); font-size: 0.882rem; white-space: nowrap; }
+  .item .from { display: block; color: var(--muted); font-size: 0.765rem; }
   .item.done .name { color: var(--muted); text-decoration: line-through; }
-  .item .more { color: var(--muted); padding: 6px; margin-right: -6px; }
+  .item .more { color: var(--muted); padding: 12px; margin: -6px -12px -6px 0; }
   .item .more svg { width: 20px; height: 20px; display: block; }
 
   .empty { text-align: center; color: var(--muted); padding: 48px 24px; }
-  .empty .big { font-size: 44px; margin-bottom: 8px; }
+  .empty .big { font-size: 2.588rem; margin-bottom: 8px; }
 
   .row-actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
 
   /* Week */
   .week-nav { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
-  .week-nav strong { font-size: 17px; }
+  .week-nav strong { font-size: 1rem; }
   .day {
     display: flex; gap: 14px; align-items: center; padding: 12px 16px;
     border-top: 1px solid var(--line); width: 100%; text-align: left;
   }
   .day:first-child { border-top: 0; }
   .day .date { width: 44px; flex: none; text-align: center; }
-  .day .date b { display: block; font-size: 22px; line-height: 1; }
-  .day .date span { font-size: 12px; text-transform: uppercase; color: var(--muted); letter-spacing: .05em; }
+  .day .date b { display: block; font-size: 1.294rem; line-height: 1; }
+  .day .date span { font-size: 0.706rem; text-transform: uppercase; color: var(--muted); letter-spacing: .05em; }
   .day.today .date b, .day.today .date span { color: var(--accent); }
   .day .meal { flex: 1; min-width: 0; }
   .day .meal .placeholder { color: var(--muted); }
-  .day .meal small { display: block; color: var(--muted); font-size: 13px; }
+  .day .meal small { display: block; color: var(--muted); font-size: 0.765rem; }
 
   /* Recipes */
   .recipe { padding: 14px 16px; border-top: 1px solid var(--line); width: 100%; text-align: left; display: block; }
   .recipe:first-child, .group h2 + .recipe { border-top: 0; }
-  .recipe small { display: block; color: var(--muted); font-size: 14px; margin-top: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .recipe small { display: block; color: var(--muted); font-size: 0.824rem; margin-top: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
   /* Tab bar */
   nav.tabs {
@@ -169,13 +177,13 @@
   nav.tabs .inner { display: flex; width: 100%; max-width: 640px; height: var(--tabbar-h); }
   nav.tabs button {
     flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px;
-    font-size: 11px; color: var(--muted); position: relative;
+    font-size: 0.647rem; color: var(--muted); position: relative;
   }
   nav.tabs button svg { width: 25px; height: 25px; }
   nav.tabs button[aria-selected="true"] { color: var(--accent); }
   nav.tabs .badge {
     position: absolute; top: 6px; left: calc(50% + 6px);
-    background: var(--danger); color: #fff; font-size: 11px; font-weight: 700;
+    background: var(--danger); color: #fff; font-size: 0.647rem; font-weight: 700;
     min-width: 18px; height: 18px; border-radius: 9px; padding: 0 5px; display: grid; place-items: center;
   }
 
@@ -194,12 +202,12 @@
   }
   .sheet.open { transform: none; }
   .sheet .grab { width: 40px; height: 5px; border-radius: 3px; background: var(--line); margin: 4px auto 12px; }
-  .sheet h3 { margin: 0 0 14px; font-size: 21px; }
+  .sheet h3 { margin: 0 0 14px; font-size: 1.235rem; }
   .field { display: block; margin-bottom: 12px; }
-  .field > span { display: block; font-size: 13px; color: var(--muted); margin: 0 0 6px 4px; }
+  .field > span { display: block; font-size: 0.765rem; color: var(--muted); margin: 0 0 6px 4px; }
   .field input, .field select, .field textarea {
     width: 100%; background: var(--surface); border: 1px solid var(--line); border-radius: 12px;
-    padding: 12px 14px; outline: none; font-size: 17px;
+    padding: 12px 14px; outline: none; font-size: 1rem;
   }
   .field textarea { min-height: 150px; resize: vertical; line-height: 1.5; }
   .field input:focus, .field select:focus, .field textarea:focus { border-color: var(--accent); }
@@ -213,7 +221,7 @@
     position: fixed; left: 50%; bottom: calc(var(--tabbar-h) + env(safe-area-inset-bottom) + 16px);
     transform: translate(-50%, 20px); opacity: 0; z-index: 30;
     background: var(--text); color: var(--bg); padding: 10px 14px; border-radius: 12px;
-    font-size: 15px; display: flex; gap: 14px; align-items: center; transition: .2s; pointer-events: none;
+    font-size: 0.882rem; display: flex; gap: 14px; align-items: center; transition: .2s; pointer-events: none;
     width: max-content; max-width: calc(100% - 32px);
   }
   .toast.show { opacity: 1; transform: translate(-50%, 0); pointer-events: auto; }
@@ -223,15 +231,15 @@
   /* Recept */
   .search { display: flex; align-items: center; gap: 8px; padding: 4px 12px; margin-bottom: 12px; }
   .search svg { width: 18px; height: 18px; color: var(--muted); flex: none; }
-  .search input { flex: 1; min-width: 0; border: 0; outline: 0; background: transparent; padding: 10px 0; font-size: 17px; -webkit-appearance: none; }
+  .search input { flex: 1; min-width: 0; border: 0; outline: 0; background: transparent; padding: 10px 0; font-size: 1rem; -webkit-appearance: none; }
   .chip.on { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
-  .recipe-meta { color: var(--muted); font-size: 15px; margin: -8px 0 16px; }
+  .recipe-meta { color: var(--muted); font-size: 0.882rem; margin: -8px 0 16px; }
   .stepper { display: flex; align-items: center; justify-content: space-between; padding: 6px; margin-bottom: 16px; }
-  .stepper button { width: 44px; height: 44px; border-radius: 12px; background: var(--surface-2); font-size: 24px; line-height: 1; font-weight: 600; }
+  .stepper button { width: 44px; height: 44px; border-radius: 12px; background: var(--surface-2); font-size: 1.412rem; line-height: 1; font-weight: 600; }
   .stepper button:disabled { opacity: .35; }
-  .stepper span { font-size: 17px; }
-  .stepper b { font-size: 22px; }
-  .sheet h4 { margin: 18px 4px 8px; font-size: 13px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); }
+  .stepper span { font-size: 1rem; }
+  .stepper b { font-size: 1.294rem; }
+  .sheet h4 { margin: 18px 4px 8px; font-size: 0.765rem; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); }
   .ing { display: flex; gap: 12px; padding: 11px 16px; border-top: 1px solid var(--line); }
   .ing:first-child { border-top: 0; }
   .ing .amt { width: 92px; flex: none; color: var(--accent); font-weight: 600; font-variant-numeric: tabular-nums; }
@@ -240,7 +248,7 @@
   .steps li::before {
     content: counter(step); position: absolute; left: 12px; top: 10px;
     width: 24px; height: 24px; border-radius: 50%; background: var(--accent-soft); color: var(--accent);
-    font-size: 13px; font-weight: 700; display: grid; place-items: center;
+    font-size: 0.765rem; font-weight: 700; display: grid; place-items: center;
   }
   .field-row { display: flex; gap: 10px; }
   .field-row .field { flex: 1; min-width: 0; }
@@ -258,14 +266,14 @@
   .in-list .row { display: flex; align-items: center; border-top: 1px solid var(--line); }
   .in-list h2 + .row { border-top: 0; }
   .in-list .open { flex: 1; min-width: 0; text-align: left; padding: 11px 16px; }
-  .in-list .open small { color: var(--muted); font-size: 14px; margin-left: 6px; }
-  .in-list .x { padding: 11px 16px; color: var(--muted); font-size: 18px; line-height: 1; }
+  .in-list .open small { color: var(--muted); font-size: 0.824rem; margin-left: 6px; }
+  .in-list .x { padding: 11px 16px; color: var(--muted); font-size: 1.059rem; line-height: 1; }
 
   /* Timers */
   .timer { display: flex; align-items: center; gap: 6px; margin-top: 8px; flex-wrap: wrap; }
-  .timer button { min-width: 36px; height: 34px; padding: 0 10px; border-radius: 10px; background: var(--surface-2); font-weight: 600; font-size: 15px; }
+  .timer button { min-width: 36px; height: 34px; padding: 0 10px; border-radius: 10px; background: var(--surface-2); font-weight: 600; font-size: 0.882rem; }
   .timer .t-go { background: var(--accent); color: var(--accent-ink); }
-  .timer .t-time { min-width: 64px; text-align: center; font-weight: 700; font-variant-numeric: tabular-nums; font-size: 16px; }
+  .timer .t-time { min-width: 64px; text-align: center; font-weight: 700; font-variant-numeric: tabular-nums; font-size: 0.941rem; }
   .timer.running .t-time { color: var(--accent); }
   .timer.done .t-time { color: var(--danger); animation: blink 1s steps(2) infinite; }
   @keyframes blink { 50% { opacity: .35; } }
@@ -278,26 +286,86 @@
     pointer-events: auto; width: 100%; max-width: 608px; display: flex; align-items: center; gap: 10px;
     background: var(--text); color: var(--bg); border-radius: 14px; padding: 10px 8px 10px 14px; box-shadow: 0 6px 20px rgba(0,0,0,.18);
   }
-  #timerbar .tb .lbl { flex: 1; min-width: 0; text-align: left; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 15px; }
+  #timerbar .tb .lbl { flex: 1; min-width: 0; text-align: left; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 0.882rem; }
   #timerbar .tb .tt { font-weight: 700; font-variant-numeric: tabular-nums; }
   #timerbar .tb.done { background: var(--danger); color: #fff; animation: blink 1s steps(2) infinite; }
-  #timerbar .tb .x { padding: 4px 8px; font-size: 18px; line-height: 1; color: inherit; opacity: .8; }
+  #timerbar .tb .x { padding: 4px 8px; font-size: 1.059rem; line-height: 1; color: inherit; opacity: .8; }
   body.has-timers .app { padding-bottom: calc(var(--tabbar-h) + env(safe-area-inset-bottom) + 90px); }
   body.has-timers .toast { bottom: calc(var(--tabbar-h) + env(safe-area-inset-bottom) + 80px); }
 
   /* Recept från nätet */
   .web { padding: 14px 16px; margin-bottom: 14px; }
-  .web p { margin: 0 0 10px; font-size: 15px; color: var(--muted); }
+  .web p { margin: 0 0 10px; font-size: 0.882rem; color: var(--muted); }
   .web p b { color: var(--text); }
   .web .chips { padding-bottom: 2px; flex-wrap: wrap; overflow: visible; }
   .web .chip { background: var(--surface-2); border-color: transparent; }
   .web + .web { margin-top: -4px; }
   .hero { width: calc(100% + 32px); margin: -8px -16px 14px; aspect-ratio: 16 / 9; object-fit: cover; display: block; background: var(--surface-2); }
-  .source { display: inline-block; margin-top: 14px; color: var(--accent); font-size: 15px; text-decoration: none; }
+  .source { display: inline-block; margin-top: 14px; color: var(--accent); font-size: 0.882rem; text-decoration: none; }
+  .groups { overflow: hidden; margin-bottom: 14px; }
+  .groups .group { margin: 0; }
+  .groups .group + .group { border-top: 1px solid var(--line); }
+  .linkbtn { min-height: 44px; display: inline-flex; align-items: center; color: var(--accent); font-size: 0.824rem; padding: 4px 0; text-align: left; }
+  .helpinline { display: flex; margin: -10px 0 -12px; }
+  .helpline { text-align: center; margin: 12px 0 0; }
+  .helptoc { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; }
+  .helptoc-link { background: var(--surface); border-radius: 999px; padding: 6px 12px; font-size: 0.824rem; box-shadow: var(--shadow); }
+  .helpsec { background: var(--surface); border-radius: var(--radius); padding: 2px 16px 12px; margin-top: 12px; scroll-margin-top: 12px; }
+  .sheet .helpsec h4 { margin: 14px 0 6px; font-size: 1rem; text-transform: none; letter-spacing: 0; color: var(--text); }
+  .helpsec p, .helpsec li { font-size: 0.882rem; }
+  .helpsteps { padding-left: 20px; margin: 6px 0; display: flex; flex-direction: column; gap: 4px; }
+  .helptip { margin: 10px 0; padding: 8px 12px; border-left: 3px solid var(--accent); background: var(--accent-soft); border-radius: 0 10px 10px 0; font-size: 0.882rem; }
+  .helpq { border-top: 1px solid var(--line); padding: 10px 0; }
+  .helpq summary { cursor: pointer; font-weight: 600; font-size: 0.882rem; }
+  .helpq div { margin-top: 6px; color: var(--muted); font-size: 0.882rem; }
+  .welcome { padding: 14px 16px; margin-bottom: 14px; font-size: 0.882rem; }
+  .welcome ul { padding-left: 18px; margin: 8px 0 12px; display: flex; flex-direction: column; gap: 4px; }
+  .welcome-actions { display: flex; gap: 8px; }
+  .welcome-actions .btn { flex: 1; padding: 11px; }
+  .drop-on { background: var(--accent-soft) !important; outline: 2px dashed var(--accent); }
+  @media (min-width: 980px) {
+    .app.wide-week { max-width: 1180px; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 32px; align-items: start; }
+    .app.wide-week #view-recipes { position: sticky; top: 12px; max-height: calc(100vh - var(--tabbar-h) - 24px); overflow-y: auto; padding-bottom: 12px; }
+    .app.wide-week #view-recipes .recipe { cursor: grab; }
+  }
+  .text-btn { background: none; border: 0; color: var(--accent); font: inherit; font-weight: 600; font-size: 1rem; padding: 10px 6px; cursor: pointer; }
+  .cat-ico { display: inline-grid; place-items: center; width: 1.5em; height: 1.5em; border-radius: 50%; background: var(--surface-2); margin-right: 8px; font-size: 1.05em; vertical-align: -0.35em; text-transform: none; }
+  .item.pop .check { animation: pop .28s ease-out; }
+  @keyframes pop { 0% { transform: scale(.8); } 60% { transform: scale(1.15); } 100% { transform: scale(1); } }
+  .item.swiping { color: var(--text); }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 8px; }
+  .addbar:focus-within { box-shadow: 0 0 0 2px var(--accent), var(--shadow); }
+  @media (hover: hover) {
+    .pick:hover, .recipe:hover, .item:hover, .day:hover { background: var(--surface-2); }
+    .chip:hover, .icon-btn:hover, .btn.ghost:hover { filter: brightness(.97); }
+    .btn:hover { filter: brightness(1.08); }
+    .linkbtn:hover { text-decoration: underline; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { transition-duration: 0s !important; animation: none !important; scroll-behavior: auto !important; }
+  }
+  .recipe .cat-ico { float: left; margin: 2px 12px 0 0; width: 2.1em; height: 2.1em; font-size: 1em; }
+  .icon-mini { min-width: 44px; min-height: 44px; border-radius: 10px; background: var(--surface-2); font-size: 18px; }
+  .icon-mini:disabled { opacity: .3; }
+  .train-tag { display: block; color: var(--muted); font-size: .76rem; margin-top: 2px; }
+  .train-tag.hard { color: var(--accent); font-weight: 600; }
+  .cook-btn { width: 100%; margin-bottom: 14px; padding: 13px; }
+  #shopbar { display: none; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 12px 10px 16px; margin-bottom: 12px; font-weight: 600; }
+  body.shopping #shopbar { display: flex; }
+  body.shopping #add-form, body.shopping #quick-chips, body.shopping #welcome, body.shopping #list-recipes, body.shopping #list-tabs { display: none !important; }
+  body.shopping .item { min-height: 64px; font-size: 1.15rem; }
+  body.shopping .check { width: 32px; height: 32px; }
+  body.shopping .group.cart { opacity: .75; }
+  body.shopping #shop-mode { background: var(--accent); color: var(--accent-ink); }
+  .avatar { width: 48px; height: 48px; border-radius: 50%; flex: none; display: grid; place-items: center; background: var(--accent); color: #fff; font-weight: 700; font-size: 1.176rem; }
+  #sync-dot { width: 9px; height: 9px; border-radius: 50%; flex: none; align-self: center; margin: 0 10px 0 auto; background: var(--muted); opacity: .5; }
+  #sync-dot[data-state="off"] { display: none; }
+  #sync-dot[data-state="ok"] { background: #34a853; opacity: .9; }
+  #sync-dot[data-state="offline"] { background: #f29900; opacity: .9; }
   .spinner { width: 18px; height: 18px; border: 2.5px solid currentColor; border-right-color: transparent; border-radius: 50%; animation: spin .7s linear infinite; display: inline-block; }
   @keyframes spin { to { transform: rotate(360deg); } }
 
-  .hint { color: var(--muted); font-size: 14px; margin: 4px 4px 14px; }
+  .hint { color: var(--muted); font-size: 0.824rem; margin: 4px 4px 14px; }
   [hidden] { display: none !important; }
 </style>
 </head>
@@ -312,7 +380,10 @@
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
         </button>
         <div class="sub" id="list-sub"></div>
+        <button class="linkbtn helpinline" data-help="list">? Hjälp om listan</button>
       </div>
+      <span id="sync-dot" data-state="off" role="status"></span>
+      <button class="text-btn" id="shop-mode">Handla</button>
       <button class="icon-btn" id="list-menu" aria-label="Fler val">
         <svg viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg>
       </button>
@@ -327,6 +398,8 @@
     </form>
     <datalist id="suggestions"></datalist>
     <div class="chips" id="quick-chips"></div>
+    <div id="shopbar" class="card"><span>Butiksläge <small style="display:block;font-weight:400;color:var(--muted)">Skärmen släcks inte</small></span><button class="btn" id="shop-done">Klar</button></div>
+    <div id="welcome"></div>
     <div id="list-recipes"></div>
     <div id="list"></div>
   </section>
@@ -337,6 +410,7 @@
       <div>
         <h1>Veckomeny</h1>
         <div class="sub" id="week-sub"></div>
+        <button class="linkbtn helpinline" data-help="week">? Hjälp om veckomenyn</button>
       </div>
     </header>
     <div class="week-nav">
@@ -354,12 +428,24 @@
     </div>
   </section>
 
+  <!-- PROFIL -->
+  <section id="view-profile" hidden>
+    <header class="top">
+      <div>
+        <h1>Profil</h1>
+        <div class="sub" id="profile-sub"></div>
+        <button class="linkbtn helpinline" data-help="account">? Hjälp om konto och delning</button>
+      </div>
+    </header>
+    <div id="profile"></div>
+  </section>
   <!-- RECEPT -->
   <section id="view-recipes" hidden>
     <header class="top">
       <div>
         <h1>Recept</h1>
-        <div class="sub">Sök bland dina recept eller hitta nya på nätet</div>
+        <div class="sub" id="recipes-sub"></div>
+        <button class="linkbtn helpinline" data-help="recipes">? Hjälp om recept</button>
       </div>
       <button class="icon-btn" id="recipe-add" aria-label="Lägg till recept">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
@@ -388,6 +474,10 @@
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3v8a3 3 0 0 0 6 0V3M9 3v18M18 21V3c-2 1-3 4-3 8h3"/></svg>
       Recept
     </button>
+    <button role="tab" data-view="profile" aria-selected="false">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+      Profil
+    </button>
   </div>
 </nav>
 
@@ -414,10 +504,12 @@ const CATEGORIES = [
   { id: "dryck",   name: "Dryck",          emoji: "🧃" },
   { id: "snacks",  name: "Godis & snacks", emoji: "🍫" },
   { id: "hushall", name: "Hushåll & hygien",emoji: "🧻" },
+  { id: "apotek",  name: "Apotek & tillskott", emoji: "💊" },
   { id: "ovrigt",  name: "Övrigt",         emoji: "🛒" },
 ];
 
 const KEYWORDS = {
+  apotek: "tillskott vitamin vitaminer kreatin proteinpulver proteinbar magnesium zink omega järn elektrolyt elektrolyter sportdryck gel energigel ibuprofen alvedon ipren paracetamol värktablett plåster nässpray halstablett multivitamin",
   frukt: "äpple banan apelsin citron lime päron druv kiwi mango avokado melon jordgubb hallon blåbär tomat gurka sallad isberg ruccola spenat paprika lök vitlök purjo morot potatis sötpotatis broccoli blomkål zucchini squash aubergine champinjon svamp kål vitkål rödkål grönkål selleri ingefära chili koriander persilja basilika dill gräslök majskolv sparris bönor ärtor rädis rödbet palsternacka fänkål granatäpple frukt grönsak",
   brod: "bröd limpa knäckebröd baguette fralla frallor tortilla pitabröd hamburgerbröd korvbröd tunnbröd rostbröd surdeg bagel croissant kanelbulle",
   mejeri: "mjölk filmjölk yoghurt grädde matlagningsgrädde gräddfil crème creme fraiche smör margarin bregott ost riven parmesan mozzarella fetaost halloumi kvarg keso ägg havredryck mellanmjölk lättmjölk",
@@ -514,7 +606,10 @@ function defaultState() {
   return {
     lists: [first],      // {id, name, items: [{id, name, qty, cat, done, from}], recipes: [{recipeId, name, servings}]}
     activeList: first.id,
-    recipes: DEFAULT_RECIPES.map(r => ({ id: uid(), ...r })),
+    recipes: [],          // nya börjar tomt; exempelrecept erbjuds i Recept
+    pantry: [],           // "Har hemma": hoppas över när recept läggs i listan
+    staples: [],          // "Varje vecka": läggs till med ett tryck
+    catOrder: [],         // butikens ordning (avdelnings-id)
     plan: {},            // "2026-10-12": {recipeId?, text?}
     history: {},         // varunamn (gemener) -> {name, cat, count}
     catOverrides: {},    // varunamn (gemener) -> cat
@@ -560,6 +655,7 @@ let weekOffset = 0;
 
 function save() {
   try { localStorage.setItem(STORE_KEY, JSON.stringify(state)); } catch (e) { /* ignorera */ }
+  schedulePush();
 }
 
 function commit() { save(); render(); }
@@ -578,6 +674,7 @@ const cap = s => s.charAt(0).toUpperCase() + s.slice(1);
 const UNITS = "st|g|kg|hg|l|dl|cl|ml|pkt|paket|burk|burkar|förp|påse|påsar|flaska|flaskor|tsk|msk|krm|kruka|krukor|knippe|knippen|bit|bitar|skiva|skivor|klyfta|klyftor|näve|nävar";
 const NUM = "\\d+(?:[.,]\\d+)?(?:\\/\\d+)?|[½¼¾⅓⅔]";
 const ENTRY_RE = new RegExp(`^((?:${NUM})(?:\\s*-\\s*(?:${NUM}))?)\\s*(${UNITS})?\\.?\\s+(.+)$`, "i");
+const TRAIL_RE = new RegExp(`^(.+?)\\s+((?:${NUM})(?:\\s*-\\s*(?:${NUM}))?)\\s*(${UNITS})\\.?$`, "i");
 const QTY_RE = new RegExp(`^(${NUM})(?:\\s*-\\s*(${NUM}))?\\s*(.*)$`, "i");
 const COUNT_UNITS = /^(st|burk|burkar|pkt|paket|förp|påse|påsar|flaska|flaskor|kruka|krukor|knippe|knippen|bit|bitar|skiva|skivor|klyfta|klyftor|näve|nävar)?$/i;
 
@@ -586,6 +683,7 @@ function parseEntry(text) {
   let qty = "";
   let m = t.match(ENTRY_RE);
   if (m) { qty = (m[1] + (m[2] ? " " + m[2] : "")).trim(); t = m[3]; }
+  else if ((m = t.match(TRAIL_RE))) { t = m[1]; qty = (m[2] + " " + m[3]).trim(); }
   else if ((m = t.match(/^(.+?)\s*[x×]\s*(\d+)$/i))) { t = m[1]; qty = m[2]; }
   return { qty, name: cap(t) };
 }
@@ -616,6 +714,16 @@ function roundNice(n, unit) {
   return Math.max(.25, Math.round(n * 4) / 4);
 }
 
+// Styckenheter i singular och plural: "1 burk" + "1 burk" -> "2 burkar"
+const UNIT_FORMS = [["burk", "burkar"], ["påse", "påsar"], ["flaska", "flaskor"], ["kruka", "krukor"], ["knippe", "knippen"],
+  ["bit", "bitar"], ["skiva", "skivor"], ["klyfta", "klyftor"], ["näve", "nävar"]];
+const unitForm = unit => UNIT_FORMS.find(f => f.includes((unit || "").toLowerCase()));
+const sameUnit = (a, b) => a.toLowerCase() === b.toLowerCase() || (!!unitForm(a) && unitForm(a) === unitForm(b));
+function unitFor(unit, n) {
+  const f = unitForm(unit);
+  return f ? (n > 1 ? f[1] : f[0]) : unit;
+}
+
 function scaleQty(qty, factor) {
   if (!qty || factor === 1) return qty;
   const p = parseQty(qty);
@@ -623,9 +731,10 @@ function scaleQty(qty, factor) {
   if (p.hi == null && /^(g|ml)$/i.test(p.unit) && p.lo * factor >= 1000) {
     return fromBase(roundNice(p.lo * factor, p.unit), p.unit.toLowerCase());
   }
-  const lo = fmtNum(roundNice(p.lo * factor, p.unit));
-  const hi = p.hi != null ? "-" + fmtNum(roundNice(p.hi * factor, p.unit)) : "";
-  return lo + hi + (p.unit ? " " + p.unit : "");
+  const loN = roundNice(p.lo * factor, p.unit);
+  const hiN = p.hi != null ? roundNice(p.hi * factor, p.unit) : null;
+  const unit = unitFor(p.unit, hiN ?? loN);
+  return fmtNum(loN) + (hiN != null ? "-" + fmtNum(hiN) : "") + (unit ? " " + unit : "");
 }
 
 // Vikt och volym räknas om till gram/milliliter så att t.ex. "1 kg" + "500 g" kan slås ihop
@@ -643,9 +752,39 @@ function mergeQty(a, b) {
   if (pa && pb && pa.hi == null && pb.hi == null) {
     const ua = BASE_UNITS[pa.unit.toLowerCase()], ub = BASE_UNITS[pb.unit.toLowerCase()];
     if (ua && ub && ua[0] === ub[0]) return fromBase(pa.lo * ua[1] + pb.lo * ub[1], ua[0]);
-    if (pa.unit.toLowerCase() === pb.unit.toLowerCase()) return fmtNum(pa.lo + pb.lo) + (pa.unit ? " " + pa.unit : "");
+    if (sameUnit(pa.unit, pb.unit)) {
+      const n = pa.lo + pb.lo, unit = unitFor(pa.unit, n);
+      return fmtNum(n) + (unit ? " " + unit : "");
+    }
   }
   return a + " + " + b;
+}
+
+// Drar av en mängd, t.ex. när ett recept tas bort ur listan: "1 kg" - "500 g" -> "500 g".
+// "" betyder att inget blir kvar; null att det inte gick att räkna ut.
+function subtractQty(a, b) {
+  if (!b) return a;
+  if (!a) return null;
+  const parts = a.split(" + ");
+  if (parts.length > 1) {
+    for (let i = 0; i < parts.length; i++) {
+      const rest = subtractQty(parts[i], b);
+      if (rest == null) continue;
+      const left = parts.slice(); if (rest) left[i] = rest; else left.splice(i, 1);
+      return left.join(" + ");
+    }
+    return null;
+  }
+  const pa = parseQty(a), pb = parseQty(b);
+  if (!pa || !pb || pa.hi != null || pb.hi != null) return null;
+  const ua = BASE_UNITS[pa.unit.toLowerCase()], ub = BASE_UNITS[pb.unit.toLowerCase()];
+  if (ua && ub && ua[0] === ub[0]) {
+    const n = pa.lo * ua[1] - pb.lo * ub[1];
+    return n > 1e-6 ? fromBase(+n.toFixed(4), ua[0]) : "";
+  }
+  if (!sameUnit(pa.unit, pb.unit)) return null;
+  const n = pa.lo - pb.lo, unit = unitFor(pa.unit, n);
+  return n > 1e-6 ? fmtNum(n) + (unit ? " " + unit : "") : "";
 }
 
 function guessCategory(name) {
@@ -706,22 +845,28 @@ const MONTHS = ["jan", "feb", "mar", "apr", "maj", "jun", "jul", "aug", "sep", "
 
 /* ---------- Rendering ---------- */
 
+let justToggled = null;   // den vara som just bockades av (får en liten animation)
 const ICON_CHECK = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>`;
-const ICON_MORE = `<svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="12" cy="19" r="1.8"/></svg>`;
+const ICON_MORE = `<svg viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="19" cy="12" r="1.8"/></svg>`;
 
 function render() {
   document.querySelectorAll("nav.tabs button").forEach(b => b.setAttribute("aria-selected", b.dataset.view === view));
   $("#view-list").hidden = view !== "list";
   $("#view-week").hidden = view !== "week";
-  $("#view-recipes").hidden = view !== "recipes";
+  const side = isWide() && view === "week";
+  document.querySelector(".app").classList.toggle("wide-week", side);
+  $("#view-recipes").hidden = view !== "recipes" && !side;
+  $("#view-profile").hidden = view !== "profile";
 
   const left = cur().items.filter(i => !i.done).length;
   const badge = $("#badge");
-  badge.hidden = left === 0; badge.textContent = left;
+  badge.hidden = true; badge.textContent = left;
 
   if (view === "list") renderList();
   if (view === "week") renderWeek();
-  if (view === "recipes") renderRecipes();
+  $("#recipes-sub").textContent = side ? "Dra ett recept till en dag i veckan" : "";
+  if (view === "recipes" || side) renderRecipes();
+  if (view === "profile") renderProfile();
 }
 
 function renderList() {
@@ -735,7 +880,7 @@ function renderList() {
   }).join("");
 
   $("#list-recipes").innerHTML = list.recipes.length ? `<div class="card in-list">
-    <h2 style="margin:0;padding:12px 16px 6px;font-size:13px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)">🍽️ Recept i listan</h2>
+    <h2 style="margin:0;padding:12px 16px 6px;font-size: 0.765rem;color:var(--muted)">Recept i listan</h2>
     ${list.recipes.map(x => `<div class="row">
       <button class="open" data-open-recipe="${x.recipeId}">${esc(x.name)}<small>${x.servings} port.</small></button>
       <button class="x" data-remove-recipe="${x.recipeId}" aria-label="Ta bort ${esc(x.name)} ur listan">✕</button>
@@ -743,15 +888,16 @@ function renderList() {
 
   const total = cur().items.length;
   const done = cur().items.filter(i => i.done).length;
-  $("#list-sub").textContent = total
-    ? (done === total ? "Allt handlat! 🎉" : `${total - done} kvar av ${total}`)
-    : "Listan är tom";
+  const who = whoSees(list);
+  $("#list-sub").textContent = (total
+    ? (done === total ? "Allt handlat!" : `${total - done} kvar av ${total}`)
+    : "Listan är tom") + (who ? " · " + who : "");
   const prog = $("#progress");
   prog.hidden = total === 0;
   prog.firstElementChild.style.width = total ? (done / total * 100) + "%" : "0";
 
   // Snabbval: mest köpta varor som inte redan står på listan
-  const onList = new Set(cur().items.filter(i => !i.done).map(i => key(i.name)));
+  const onList = new Set(cur().items.map(i => key(i.name)));
   const frequent = Object.values(state.history)
     .filter(h => !onList.has(key(h.name)))
     .sort((a, b) => b.count - a.count)
@@ -761,22 +907,23 @@ function renderList() {
 
   $("#suggestions").innerHTML = Object.values(state.history).map(h => `<option value="${esc(h.name)}">`).join("");
 
+  $("#welcome").innerHTML = welcomeHtml();
   const box = $("#list");
   if (!total) {
-    box.innerHTML = `<div class="empty"><div class="big">🧺</div>Skriv in det du behöver ovan,<br>eller planera veckan under <b>Veckomeny</b>.</div>`;
+    box.innerHTML = `<div class="empty">Skriv in det du behöver ovan,<br>eller planera veckan under <b>Veckomeny</b>.</div>`;
     return;
   }
 
-  const visible = cur().items.filter(i => !(state.hideDone && i.done));
+  const visible = cur().items.filter(i => !(state.hideDone && i.done) && !(shopping && i.done));
   let html = "";
-  for (const c of CATEGORIES) {
+  for (const c of orderedCats()) {
     const items = visible.filter(i => i.cat === c.id)
       .sort((a, b) => (a.done - b.done) || a.name.localeCompare(b.name, "sv"));
     if (!items.length) continue;
     const remaining = items.filter(i => !i.done).length;
-    html += `<div class="group card"><h2><span>${c.emoji} ${c.name}</span><span>${remaining || "✓"}</span></h2>`;
+    html += `<div class="group"><h2><span>${c.name}</span><span>${remaining || "✓"}</span></h2>`;
     for (const i of items) {
-      html += `<div class="item${i.done ? " done" : ""}" data-toggle="${i.id}">
+      html += `<div class="item${i.done ? " done" : ""}${i.id === justToggled ? " pop" : ""}" data-toggle="${i.id}">
         <span class="check">${ICON_CHECK}</span>
         <span class="name">${esc(i.name)}${i.from ? `<span class="from">${esc(i.from)}</span>` : ""}</span>
         ${i.qty ? `<span class="qty">${esc(i.qty)}</span>` : ""}
@@ -785,6 +932,12 @@ function renderList() {
     }
     html += `</div>`;
   }
+  if (shopping && done) {
+    const inCart = cur().items.filter(i => i.done).sort((a, b) => a.name.localeCompare(b.name, "sv"));
+    html += `<div class="group cart"><h2><span>I korgen</span><span>${inCart.length}</span></h2>` +
+      inCart.map(i => `<div class="item done" data-toggle="${i.id}"><span class="check">${ICON_CHECK}</span><span class="name">${esc(i.name)}</span>${i.qty ? `<span class="qty">${esc(i.qty)}</span>` : ""}</div>`).join("") + `</div>`;
+  }
+  html = `<div class="card groups">${html}</div>`;
   if (state.hideDone && done) html += `<p class="hint" style="text-align:center">${done} avbockade varor dolda</p>`;
   box.innerHTML = html;
 }
@@ -810,10 +963,11 @@ function renderWeek() {
     html += `<button class="day${iso === today ? " today" : ""}" data-day="${iso}">
       <span class="date"><span>${DAYS_SHORT[d]}</span><b>${date.getDate()}</b></span>
       <span class="meal">${label ? esc(label) : `<span class="placeholder">Välj middag…</span>`}
-        ${r ? `<small>${planServings(p, r)} portioner${r.time ? " · " + fmtTime(r.time) : ""}</small>` : ""}</span>
+        ${r ? `<small>${planServings(p, r)} portioner${r.time ? " · " + fmtTime(r.time) : ""}</small>` : ""}${trainingTag(iso)}</span>
     </button>`;
   }
   $("#days").innerHTML = html;
+  loadTrainingDays(isoDate(mon));
   $("#week-to-list").disabled = planned === 0;
   $("#week-to-list").style.opacity = planned ? 1 : .5;
 }
@@ -832,35 +986,45 @@ function renderRecipes() {
   if (recipeCatFilter && !used.some(c => c.name === recipeCatFilter)) recipeCatFilter = "";
   $("#recipe-cats").innerHTML = used.length > 1
     ? `<button class="chip${recipeCatFilter ? "" : " on"}" data-rcat="">Alla</button>` +
-      used.map(c => `<button class="chip${recipeCatFilter === c.name ? " on" : ""}" data-rcat="${esc(c.name)}">${c.emoji} ${esc(c.name)}</button>`).join("")
+      used.map(c => `<button class="chip${recipeCatFilter === c.name ? " on" : ""}" data-rcat="${esc(c.name)}">${esc(c.name)}</button>`).join("")
     : "";
 
   const box = $("#recipes");
-  if (!state.recipes.length) {
-    box.innerHTML = `<div class="card empty"><div class="big">📖</div>Inga recept än. Tryck på + för att lägga till.</div>`;
+  const cook = !recipeQuery ? `<button class="btn ghost cook-btn" data-cook>Vad kan jag laga av det jag har?${isLinked() ? "" : " <small style='color:var(--muted)'>(logga in)</small>"}</button>` : "";
+  if (!state.recipes.length && !recipeQuery) {
+    box.innerHTML = cook + `<div class="card empty">Inga recept än. Tryck på + för att lägga till ett, eller börja med några vanliga.
+      <button class="btn" data-defaults style="margin-top:14px">Lägg till 7 vanliga recept</button></div>`;
     return;
   }
   if (isUrl(recipeQuery)) {
     box.innerHTML = `<div class="card web"><p>Det där ser ut som en länk till ett recept.</p>
-      <button class="btn" data-import="${esc(recipeQuery)}" style="width:100%">🔗 Hämta receptet</button></div>`;
+      <button class="btn" data-import="${esc(recipeQuery)}" style="width:100%">Hämta receptet</button></div>`;
     return;
   }
   const hits = state.recipes.filter(r => (!recipeCatFilter || r.category === recipeCatFilter) && recipeMatches(r, recipeQuery));
-  const web = recipeQuery ? webSearchHtml(recipeQuery) : "";
+  const web = recipeQuery ? webResultsHtml(recipeQuery) + webSearchHtml(recipeQuery) : "";
   if (!hits.length) {
-    box.innerHTML = `<div class="card empty" style="padding:28px 24px"><div class="big">🔍</div>Du har inget sparat recept som matchar.</div>` + web;
+    box.innerHTML = `<div class="card empty" style="padding:28px 24px">Du har inget sparat recept som matchar.</div>` + web;
+    return;
+  }
+  const row = r => `<button class="recipe" data-recipe="${r.id}" draggable="${isWide() ? "true" : "false"}"><b>${esc(r.name)}</b>
+      <small>${r.time ? `${fmtTime(r.time)} · ` : ""}${r.servings} portioner · ${r.ingredients.length} ingredienser</small></button>`;
+  // Få recept per kategori: en enkel lista med kategorin som liten bild, utan rubriker
+  const groupsUsed = RECIPE_CATS.filter(c => hits.some(r => recipeCat(r.category) === c));
+  if (groupsUsed.length > hits.length / 2) {
+    const sorted = [...hits].sort((a, b) => a.name.localeCompare(b.name, "sv"));
+    box.innerHTML = cook + `<div class="card groups">${sorted.map(r => row(r)).join("")}</div>` + web;
     return;
   }
   let html = "";
   for (const c of RECIPE_CATS) {
     const list = hits.filter(r => recipeCat(r.category) === c).sort((a, b) => a.name.localeCompare(b.name, "sv"));
     if (!list.length) continue;
-    html += `<div class="group card"><h2><span>${c.emoji} ${esc(c.name)}</span><span>${list.length}</span></h2>`;
-    html += list.map(r => `<button class="recipe" data-recipe="${r.id}"><b>${esc(r.name)}</b>
-      <small>${r.time ? `⏱ ${fmtTime(r.time)} · ` : ""}${r.servings} portioner · ${r.ingredients.length} ingredienser</small></button>`).join("");
+    html += `<div class="group"><h2><span>${esc(c.name)}</span><span>${list.length}</span></h2>`;
+    html += list.map(row).join("");
     html += `</div>`;
   }
-  box.innerHTML = html + web;
+  box.innerHTML = cook + `<div class="card groups">${html}</div>` + web;
 }
 
 /* ---------- Recept från nätet ---------- */
@@ -875,8 +1039,10 @@ const WEB_SITES = [
 const isUrl = t => /^https?:\/\/\S+\.\S+/i.test(t || "");
 
 function webSearchHtml(q) {
+  const ai = isLinked() && webResults.q !== q
+    ? `<button class="btn" data-aisearch style="width:100%;margin-bottom:12px">Hitta recept på ${esc(q)}</button>` : "";
   return `<div class="card web">
-    <p>Sök <b>${esc(q)}</b> på nätet:</p>
+    ${ai}<p>${ai ? "Eller sök själv" : "Sök <b>" + esc(q) + "</b> på nätet"}:</p>
     <div class="chips">
       ${WEB_SITES.map(w => `<button class="chip" data-websearch="${esc(w.site)}">${esc(w.name)}</button>`).join("")}
       <button class="chip" data-websearch="">Alla sajter</button>
@@ -886,6 +1052,7 @@ function webSearchHtml(q) {
 }
 
 function openWebSearch(q, site) {
+  cameFromWebSearch = true;
   const query = `${q} recept${site ? " site:" + site : ""}`;
   window.open("https://www.google.com/search?q=" + encodeURIComponent(query), "_blank");
 }
@@ -893,11 +1060,11 @@ function openWebSearch(q, site) {
 // Hämtar sidan via en mellanhand, eftersom webbläsaren inte får läsa andra sajter direkt.
 // Alla provas samtidigt och den första som ger ett recept vinner.
 const PROXIES = [
+  { url: u => "https://r.jina.ai/" + u, headers: { "X-Return-Format": "html" } },
   { url: u => "https://api.allorigins.win/raw?url=" + encodeURIComponent(u) },
   { url: u => "https://api.allorigins.win/get?url=" + encodeURIComponent(u), json: "contents" },
   { url: u => "https://whateverorigin.org/get?url=" + encodeURIComponent(u), json: "contents" },
   { url: u => "https://api.codetabs.com/v1/proxy/?quest=" + encodeURIComponent(u) },
-  { url: u => "https://r.jina.ai/" + u, headers: { "X-Return-Format": "html" } },
 ];
 
 async function fetchRecipeLd(url) {
@@ -1035,7 +1202,7 @@ const SHORTCUT_JS = `var s=[];document.querySelectorAll('script[type="applicatio
 function shortcutSheet() {
   openSheet(`
     <h3>Spara recept från Safari</h3>
-    <p class="hint" style="font-size:16px;margin-top:-6px">Skapa genvägen en gång, så kan du sedan spara recept direkt från dela-menyn i Safari. Det tar ett par minuter.</p>
+    <p class="hint" style="font-size: 0.941rem;margin-top:-6px">Skapa genvägen en gång, så kan du sedan spara recept direkt från dela-menyn i Safari. Det tar ett par minuter.</p>
     <h4>1. Tillåt skript</h4>
     <div class="card"><ol class="steps">
       <li>Öppna <b>Inställningar</b> → <b>Appar</b> → <b>Genvägar</b> → <b>Avancerat</b>. (På äldre iPhone: Inställningar → Genvägar → Avancerat.)</li>
@@ -1051,13 +1218,14 @@ function shortcutSheet() {
       <li>Tryck på namnet längst upp, välj <b>Byt namn</b> och skriv <b>Spara i Handla</b>.</li>
       <li>Tryck på <b>ⓘ</b> eller namnet → <b>Detaljer</b> och slå på <b>Visa i delningsblad</b>. Tryck på <b>Klar</b>.</li>
     </ol></div>
-    <button class="btn" id="s-copy" style="width:100%;margin-top:12px;padding:13px">📋 Kopiera koden</button>
+    <button class="btn" id="s-copy" style="width:100%;margin-top:12px;padding:13px">Kopiera koden</button>
     <h4>3. Så använder du den</h4>
     <div class="card"><ol class="steps">
       <li>Öppna ett recept i Safari, tryck på <b>dela-knappen</b> och välj <b>Spara i Handla</b>. (Första gången frågar iPhone om lov – välj <b>Tillåt alltid</b>.)</li>
       <li>Öppna appen Handla, gå till <b>Recept</b> → <b>+</b> och tryck på <b>Klistra in kopierat recept</b>.</li>
     </ol></div>
-    <div class="actions"><button class="btn ghost" id="s-close">Stäng</button></div>`, body => {
+    <div class="actions"><button class="btn ghost" id="s-close">Stäng</button></div>
+    <p class="helpline"><button class="linkbtn" data-help="account">? Hjälp om delning</button></p>`, body => {
     body.querySelector("#s-close").onclick = closeSheet;
     body.querySelector("#s-copy").onclick = async () => {
       try { await navigator.clipboard.writeText(SHORTCUT_JS); toast("Koden är kopierad"); }
@@ -1075,15 +1243,26 @@ async function importRecipe(url) {
     <div class="card" style="padding:18px 16px;display:flex;gap:12px;align-items:center;color:var(--muted)">
       <span class="spinner"></span><span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(url)}</span></div>`);
   try {
+    if (isLinked()) {
+      // Träningsappens tjänst hämtar sidan och låter AI läsa den om den saknar receptformat
+      try { showDraft(recipeFromShop(await callShop("recipe_url", { url }), url)); return; }
+      catch (err) { if (err.code !== "fetch_failed" && err.code !== "network") throw err; }
+    }
     showDraft(recipeFromLd(await fetchRecipeLd(url), url));
   } catch (e) {
+    if (e.code === "unauthorized") setLinkCode("");
+    const linked = isLinked();
     openSheet(`<h3>Det gick inte att hämta receptet</h3>
-      <p class="hint" style="font-size:16px">${esc(e.message)}.</p>
-      <p class="hint" style="font-size:16px">Använd genvägen <b>Spara i Handla</b> i Safaris dela-meny istället – den läser receptet direkt från sidan och fungerar även när länken inte gör det.</p>
-      <div class="card" style="margin-bottom:8px"><button class="pick" id="i-shortcut">📲 Visa hur du skapar genvägen</button></div>
+      <p class="hint" style="font-size: 0.941rem">${esc(e.message)}.</p>
+      ${linked ? `<p class="hint" style="font-size: 0.941rem">Ta en skärmbild av receptet och läs in den med <b>Fota recept</b>, eller kopiera texten och välj <b>Klistra in recepttext</b>.</p>
+      <div class="card" style="margin-bottom:8px"><button class="pick" id="i-photo">Fota recept eller välj bild</button><button class="pick" id="i-text">Klistra in recepttext</button></div>` : ""}
+      <p class="hint" style="font-size: 0.941rem">Använd genvägen <b>Spara i Handla</b> i Safaris dela-meny istället – den läser receptet direkt från sidan och fungerar även när länken inte gör det.</p>
+      <div class="card" style="margin-bottom:8px"><button class="pick" id="i-shortcut">Visa hur du skapar genvägen</button></div>
       <div class="actions"><button class="btn ghost" id="i-close">Stäng</button><button class="btn" id="i-manual">Skriv själv</button></div>`, body => {
       body.querySelector("#i-close").onclick = closeSheet;
       body.querySelector("#i-shortcut").onclick = shortcutSheet;
+      body.querySelector("#i-photo")?.addEventListener("click", pickRecipePhotos);
+      body.querySelector("#i-text")?.addEventListener("click", pasteTextSheet);
       body.querySelector("#i-manual").onclick = () => recipeEditSheet(null, null, null, { name: "", category: "Övrigt", servings: 4, time: 0, ingredients: [], steps: [], source: url, image: "" });
     });
   } finally {
@@ -1091,47 +1270,1256 @@ async function importRecipe(url) {
   }
 }
 
-function addRecipeSheet() {
-  openSheet(`
-    <h3>Lägg till recept</h3>
-    <form class="addbar card" id="a-form" style="position:static" autocomplete="off">
-      <input id="a-url" inputmode="url" placeholder="Klistra in länk till ett recept" enterkeyhint="go" autocapitalize="off">
-      <button class="btn" type="submit">Hämta</button>
-    </form>
-    <p class="hint">Fungerar med de flesta stora receptsajter, t.ex. ICA, Arla, Köket och Coop.</p>
-    <div class="card" style="margin-bottom:14px">
-      ${navigator.clipboard?.readText ? `<button class="pick" id="a-paste">📋 Klistra in kopierat recept eller länk</button>` : ""}
-      <button class="pick" id="a-shortcut">📲 Spara recept direkt från Safari (genväg)</button>
-    </div>
-    <form class="addbar card" id="a-search" style="position:static" autocomplete="off">
-      <input id="a-q" type="search" placeholder="Sök recept på nätet, t.ex. lasagne" enterkeyhint="search">
-      <button class="btn ghost" type="submit">Sök</button>
-    </form>
-    <div class="card" style="margin-top:14px"><button class="pick" id="a-manual">✍️ Skriv ett eget recept</button></div>
-    <div class="actions"><button class="btn ghost" id="a-close">Stäng</button></div>`, body => {
-    body.querySelector("#a-close").onclick = closeSheet;
-    body.querySelector("#a-manual").onclick = () => recipeEditSheet(null);
-    body.querySelector("#a-shortcut").onclick = shortcutSheet;
-    body.querySelector("#a-form").onsubmit = e => {
-      e.preventDefault();
-      if (!importFromText(body.querySelector("#a-url").value)) body.querySelector("#a-url").focus();
-    };
-    body.querySelector("#a-paste")?.addEventListener("click", async () => {
-      let text;
-      try { text = await navigator.clipboard.readText(); }
-      catch (e) { toast("Kunde inte läsa urklipp – klistra in i rutan istället"); return; }
-      if (!importFromText(text)) toast("Inget recept eller länk i urklipp");
+/* ---------- Konto och synk ---------- */
+
+// Kontot fungerar på egen hand. Den som också har träningsappen kan logga in med samma
+// e-post och lösenord (apparna delar inloggning men inte data). Inloggad sparas listor, recept och veckomeny i hushållet och synkas direkt mellan telefon,
+// dator och de man bjudit in. Utan inloggning sparas allt bara på den här enheten, som förut.
+// Adressen och den publika nyckeln är gjorda för att ligga i appar; allt skyddas av inloggningen.
+const SUPA_URL = "https://gvysusqqxvsmsxepjvjy.supabase.co";
+const SUPA_KEY = "sb_publishable_0la25_YhgoMyxGHxXhmVvw_vQBGg-7f";
+const SUPA_LIB = "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0/+esm";
+const SUPA_SESSION_KEY = "sb-gvysusqqxvsmsxepjvjy-auth-token";
+const SYNC_KEY = "veckohandling.synced";
+const APP_URL = "https://pontussnadhsmekaniska.github.io/ink-pslista/";
+
+let sb = null;              // Supabase-klienten (laddas bara när den behövs)
+let session = null;
+let household = null;       // hemmet: { id, name, members: [{user_id, display_name, role}] }
+let spaces = { private: null, shared: [] };  // egna listor och listor delade med andra
+let channel = null;
+let synced = { hid: null, docs: {}, since: null, spaces: [] };  // senast kända läget på servern
+let syncStatus = "off";     // off | syncing | ok | offline
+let pushTimer = null, pushing = false, pushAgain = false;
+
+// Samma JSON oavsett nyckelordning (servern sorterar nycklarna)
+function stable(v) {
+  if (Array.isArray(v)) return "[" + v.map(stable).join(",") + "]";
+  if (v && typeof v === "object") return "{" + Object.keys(v).sort().filter(k => v[k] !== undefined).map(k => JSON.stringify(k) + ":" + stable(v[k])).join(",") + "}";
+  return JSON.stringify(v ?? null);
+}
+
+function loadSynced() {
+  try { const s = JSON.parse(localStorage.getItem(SYNC_KEY) || "null"); if (s && s.docs) synced = s; } catch (e) { /* tomt */ }
+}
+function saveSynced() { try { localStorage.setItem(SYNC_KEY, JSON.stringify(synced)); } catch (e) { /* ignorera */ } }
+
+// Alla utrymmen man är med i: hemmet, egna listor, delade listor
+const spaceIds = () => household ? [household.id, ...(spaces.private ? [spaces.private.id] : []), ...spaces.shared.map(x => x.id)] : [];
+const sharedSpace = id => spaces.shared.find(x => x.id === id) || null;
+// Vilket utrymme en lista ligger i (utan angivet: hemmet)
+function listSpace(l) {
+  if (!household) return null;
+  if (!l.space) return household.id;
+  return spaceIds().includes(l.space) ? l.space : null;
+}
+function splitKey(k) {
+  const bar = k.indexOf("|"), colon = k.indexOf(":", bar);
+  return [k.slice(0, bar), k.slice(bar + 1, colon), k.slice(colon + 1)];
+}
+
+// Tillståndet som rader: "utrymme|kind:id" -> JSON
+function flatten(st) {
+  const m = new Map(), H = household.id + "|";
+  for (const l of st.lists) {
+    const sid = listSpace(l);
+    if (!sid) continue;
+    const P = sid + "|";
+    m.set(P + "list:" + l.id, stable({ name: l.name, recipes: l.recipes || [] }));
+    for (const i of l.items) { const { id, ...rest } = i; m.set(P + "item:" + id, stable({ ...rest, listId: l.id })); }
+  }
+  for (const r of st.recipes) { const { id, ...rest } = r; m.set(H + "recipe:" + id, stable(rest)); }
+  for (const [d, p] of Object.entries(st.plan)) m.set(H + "plan:" + d, stable(p));
+  m.set(H + "meta:history", stable(st.history || {}));
+  m.set(H + "meta:catOverrides", stable(st.catOverrides || {}));
+  m.set(H + "meta:servings", stable({ n: st.servings || 4 }));
+  m.set(H + "meta:pantry", stable({ v: st.pantry || [] }));
+  m.set(H + "meta:staples", stable({ v: st.staples || [] }));
+  m.set(H + "meta:catOrder", stable({ v: st.catOrder || [] }));
+  return m;
+}
+
+// Raderna tillbaka till tillstånd; ordningen på listor, varor och recept behålls från `prev`
+function unflatten(m, prev) {
+  const rows = { list: {}, item: {}, recipe: {}, plan: {}, meta: {} }, listSid = {};
+  for (const [k, v] of m) {
+    const [sid, kind, id] = splitKey(k);
+    if (!rows[kind]) continue;
+    rows[kind][id] = JSON.parse(v);
+    if (kind === "list") listSid[id] = sid;
+  }
+  const order = (ids, prevIds) => [...prevIds.filter(id => ids.includes(id)), ...ids.filter(id => !prevIds.includes(id))];
+  const listIds = order(Object.keys(rows.list), prev.lists.map(l => l.id));
+  const lists = listIds.map(id => {
+    const old = prev.lists.find(l => l.id === id);
+    const itemIds = Object.keys(rows.item).filter(i => rows.item[i].listId === id);
+    const items = order(itemIds, old ? old.items.map(i => i.id) : []).map(i => {
+      const { listId, ...rest } = rows.item[i];
+      // Från träningsappen kan en vara komma utan avdelning: sortera den efter namnet.
+      if (!CATEGORIES.some(c => c.id === rest.cat)) rest.cat = guessCategory(rest.name || "");
+      return { id: i, ...rest };
     });
-    body.querySelector("#a-search").onsubmit = e => {
-      e.preventDefault();
-      const q = body.querySelector("#a-q").value.trim();
-      if (!q) return;
+    const l = { id, name: rows.list[id].name, items, recipes: rows.list[id].recipes || [] };
+    if (household && listSid[id] !== household.id) l.space = listSid[id];
+    return l;
+  });
+  const recipeIds = order(Object.keys(rows.recipe), prev.recipes.map(r => r.id));
+  const st = {
+    ...prev,
+    lists: lists.length ? lists : [newList("Inköpslista")],
+    recipes: recipeIds.map(id => ({ id, ...rows.recipe[id] })),
+    plan: rows.plan,
+    history: rows.meta.history || prev.history || {},
+    catOverrides: rows.meta.catOverrides || prev.catOverrides || {},
+    servings: rows.meta.servings?.n || prev.servings || 4,
+    pantry: rows.meta.pantry?.v || prev.pantry || [],
+    staples: rows.meta.staples?.v || prev.staples || [],
+    catOrder: rows.meta.catOrder?.v || prev.catOrder || [],
+  };
+  if (!st.lists.some(l => l.id === st.activeList)) st.activeList = st.lists[0].id;
+  return st;
+}
+
+function setStatus(s) {
+  syncStatus = s;
+  const el = document.getElementById("sync-dot");
+  if (el) { el.dataset.state = s; el.title = { ok: "Synkad", syncing: "Synkar…", offline: "Väntar på nät", off: "" }[s] || ""; }
+  const t = document.getElementById("sync-text");
+  if (t) t.textContent = SYNC_TEXT[s] || "";
+}
+
+function schedulePush() {
+  if (!session || !household) return;
+  clearTimeout(pushTimer);
+  pushTimer = setTimeout(pushNow, 400);
+}
+
+// Skickar det som ändrats sedan senaste synk; raderat skickas som borttaget
+async function pushNow() {
+  if (!session || !household) return;
+  if (pushing) { pushAgain = true; return; }
+  pushing = true;
+  try {
+    const cur = flatten(state), rows = [], sent = {};
+    const now = new Date().toISOString();
+    for (const [k, v] of cur) if (synced.docs[k] !== v) { rows.push(docRow(k, JSON.parse(v), false, now)); sent[k] = v; }
+    for (const k of Object.keys(synced.docs)) if (!cur.has(k)) { rows.push(docRow(k, JSON.parse(synced.docs[k]), true, now)); sent[k] = null; }
+    if (!rows.length) { setStatus("ok"); return; }
+    setStatus("syncing");
+    for (let i = 0; i < rows.length; i += 200) {
+      const { error } = await sb.from("shop_docs").upsert(rows.slice(i, i + 200), { onConflict: "household_id,kind,id" });
+      if (error) throw error;
+    }
+    for (const [k, v] of Object.entries(sent)) { if (v === null) delete synced.docs[k]; else synced.docs[k] = v; }
+    saveSynced();
+    setStatus("ok");
+  } catch (e) {
+    setStatus("offline");
+  } finally {
+    pushing = false;
+    if (pushAgain) { pushAgain = false; schedulePush(); }
+  }
+}
+
+function docRow(k, data, deleted, now) {
+  const [sid, kind, id] = splitKey(k);
+  return { household_id: sid, kind, id, data, deleted, updated_at: now, updated_by: session.user.id };
+}
+
+// Ändringar från servern: tas in om man inte själv har en osynkad ändring på samma rad
+function applyRemote(rows) {
+  if (!rows.length) return;
+  const cur = flatten(state);
+  let changed = false;
+  for (const r of rows) {
+    if (!spaceIds().includes(r.household_id)) continue;
+    if (!synced.since || r.updated_at > synced.since) synced.since = r.updated_at;
+    const k = r.household_id + "|" + r.kind + ":" + r.id;
+    const v = r.deleted ? null : stable(r.data);
+    const local = cur.has(k) ? cur.get(k) : null;
+    const base = k in synced.docs ? synced.docs[k] : null;
+    if (local !== base) {                 // egen ändring väntar på att skickas
+      if (v === local) { if (v === null) delete synced.docs[k]; else synced.docs[k] = v; }
+      continue;
+    }
+    if (v === null) { if (cur.delete(k)) changed = true; delete synced.docs[k]; }
+    else { if (local !== v) changed = true; cur.set(k, v); synced.docs[k] = v; }
+  }
+  saveSynced();
+  if (changed) {
+    state = unflatten(cur, state);
+    try { localStorage.setItem(STORE_KEY, JSON.stringify(state)); } catch (e) { /* ignorera */ }
+    render();
+  }
+}
+
+async function fetchDocs(since, ids = spaceIds()) {
+  let q = sb.from("shop_docs").select("*").in("household_id", ids).order("updated_at").limit(5000);
+  if (since) q = q.gte("updated_at", since);
+  const { data, error } = await q;
+  if (error) throw error;
+  return data || [];
+}
+
+async function pullChanges() {
+  if (!session || !household) return;
+  try { applyRemote(await fetchDocs(synced.since)); setStatus("ok"); }
+  catch (e) { setStatus("offline"); }
+}
+
+// Första gången på en enhet (eller efter byte av hushåll): det som finns här läggs till i
+// hushållet. Listor och recept med samma namn slås ihop i stället för att bli dubbletter.
+async function mergeIntoHousehold() {
+  const remote = (await fetchDocs(null)).filter(r => !r.deleted);
+  const R = new Map(remote.map(r => [r.household_id + "|" + r.kind + ":" + r.id, stable(r.data)]));
+  const L = flatten(state);
+  const H = household.id + "|";
+  const remoteRows = kind => remote.filter(r => r.kind === kind && r.household_id === household.id);
+  const byName = (kind, name) => remoteRows(kind).find(r => (r.data.name || "").trim().toLowerCase() === (name || "").trim().toLowerCase());
+  const listMap = {}, recipeMap = {};
+  if (remote.length) {
+    for (const l of state.lists) { const hit = byName("list", l.name); if (hit && hit.id !== l.id) listMap[l.id] = hit.id; }
+    for (const r of state.recipes) { const hit = byName("recipe", r.name); if (hit && hit.id !== r.id) recipeMap[r.id] = hit.id; }
+  }
+  const merged = new Map(R);
+  for (const [k, v] of L) {
+    const [sid, kind, id] = splitKey(k);
+    if (R.has(k) && kind !== "meta") continue;
+    if (sid !== household.id) { merged.set(k, v); continue; }
+    let data = JSON.parse(v);
+    if (kind === "list" && listMap[id]) continue;
+    if (kind === "recipe" && recipeMap[id]) continue;
+    if (kind === "item" && listMap[data.listId]) {
+      // Samma vara i samma lista finns redan: behåll den som finns
+      const target = listMap[data.listId];
+      if (remoteRows("item").some(r => r.data.listId === target && (r.data.name || "").toLowerCase() === (data.name || "").toLowerCase())) continue;
+      data = { ...data, listId: target };
+    }
+    if (kind === "list") data = { ...data, recipes: (data.recipes || []).map(x => ({ ...x, recipeId: recipeMap[x.recipeId] || x.recipeId })) };
+    if (kind === "plan") { if (R.has(k)) continue; if (data.recipeId) data = { ...data, recipeId: recipeMap[data.recipeId] || data.recipeId }; }
+    if (kind === "meta" && R.has(k)) {
+      const r = JSON.parse(R.get(k));
+      if (id === "history") { for (const [n, h] of Object.entries(data)) r[n] = r[n] ? { ...r[n], count: Math.max(r[n].count || 0, h.count || 0) } : h; data = r; }
+      else if (id === "catOverrides") data = { ...data, ...r };
+      else if (id === "pantry" || id === "staples") data = { v: [...new Set([...(r.v || []), ...(data.v || [])])] };
+      else data = r;
+    }
+    merged.set(H + kind + ":" + id, stable(data));
+  }
+  synced = { hid: household.id, docs: Object.fromEntries(R), since: remote.reduce((m, r) => (r.updated_at > m ? r.updated_at : m), "") || null, spaces: spaceIds() };
+  saveSynced();
+  const keepActive = state.activeList;
+  state = unflatten(merged, { ...state, lists: state.lists.map(l => ({ ...l, id: listMap[l.id] || l.id })) });
+  if (state.lists.some(l => l.id === (listMap[keepActive] || keepActive))) state.activeList = listMap[keepActive] || keepActive;
+  try { localStorage.setItem(STORE_KEY, JSON.stringify(state)); } catch (e) { /* ignorera */ }
+  render();
+  await pushNow();
+}
+
+async function loadSupabase() {
+  if (sb) return sb;
+  const { createClient } = await import(SUPA_LIB);
+  // detectSessionInUrl: länkar i bekräftelse- och lösenordsmejl loggar in direkt här
+  sb = createClient(SUPA_URL, SUPA_KEY, { auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true, flowType: "implicit" } });
+  sb.auth.onAuthStateChange((event, s) => {
+    session = s;
+    if (event === "SIGNED_OUT") stopSync();
+    if (event === "PASSWORD_RECOVERY") setTimeout(newPasswordSheet, 0);
+  });
+  return sb;
+}
+
+async function loadHousehold() {
+  const { data: hid, error } = await sb.rpc("ensure_household");
+  if (error) throw error;
+  const [{ data: hs }, { data: members }] = await Promise.all([
+    sb.from("households").select("id, name, kind"),
+    sb.from("household_members").select("household_id, user_id, display_name, role").order("joined_at"),
+  ]);
+  const all = (hs || []).map(h => ({ id: h.id, name: h.name, kind: h.kind, members: (members || []).filter(m => m.household_id === h.id) }));
+  household = all.find(h => h.id === hid) || { id: hid, name: "Mitt hushåll", kind: "home", members: [] };
+  spaces = { private: all.find(h => h.kind === "private") || null, shared: all.filter(h => h.kind === "shared") };
+}
+
+// Utrymmen man inte längre är med i glöms på den här enheten (utan att något raderas på servern)
+function dropSpaces(ids) {
+  if (!ids.length) return;
+  for (const k of Object.keys(synced.docs)) if (ids.includes(k.slice(0, k.indexOf("|")))) delete synced.docs[k];
+  state.lists = state.lists.filter(l => !ids.includes(l.space));
+  if (!state.lists.length) state.lists = [newList("Inköpslista")];
+  if (!state.lists.some(l => l.id === state.activeList)) state.activeList = state.lists[0].id;
+  saveSynced(); save();
+}
+
+function subscribe() {
+  if (channel) sb.removeChannel(channel);
+  channel = sb.channel("shop-" + household.id + "-" + Date.now());
+  for (const id of spaceIds())
+    channel.on("postgres_changes", { event: "*", schema: "public", table: "shop_docs", filter: "household_id=eq." + id },
+      p => { if (p.new && p.new.kind) applyRemote([p.new]); });
+  channel.subscribe(status => { if (status === "SUBSCRIBED") pullChanges(); });
+}
+
+async function startSync() {
+  setStatus("syncing");
+  loadSynced();
+  await loadHousehold();
+  const ids = spaceIds();
+  if (synced.hid !== household.id) await mergeIntoHousehold();
+  else {
+    const known = synced.spaces || [household.id];
+    dropSpaces(known.filter(id => !ids.includes(id)));
+    const fresh = ids.filter(id => !known.includes(id));
+    if (fresh.length) applyRemote(await fetchDocs(null, fresh));
+    await pullChanges(); await pushNow();
+  }
+  synced.spaces = ids; saveSynced();
+  subscribe();
+  setStatus("ok");
+  render();
+}
+
+function stopSync() {
+  if (channel && sb) sb.removeChannel(channel);
+  channel = null; household = null; session = null; spaces = { private: null, shared: [] };
+  setStatus("off");
+}
+
+// Vid start: bara om man varit inloggad laddas inloggningen (annars går appen lika snabbt som förut)
+async function initAuth() {
+  let hadSession = false;
+  try { hadSession = !!localStorage.getItem(SUPA_SESSION_KEY); } catch (e) { /* ignorera */ }
+  // Kommer man från en länk i ett mejl (bekräfta konto, nytt lösenord)
+  const linkHash = location.hash;
+  const fromMail = /access_token=|error_description=/.test(linkHash);
+  if (fromMail) hadSession = true;
+  if (/error_description=/.test(linkHash)) {
+    history.replaceState(null, "", location.pathname);
+    setTimeout(() => toast("Länken har gått ut eller redan använts. Försök igen"), 300);
+  }
+  const params = new URLSearchParams(location.search);
+  const join = params.get("join");
+  if (join) {
+    try { sessionStorage.setItem("veckohandling.join", join.trim() + "|" + (params.get("t") === "list" ? "list" : "home")); } catch (e) { /* ignorera */ }
+    history.replaceState(null, "", location.pathname);
+  }
+  if (!hadSession) { if (join) accountSheet(); return; }
+  try {
+    await loadSupabase();
+    const { data } = await sb.auth.getSession();
+    session = data.session;
+    if (!session) { if (join) accountSheet(); return; }
+    if (fromMail && /type=signup/.test(linkHash)) setTimeout(() => toast("Kontot är bekräftat – du är inloggad"), 300);
+    await startSync();
+    await maybeJoin();
+  } catch (e) { setStatus("offline"); }
+}
+
+async function maybeJoin() {
+  let code = "";
+  try { code = sessionStorage.getItem("veckohandling.join") || ""; } catch (e) { /* ignorera */ }
+  if (!code || !session) return;
+  try { sessionStorage.removeItem("veckohandling.join"); } catch (e) { /* ignorera */ }
+  const kind = code.split("|")[1] || "home";
+  code = code.split("|")[0];
+  openSheet((kind === "list" ? `<h3>Öppna den delade listan?</h3>
+    <p class="hint" style="font-size: 0.941rem;margin-top:-6px">Någon har delat en inköpslista med dig. Ni ser och bockar av i samma lista. Dina andra listor påverkas inte.</p>` : `<h3>Gå med i hushållet?</h3>
+    <p class="hint" style="font-size: 0.941rem;margin-top:-6px">Ni delar då hushållets inköpslistor, recept och veckomeny, och ser varandras ändringar direkt. Det du har nu läggs till i hushållet. Dina egna och delade listor påverkas inte.</p>`) + `
+    <div class="actions"><button class="btn ghost" id="j-no">Inte nu</button><button class="btn" id="j-yes">Gå med</button></div>`, body => {
+    body.querySelector("#j-no").onclick = closeSheet;
+    body.querySelector("#j-yes").onclick = async () => {
+      body.querySelector("#j-yes").disabled = true;
+      const { data: sid, error } = await sb.rpc("join_household", { invite_code: code });
+      if (error) { toast("Inbjudan gäller inte längre. Be om en ny"); closeSheet(); return; }
       closeSheet();
-      recipeQuery = q; $("#recipe-search").value = q; recipeCatFilter = "";
-      view = "recipes"; render();
+      if (kind === "list") {
+        await startSync();
+        const l = state.lists.find(x => x.space === sid);
+        if (l) { state.activeList = l.id; view = "list"; commit(); }
+        toast("Den delade listan finns nu bland dina listor");
+      } else {
+        synced = { hid: null, docs: {}, since: null, spaces: [] }; saveSynced();
+        await startSync();
+        toast("Du är med i hushållet");
+      }
     };
   });
 }
+
+async function signIn(email, password) {
+  await loadSupabase();
+  const { data, error } = await sb.auth.signInWithPassword({ email, password });
+  if (error) throw new Error(/invalid/i.test(error.message) ? "Fel e-post eller lösenord" : /confirm/i.test(error.message) ? "Bekräfta din e-post först (kolla inkorgen)" : "Kunde inte logga in. Försök igen");
+  session = data.session;
+  await startSync();
+  await maybeJoin();
+}
+
+async function signUp(email, password) {
+  await loadSupabase();
+  const { data, error } = await sb.auth.signUp({ email, password, options: { emailRedirectTo: APP_URL } });
+  if (error) throw new Error(/registered|exists/i.test(error.message) ? "Det finns redan ett konto med den e-posten. Logga in i stället" : /password/i.test(error.message) ? "Lösenordet behöver vara längre (minst 8 tecken)" : "Kunde inte skapa kontot. Försök igen");
+  if (data.session) { session = data.session; await startSync(); await maybeJoin(); return "in"; }
+  return "confirm";
+}
+
+async function signOut() {
+  try { if (sb) await sb.auth.signOut(); } catch (e) { /* ignorera */ }
+  stopSync();
+  try { localStorage.removeItem(SUPA_SESSION_KEY); localStorage.removeItem(SYNC_KEY); } catch (e) { /* ignorera */ }
+  synced = { hid: null, docs: {}, since: null, spaces: [] };
+  // Utloggad: hushållets listor ligger kvar i kontot, inte på den här enheten
+  state = defaultState();
+  save(); render();
+}
+
+function accountSheet() {
+  if (session && household) return householdSheet();
+  openSheet(`
+    <h3>Logga in eller skapa konto</h3>
+    <p class="hint" style="font-size: 0.941rem;margin-top:-6px">Med ett konto får du samma listor, recept och veckomeny på telefon och dator, kan dela med hushållet och läsa in recept från foton. Utan konto fungerar appen som vanligt på den här enheten.</p>
+    <form class="card" id="u-form" style="padding:14px 16px" autocomplete="on">
+      <input id="u-email" type="email" autocomplete="username" placeholder="E-post" required style="width:100%;margin-bottom:10px">
+      <input id="u-pass" type="password" autocomplete="current-password" placeholder="Lösenord" required minlength="6" style="width:100%">
+      <button class="btn" type="submit" style="width:100%;margin-top:12px;padding:13px">Logga in</button>
+    </form>
+    <div class="card" style="margin-top:12px">
+      <button class="pick" id="u-new">Skapa konto med e-posten och lösenordet ovan</button>
+      <button class="pick" id="u-forgot">Glömt lösenordet?</button>
+    </div>
+    <p class="hint" style="margin-top:12px">Har du träningsappen? Samma inloggning fungerar här.</p>
+    <div class="actions"><button class="btn ghost" id="u-close">Stäng</button></div>`, body => {
+    const email = () => body.querySelector("#u-email").value.trim();
+    const pass = () => body.querySelector("#u-pass").value;
+    body.querySelector("#u-close").onclick = closeSheet;
+    const busy = on => body.querySelectorAll("button").forEach(b => b.disabled = on);
+    body.querySelector("#u-form").onsubmit = async e => {
+      e.preventDefault(); busy(true);
+      try { await signIn(email(), pass()); closeSheet(); toast("Inloggad – dina listor synkas nu"); }
+      catch (err) { toast(err.message || "Kunde inte logga in"); }
+      finally { busy(false); }
+    };
+    body.querySelector("#u-forgot").onclick = async () => {
+      if (!email()) { toast("Skriv din e-post först"); body.querySelector("#u-email").focus(); return; }
+      busy(true);
+      try {
+        await loadSupabase();
+        const { error } = await sb.auth.resetPasswordForEmail(email(), { redirectTo: APP_URL });
+        if (error) throw error;
+        openSheet(`<h3>Kolla din e-post</h3><p class="hint" style="font-size: 0.941rem">Om det finns ett konto för <b>${esc(email())}</b> har vi skickat en länk. Öppna den på den här enheten, så får du välja ett nytt lösenord.</p>
+          <div class="actions"><button class="btn" id="c-ok">Okej</button></div>`, b => { b.querySelector("#c-ok").onclick = closeSheet; });
+      } catch (err) { toast(/rate|seconds/i.test(err.message || "") ? "Vänta en stund innan du försöker igen" : "Kunde inte skicka mejlet. Försök igen"); }
+      finally { busy(false); }
+    };
+    body.querySelector("#u-new").onclick = async () => {
+      if (!email() || pass().length < 8) { toast("Skriv e-post och ett lösenord på minst 8 tecken först"); return; }
+      busy(true);
+      try {
+        const r = await signUp(email(), pass());
+        if (r === "in") { closeSheet(); toast("Kontot är skapat"); }
+        else openSheet(`<h3>Kolla din e-post</h3><p class="hint" style="font-size: 0.941rem">Vi har skickat ett mejl till <b>${esc(email())}</b>. Tryck på länken i det, kom sedan tillbaka hit och logga in.</p>
+          <div class="actions"><button class="btn" id="c-ok">Okej</button></div>`, b => { b.querySelector("#c-ok").onclick = accountSheet; });
+      } catch (err) { toast(err.message); }
+      finally { busy(false); }
+    };
+  });
+}
+
+function newPasswordSheet() {
+  openSheet(`
+    <h3>Välj ett nytt lösenord</h3>
+    <form class="card" id="p-form" style="padding:14px 16px">
+      <input id="p-pass" type="password" autocomplete="new-password" placeholder="Nytt lösenord (minst 8 tecken)" minlength="8" required style="width:100%">
+      <button class="btn" type="submit" style="width:100%;margin-top:12px;padding:13px">Spara lösenordet</button>
+    </form>`, body => {
+    body.querySelector("#p-form").onsubmit = async e => {
+      e.preventDefault();
+      const btn = body.querySelector("button"); btn.disabled = true;
+      const { error } = await sb.auth.updateUser({ password: body.querySelector("#p-pass").value });
+      btn.disabled = false;
+      if (error) { toast(/password/i.test(error.message) ? "Välj ett annat, längre lösenord" : "Det gick inte. Försök igen"); return; }
+      closeSheet(); toast("Lösenordet är bytt");
+      if (!household) startSync().catch(() => setStatus("offline"));
+    };
+  });
+}
+
+async function deleteAccount() {
+  if (!confirm("Radera kontot för gott? Allt som hör till kontot tas bort, även i träningsappen om du använder den. Det du delat i ett hushåll med andra finns kvar hos dem.")) return;
+  if (prompt("Skriv RADERA för att bekräfta") !== "RADERA") return;
+  const { error } = await sb.functions.invoke("delete-account", { body: {} });
+  if (error) { toast("Kunde inte radera kontot. Försök igen"); return; }
+  closeSheet();
+  await signOut();
+  toast("Kontot är raderat");
+}
+
+// Vem som ser en lista (visas under listans namn när man är inloggad)
+function whoSees(l) {
+  if (!session || !household) return "";
+  const sid = listSpace(l);
+  if (spaces.private && sid === spaces.private.id) return "Bara jag";
+  const sh = sharedSpace(sid);
+  if (sh) {
+    const others = sh.members.filter(m => m.user_id !== session.user.id).map(m => m.display_name);
+    return "" + (others.length ? "Delad med " + others.join(", ") : "Delad – väntar på att någon går med");
+  }
+  return household.members.length > 1 ? "Hushållet" : "";
+}
+const spaceKindOf = l => !session || !household ? "local" : spaces.private && listSpace(l) === spaces.private.id ? "private" : sharedSpace(listSpace(l)) ? "shared" : "home";
+
+// Flyttar en lista: hushållet, bara jag, eller en egen delad lista
+async function moveList(l, target) {
+  if (!session || !household) { accountSheet(); return; }
+  try {
+    let sid;
+    if (target === "home") sid = undefined;
+    else if (target === "private") {
+      if (!spaces.private) { const { data, error } = await sb.rpc("ensure_private_space"); if (error) throw error; await loadHousehold(); }
+      sid = spaces.private.id;
+    } else if (target === "share") {
+      if (spaceKindOf(l) === "shared") return inviteToList(l);
+      const { data, error } = await sb.rpc("create_shared_space", { space_name: l.name });
+      if (error) throw error;
+      await loadHousehold();
+      sid = data;
+    }
+    synced.spaces = spaceIds(); saveSynced(); subscribe();
+    l.space = sid; commit();
+    if (target === "share") await inviteToList(l);
+    else toast(target === "private" ? "Listan syns nu bara för dig" : "Listan delas nu med hushållet");
+  } catch (e) { toast("Det gick inte. Försök igen"); }
+}
+
+async function inviteToList(l) {
+  const { data: code, error } = await sb.rpc("create_space_invite", { space: listSpace(l) });
+  if (error) { toast("Kunde inte skapa en inbjudan. Försök igen"); return; }
+  const link = APP_URL + "?join=" + code + "&t=list";
+  const text = `Jag delar inköpslistan "${l.name}" med dig i Veckohandling: ${link}`;
+  if (navigator.share) { try { await navigator.share({ title: l.name, text }); return; } catch (e) { if (e.name === "AbortError") return; } }
+  try { await navigator.clipboard.writeText(link); toast("Länken är kopierad – skicka den till den du vill dela med"); }
+  catch (e) { prompt("Skicka den här länken:", link); }
+}
+
+async function leaveSharedList(l) {
+  const sid = listSpace(l);
+  if (!confirm(`Sluta vara med i "${l.name}"? Listan försvinner från dina enheter. De andra behåller den.`)) return;
+  const { error } = await sb.rpc("leave_space", { space: sid });
+  if (error) { toast("Det gick inte. Försök igen"); return; }
+  await loadHousehold();
+  dropSpaces([sid]);
+  synced.spaces = spaceIds(); saveSynced(); subscribe();
+  render(); toast("Du är inte längre med i listan");
+}
+
+function listShareSheet(l) {
+  const kind = spaceKindOf(l);
+  const sh = kind === "shared" ? sharedSpace(listSpace(l)) : null;
+  const opt = (k, icon, title, desc) => `<button class="pick${kind === k ? " sel" : ""}" data-move="${k}"><b>${title}</b>${kind === k ? " ✓" : ""}<br><small style="color:var(--muted)">${desc}</small></button>`;
+  openSheet(`
+    <h3>Vem ser "${esc(l.name)}"?</h3>
+    <div class="card">
+      ${opt("home", "", "Hushållet", household.members.length > 1 ? "Alla i hushållet: " + household.members.map(m => esc(m.display_name)).join(", ") : "Du och de du bjuder in till hushållet")}
+      ${opt("private", "", "Bara jag", "Syns bara för dig, på alla dina enheter")}
+      ${opt("share", "", kind === "shared" ? "Bjud in fler" : "Dela med någon", sh ? "Delad med " + (sh.members.filter(m => m.user_id !== session.user.id).map(m => esc(m.display_name)).join(", ") || "– ingen har gått med än") : "Skicka en länk, t.ex. till en vän inför en fest")}
+    </div>
+    ${kind === "shared" ? `<div class="card" style="margin-top:14px"><button class="pick" id="s-leave" style="color:var(--danger)">Sluta vara med i listan</button></div>` : ""}
+    <div class="actions"><button class="btn ghost" id="s-close">Stäng</button></div>`, body => {
+    body.querySelector("#s-close").onclick = closeSheet;
+    body.querySelector("#s-leave")?.addEventListener("click", () => { closeSheet(); leaveSharedList(l); });
+    body.querySelectorAll("[data-move]").forEach(b => b.onclick = () => {
+      const t = b.dataset.move;
+      if (t === kind && t !== "shared" && t !== "share") { closeSheet(); return; }
+      if (t === "home" && kind === "shared" && !confirm("Flytta listan till hushållet? De du delat den med ser den inte längre.")) return;
+      closeSheet(); moveList(l, t);
+    });
+  });
+}
+
+// Hushållets knappar (används från profilen)
+async function inviteToHousehold() {
+  const { data: code, error } = await sb.rpc("create_household_invite");
+  if (error) { toast("Kunde inte skapa en inbjudan. Försök igen"); return; }
+  const link = APP_URL + "?join=" + code + "&t=home";
+  const text = "Gå med i vårt hushåll i Veckohandling, så delar vi inköpslistor, recept och veckomeny: " + link;
+  if (navigator.share) { try { await navigator.share({ title: "Veckohandling", text }); return; } catch (e) { if (e.name === "AbortError") return; } }
+  try { await navigator.clipboard.writeText(link); toast("Länken är kopierad – skicka den till den du vill bjuda in"); }
+  catch (e) { prompt("Skicka den här länken:", link); }
+}
+
+async function leaveHousehold() {
+  if (!confirm("Lämna hushållet? Du får en egen, tom lista. De andra behåller allt ni delat.")) return;
+  const { error } = await sb.rpc("leave_household");
+  if (error) { toast("Det gick inte. Försök igen"); return; }
+  synced = { hid: null, docs: {}, since: null, spaces: [] }; saveSynced();
+  state = defaultState(); save();
+  await startSync(); toast("Du har lämnat hushållet");
+}
+
+async function confirmSignOut() {
+  if (!confirm("Logga ut? Listorna finns kvar i kontot men tas bort från den här enheten.")) return;
+  await signOut(); toast("Utloggad");
+}
+
+// Logga in-rutan, eller profilen om man redan är inloggad
+function householdSheet() { closeSheet(); view = "profile"; render(); window.scrollTo(0, 0); }
+
+const SYNC_TEXT = { ok: "✓ Synkad", syncing: "Synkar…", offline: "Väntar på nät – ändringar skickas sen", off: "" };
+
+function renderProfile() {
+  const box = $("#profile");
+  const signedIn = !!(session && household);
+  const email = session?.user?.email || "";
+  $("#profile-sub").textContent = signedIn ? email : session ? "Ansluter…" : "Inte inloggad";
+  let html = "";
+  if (!signedIn) {
+    html += `<div class="card" style="padding:18px 16px">
+      <div style="display:flex;gap:14px;align-items:center;margin-bottom:12px">
+        <div class="avatar" style="background:var(--surface-2);color:var(--muted)"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.6-7 8-7s8 3 8 7"/></svg></div>
+        <div><b>Logga in eller skapa konto</b><div class="hint" style="margin:2px 0 0">Samma listor, recept och veckomeny på telefon och dator, dela med hushållet och läs in recept från foton.</div></div>
+      </div>
+      <button class="btn" data-p="login" style="width:100%;padding:13px">Logga in</button>
+    </div>
+    <p class="hint">Utan konto sparas allt bara på den här enheten.</p>`;
+  } else {
+    const me = session.user;
+    html += `<div class="card" style="padding:16px;display:flex;gap:14px;align-items:center">
+      <div class="avatar">${esc((email[0] || "?").toUpperCase())}</div>
+      <div style="min-width:0"><b style="display:block;overflow:hidden;text-overflow:ellipsis">${esc(email)}</b>
+        <small id="sync-text" style="color:var(--muted)">${SYNC_TEXT[syncStatus] || ""}</small></div>
+    </div>
+    <p class="hint" style="margin-top:16px">Hushåll</p>
+    <div class="card">
+      ${household.members.map(m => `<div class="pick" style="cursor:default">${esc(m.display_name || "Medlem")}${m.user_id === me.id ? " <small style='color:var(--muted)'>(du)</small>" : ""}</div>`).join("")}
+      <button class="pick" data-p="invite">Bjud in någon till hushållet</button>
+      ${household.members.length > 1 ? `<button class="pick" data-p="leave">Lämna hushållet</button>` : ""}
+    </div>
+    <p class="hint">Alla i hushållet delar listor, recept och veckomeny och ser ändringar direkt.</p>`;
+  }
+  html += `<p class="hint" style="margin-top:16px">Recept</p>
+    <div class="card">
+      ${signedIn ? `<button class="pick" data-p="photo">Fota recept eller välj bild</button>` : ""}
+      <button class="pick" data-cook-p>Vad kan jag laga?</button>
+    </div>
+    <p class="hint" style="margin-top:16px">Mina varor</p>
+    <div class="card">
+      <button class="pick" data-p="pantry">Har hemma <small style="color:var(--muted)">${(state.pantry || []).length || ""}</small></button>
+      <button class="pick" data-p="staples">Varje vecka <small style="color:var(--muted)">${(state.staples || []).length || ""}</small></button>
+      <button class="pick" data-p="order">Din butiks ordning</button>
+    </div>`;
+  if (!signedIn) html += `<p class="hint" style="margin-top:16px">Säkerhetskopia</p>
+    <div class="card">
+      <button class="pick" data-p="export">Exportera all data</button>
+      <button class="pick" data-p="import">Importera data</button>
+    </div>`;
+  html += `<input type="file" id="p-file" accept="application/json,.json" hidden>`;
+  html += `
+    <p class="hint" style="margin-top:16px">Hjälp</p>
+    <div class="card"><button class="pick" data-help="">Hjälp och vanliga frågor</button></div>
+`;
+  if (signedIn) html += `<div class="card" style="margin-top:16px">
+      <button class="pick" data-p="signout" style="color:var(--danger)">Logga ut</button>
+      <button class="pick" data-p="delete" style="color:var(--danger)">Radera kontot</button>
+    </div>`;
+  html += `<p class="hint" style="margin-top:16px;text-align:center">Har du träningsappen? Samma inloggning fungerar här.</p>`;
+  box.innerHTML = html;
+  const file = box.querySelector("#p-file");
+  file.onchange = () => importData(file.files[0]);
+}
+
+
+// Tillbaka till appen eller nätet: hämta det som missats och skicka det som väntar
+document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible" && session) { pullChanges(); pushNow(); } });
+window.addEventListener("online", () => { if (session) { pullChanges(); pushNow(); } });
+
+/* ---------- AI via träningsappen ---------- */
+
+// Kopplingen görs i träningsappen (Profil → Kopplingar → Veckohandling) som ger en kod.
+// Koden sparas bara på den här telefonen och följer inte med i säkerhetskopian.
+const SHOP_FN = "https://gvysusqqxvsmsxepjvjy.supabase.co/functions/v1/shop";
+const LINK_KEY = "veckohandling.link";
+const linkCode = () => { try { return localStorage.getItem(LINK_KEY) || ""; } catch (e) { return ""; } };
+const isLinked = () => !!session || !!linkCode();
+function setLinkCode(code) {
+  try { code ? localStorage.setItem(LINK_KEY, code) : localStorage.removeItem(LINK_KEY); } catch (e) { /* ignorera */ }
+}
+
+const SHOP_ERRORS = {
+  unauthorized: "Kopplingen till träningsappen gäller inte längre. Koppla igen med en ny kod",
+  daily_limit: "Dagens gräns är nådd. Försök igen i morgon",
+  no_recipe: "Hittade inget recept",
+  refused: "Det gick inte att läsa det här",
+  fetch_failed: "Sidan kunde inte hämtas",
+  bad_url: "Länken ser inte ut som en vanlig webbadress",
+  not_configured: "AI är inte påslagen än",
+  busy: "AI:n är upptagen just nu. Försök igen om en stund",
+  ai_unavailable: "AI:n svarar inte just nu. Försök igen om en stund",
+  invalid_request: "Det gick inte att skicka det här",
+};
+
+async function callShop(action, data = {}, code = linkCode()) {
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), 120000);
+  let res, body = {};
+  try {
+    res = await fetch(SHOP_FN, {
+      method: "POST",
+      headers: session ? { "Content-Type": "application/json", Authorization: "Bearer " + session.access_token } : { "Content-Type": "application/json" },
+      body: JSON.stringify(session ? { action, ...data } : { action, code, ...data }),
+      signal: ctrl.signal,
+    });
+    try { body = await res.json(); } catch (e) { /* tomt svar */ }
+  } catch (e) {
+    throw Object.assign(new Error(navigator.onLine === false ? "Ingen internetanslutning" : "Kunde inte nå tjänsten. Försök igen"), { code: "network" });
+  } finally { clearTimeout(timer); }
+  if (!res.ok) {
+    const code = body.error || "error";
+    throw Object.assign(new Error(SHOP_ERRORS[code] || "Något gick fel. Försök igen"), { code });
+  }
+  return body;
+}
+
+// Svar från tjänsten -> utkast till recept
+function recipeFromShop(body, source) {
+  if (body.ld) return recipeFromLd(body.ld, source);
+  const r = body.recipe;
+  return { name: r.name, category: r.category, servings: r.servings, time: r.time, ingredients: r.ingredients, steps: r.steps, source: source || "", image: "" };
+}
+
+function busySheet(title, detail) {
+  openSheet(`<h3>${esc(title)}</h3>
+    <div class="card" style="padding:18px 16px;display:flex;gap:12px;align-items:center;color:var(--muted)">
+      <span class="spinner"></span><span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(detail)}</span></div>`);
+}
+
+function aiFailSheet(title, err, retry) {
+  openSheet(`<h3>${esc(title)}</h3>
+    <p class="hint" style="font-size: 0.941rem">${esc(err.message)}.</p>
+    ${err.code === "unauthorized" ? `<div class="card" style="margin-bottom:8px"><button class="pick" id="f-link">Logga in</button></div>` : ""}
+    <div class="actions"><button class="btn ghost" id="f-close">Stäng</button>${retry ? `<button class="btn" id="f-retry">Försök igen</button>` : ""}</div>`, body => {
+    body.querySelector("#f-close").onclick = closeSheet;
+    body.querySelector("#f-link")?.addEventListener("click", accountSheet);
+    body.querySelector("#f-retry")?.addEventListener("click", retry);
+  });
+  if (err.code === "unauthorized") setLinkCode("");
+}
+
+function linkSheet() {
+  const linked = isLinked();
+  openSheet(`
+    <h3>Koppla till träningsappen</h3>
+    <p class="hint" style="font-size: 0.941rem;margin-top:-6px">Med kopplingen kan Veckohandling läsa recept från foton, inklistrad text och fler länkar, och söka recept på nätet. Träningsappens hälsodata följer aldrig med.</p>
+    ${linked ? `<div class="card" style="padding:14px 16px">Kopplad på den här telefonen</div>
+      <div class="actions"><button class="btn ghost" id="l-close">Stäng</button><button class="btn" id="l-unlink" style="background:var(--danger)">Koppla från</button></div>` : `
+    <div class="card"><ol class="steps">
+      <li>Öppna träningsappen → <b>Profil</b> → <b>Kopplingar</b> → <b>Veckohandling</b> och tryck <b>Skapa kopplingskod</b>.</li>
+      <li>Kopiera koden och klistra in den här.</li>
+    </ol></div>
+    <form class="addbar card" id="l-form" style="position:static;margin-top:12px" autocomplete="off">
+      <input id="l-code" placeholder="VH-XXXXX-XXXXX-XXXXX-XXXXX" autocapitalize="characters" autocorrect="off" spellcheck="false" enterkeyhint="done">
+      <button class="btn" type="submit">Koppla</button>
+    </form>
+    <div class="actions"><button class="btn ghost" id="l-close">Stäng</button></div>`}`, body => {
+    body.querySelector("#l-close").onclick = closeSheet;
+    body.querySelector("#l-unlink")?.addEventListener("click", () => { setLinkCode(""); closeSheet(); toast("Kopplingen är borttagen från telefonen"); render(); });
+    const form = body.querySelector("#l-form");
+    if (!form) return;
+    form.onsubmit = async e => {
+      e.preventDefault();
+      const code = body.querySelector("#l-code").value.replace(/\s+/g, "").toUpperCase();
+      if (!/^VH(-[A-Z0-9]{5}){4}$/.test(code)) { toast("Koden ska se ut som VH-XXXXX-XXXXX-XXXXX-XXXXX"); return; }
+      const btn = form.querySelector("button"); btn.disabled = true;
+      try {
+        await callShop("ping", {}, code);
+        setLinkCode(code); closeSheet(); toast("Kopplad till träningsappen"); render();
+      } catch (err) {
+        toast(err.code === "unauthorized" ? "Koden fungerar inte. Skapa en ny i träningsappen" : err.message);
+      } finally { btn.disabled = false; }
+    };
+  });
+}
+
+// Bilder krymps i telefonen innan de skickas (räcker för att läsa text, går fort att skicka)
+const PHOTO_MAX_SIDE = 1600;
+async function shrinkPhoto(file) {
+  const url = URL.createObjectURL(file);
+  try {
+    const img = await new Promise((ok, bad) => { const i = new Image(); i.onload = () => ok(i); i.onerror = bad; i.src = url; });
+    const scale = Math.min(1, PHOTO_MAX_SIDE / Math.max(img.naturalWidth, img.naturalHeight));
+    const canvas = document.createElement("canvas");
+    canvas.width = Math.round(img.naturalWidth * scale);
+    canvas.height = Math.round(img.naturalHeight * scale);
+    canvas.getContext("2d").drawImage(img, 0, 0, canvas.width, canvas.height);
+    return { media_type: "image/jpeg", data: canvas.toDataURL("image/jpeg", 0.8).split(",")[1] };
+  } finally { URL.revokeObjectURL(url); }
+}
+
+function pickRecipePhotos() {
+  const input = document.createElement("input");
+  input.type = "file"; input.accept = "image/*"; input.multiple = true;
+  input.onchange = () => {
+    const files = [...input.files].slice(0, 3);
+    if (input.files.length > 3) toast("Max 3 bilder åt gången – de 3 första används");
+    if (files.length) readRecipePhotos(files);
+  };
+  input.click();
+}
+
+async function readRecipePhotos(files) {
+  busySheet("Läser receptet…", files.length > 1 ? `${files.length} bilder` : "1 bild");
+  try {
+    const images = await Promise.all(files.map(shrinkPhoto));
+    showDraft(recipeFromShop(await callShop("recipe_image", { images }), ""));
+  } catch (err) {
+    aiFailSheet("Det gick inte att läsa receptet", err.code ? err : new Error("Kunde inte öppna bilden"), () => readRecipePhotos(files));
+  }
+}
+
+function pasteTextSheet() {
+  openSheet(`
+    <h3>Klistra in ett recept</h3>
+    <p class="hint" style="font-size: 0.941rem;margin-top:-6px">Från ett sms, ett mejl, Instagram eller var som helst. AI:n plockar ut ingredienser och steg.</p>
+    <textarea id="t-text" style="width:100%;min-height:200px" placeholder="Klistra in recepttexten här"></textarea>
+    <div class="actions"><button class="btn ghost" id="t-close">Stäng</button><button class="btn" id="t-go">Läs receptet</button></div>`, body => {
+    body.querySelector("#t-close").onclick = closeSheet;
+    body.querySelector("#t-go").onclick = () => {
+      const text = body.querySelector("#t-text").value.trim();
+      if (text.length < 20) { toast("Klistra in hela receptet"); return; }
+      readRecipeText(text.slice(0, 20000));
+    };
+    setTimeout(() => body.querySelector("#t-text").focus(), 50);
+  });
+}
+
+async function readRecipeText(text) {
+  busySheet("Läser receptet…", text.slice(0, 60));
+  try { showDraft(recipeFromShop(await callShop("recipe_text", { text }), "")); }
+  catch (err) { aiFailSheet("Det gick inte att läsa receptet", err, () => readRecipeText(text)); }
+}
+
+// Receptsök via träningsappens tjänst; resultaten visas under sökrutan i Recept
+let webResults = { q: "", busy: false, hits: null, error: "" };
+async function searchWeb(q) {
+  webResults = { q, busy: true, hits: null, error: "" };
+  renderRecipes();
+  try {
+    const { results } = await callShop("search", { q });
+    if (webResults.q === q) webResults = { q, busy: false, hits: results || [], error: "" };
+  } catch (err) {
+    if (webResults.q === q) webResults = { q, busy: false, hits: null, error: err.message };
+    if (err.code === "unauthorized") setLinkCode("");
+  }
+  renderRecipes();
+}
+
+function webResultsHtml(q) {
+  if (webResults.q !== q) return "";
+  if (webResults.busy) return `<div class="card web" style="display:flex;gap:12px;align-items:center;color:var(--muted)"><span class="spinner"></span>Söker recept på nätet…</div>`;
+  if (webResults.error) return `<div class="card web"><p>${esc(webResults.error)}.</p></div>`;
+  if (!webResults.hits) return "";
+  if (!webResults.hits.length) return `<div class="card web"><p>Hittade inga recept på nätet för <b>${esc(q)}</b>.</p></div>`;
+  return `<div class="group card"><h2><span>Från nätet</span><span>${webResults.hits.length}</span></h2>` +
+    webResults.hits.map(h => `<button class="recipe" data-import="${esc(h.url)}"><b>${esc(h.title)}</b><small>${esc(h.site)} · tryck för att hämta</small></button>`).join("") +
+    `</div>`;
+}
+
+function addRecipeSheet() {
+  const ai = isLinked();
+  openSheet(`
+    <h3>Lägg till recept</h3>
+    <form class="addbar card" id="a-form" style="position:static" autocomplete="off">
+      <input id="a-url" placeholder="Klistra in länk, eller sök t.ex. lasagne" enterkeyhint="go" autocapitalize="off">
+      <button class="btn" type="submit" id="a-go">Hämta</button>
+    </form>
+    <p class="hint">Länkar fungerar från de flesta receptsajter, t.ex. ICA, Arla och Köket.</p>
+    <div class="card" style="margin-bottom:14px">
+      <button class="pick" id="a-photo">Fota recept eller välj bild${ai ? "" : " <small style='color:var(--muted)'>(logga in)</small>"}</button>
+      <button class="pick" id="a-text">Klistra in recepttext${ai ? "" : " <small style='color:var(--muted)'>(logga in)</small>"}</button>
+      <button class="pick" id="a-manual">Skriv ett eget recept</button>
+    </div>
+    <div class="actions"><button class="btn ghost" id="a-close">Stäng</button></div>
+    <p class="helpline"><button class="linkbtn" data-help="recipes">? Hjälp om att lägga till recept</button></p>`, body => {
+    const input = body.querySelector("#a-url"), go = body.querySelector("#a-go");
+    input.oninput = () => { const v = input.value.trim(); go.textContent = !v || /https?:\/\//.test(v) ? "Hämta" : "Sök"; };
+    body.querySelector("#a-close").onclick = closeSheet;
+    body.querySelector("#a-manual").onclick = () => recipeEditSheet(null);
+    body.querySelector("#a-photo").onclick = () => ai ? pickRecipePhotos() : accountSheet();
+    body.querySelector("#a-text").onclick = () => ai ? pasteTextSheet() : accountSheet();
+    body.querySelector("#a-form").onsubmit = e => {
+      e.preventDefault();
+      const v = input.value.trim();
+      if (!v) { input.focus(); return; }
+      if (importFromText(v)) return;
+      // Inte en länk: sök
+      closeSheet();
+      recipeQuery = v; $("#recipe-search").value = v; recipeCatFilter = "";
+      view = "recipes"; render();
+      if (ai) searchWeb(v);
+    };
+  });
+}
+
+/* ---------- Butikens ordning ---------- */
+
+// Avdelningarna i den ordning du går i din butik (sparas och synkas)
+function orderedCats() {
+  const order = Array.isArray(state.catOrder) ? state.catOrder : [];
+  const known = order.map(id => CATEGORIES.find(c => c.id === id)).filter(Boolean);
+  return [...known, ...CATEGORIES.filter(c => !order.includes(c.id))];
+}
+
+function storeOrderSheet() {
+  const cats = orderedCats();
+  openSheet(`
+    <h3>Din butiks ordning</h3>
+    <p class="hint" style="font-size:16px;margin-top:-6px">Flytta avdelningarna i den ordning du går i butiken. Listan sorteras efter det.</p>
+    <div class="card">${cats.map((c, i) => `<div class="pick" style="display:flex;align-items:center;gap:8px;cursor:default">
+      <span style="flex:1">${esc(c.name)}</span>
+      <button class="icon-mini" data-move-cat="${c.id}" data-dir="-1" aria-label="Flytta ${esc(c.name)} upp"${i === 0 ? " disabled" : ""}>↑</button>
+      <button class="icon-mini" data-move-cat="${c.id}" data-dir="1" aria-label="Flytta ${esc(c.name)} ner"${i === cats.length - 1 ? " disabled" : ""}>↓</button>
+    </div>`).join("")}</div>
+    <div class="actions"><button class="btn ghost" id="so-reset">Återställ</button><button class="btn" id="so-done">Klar</button></div>`, body => {
+    body.querySelector("#so-done").onclick = closeSheet;
+    body.querySelector("#so-reset").onclick = () => { state.catOrder = []; commit(); storeOrderSheet(); };
+    body.querySelectorAll("[data-move-cat]").forEach(b => b.onclick = () => {
+      const ids = orderedCats().map(c => c.id);
+      const i = ids.indexOf(b.dataset.moveCat), j = i + +b.dataset.dir;
+      if (j < 0 || j >= ids.length) return;
+      [ids[i], ids[j]] = [ids[j], ids[i]];
+      state.catOrder = ids; commit();
+      const top = $("#sheet").scrollTop; storeOrderSheet(); $("#sheet").scrollTop = top;
+    });
+  });
+}
+
+/* ---------- Butiksläge ---------- */
+
+let shopping = false, shopLock = null;
+async function setShopping(on) {
+  shopping = on;
+  document.body.classList.toggle("shopping", on);
+  try {
+    if (on && "wakeLock" in navigator) shopLock = await navigator.wakeLock.request("screen");
+    else if (!on && shopLock) { await shopLock.release(); shopLock = null; }
+  } catch (e) { /* skärmen får släckas som vanligt */ }
+  view = "list"; render(); window.scrollTo(0, 0);
+}
+// Skärmlåset släpps när appen göms; ta det igen när man kommer tillbaka
+document.addEventListener("visibilitychange", () => {
+  if (shopping && document.visibilityState === "visible" && "wakeLock" in navigator)
+    navigator.wakeLock.request("screen").then(l => { shopLock = l; }).catch(() => {});
+});
+
+/* ---------- Har hemma och Varje vecka ---------- */
+
+const PANTRY_SUGGEST = ["Salt", "Peppar", "Olja", "Olivolja", "Smör", "Socker", "Vetemjöl", "Buljong", "Vitlök", "Soja"];
+const GENERIC_END = ["olja", "peppar", "salt", "socker"];
+const pantryKeys = () => (state.pantry || []).map(key);
+
+// Står varan på "Har hemma"? ("1 tsk salt", "rapsolja", "salt och peppar")
+function inPantry(name) {
+  const keys = pantryKeys();
+  if (!keys.length) return false;
+  const parts = key(name).split(/\s*(?:,| och | & )\s*/).filter(Boolean);
+  return parts.length > 0 && parts.every(p => keys.some(k => p === k || p.split(/\s+/).includes(k) || (GENERIC_END.includes(k) && p.endsWith(k))));
+}
+
+function editNamesSheet(kind) {
+  const isPantry = kind === "pantry";
+  const items = (isPantry ? state.pantry : state.staples) || [];
+  const suggestions = isPantry ? PANTRY_SUGGEST.filter(s => !pantryKeys().includes(key(s))) : Object.values(state.history).sort((a, b) => b.count - a.count).slice(0, 10).map(h => h.name).filter(n => !items.some(x => key(parseEntry(x).name) === key(n)));
+  openSheet(`
+    <h3>${isPantry ? "Har hemma" : "Varje vecka"}</h3>
+    <p class="hint" style="font-size:16px;margin-top:-6px">${isPantry
+      ? "Basvaror du alltid har. De hoppas över när ett recept eller veckans meny läggs i listan."
+      : "Det du köper varje vecka. Lägg till allt med ett tryck under ⋯ i listan."}</p>
+    <form class="addbar card" id="n-form" style="position:static" autocomplete="off">
+      <input id="n-input" placeholder="${isPantry ? "t.ex. salt, olja" : "t.ex. 2 l mjölk, bröd"}" enterkeyhint="done">
+      <button class="btn" type="submit">Lägg till</button>
+    </form>
+    ${items.length ? `<div class="card">${items.map((n, i) => `<div class="pick" style="display:flex;align-items:center;cursor:default"><span style="flex:1">${esc(n)}</span><button class="icon-mini" data-rm="${i}" aria-label="Ta bort ${esc(n)}">✕</button></div>`).join("")}</div>`
+      : `<p class="hint">Inget här än.</p>`}
+    ${suggestions.length ? `<p class="hint" style="margin-top:14px">Förslag</p><div class="chips" style="flex-wrap:wrap">${suggestions.map(s => `<button class="chip" data-add-name="${esc(s)}">+ ${esc(s)}</button>`).join("")}</div>` : ""}
+    <div class="actions"><button class="btn" id="n-done">Klar</button></div>`, body => {
+    const list = () => (isPantry ? (state.pantry = state.pantry || []) : (state.staples = state.staples || []));
+    const add = text => {
+      for (const part of text.split(/[,;\n]/).map(s => s.trim()).filter(Boolean)) {
+        const v = isPantry ? cap(parseEntry(part).name) : cap(part);
+        if (!list().some(x => key(x) === key(v))) list().push(v);
+      }
+      commit(); editNamesSheet(kind);
+    };
+    body.querySelector("#n-done").onclick = closeSheet;
+    body.querySelector("#n-form").onsubmit = e => { e.preventDefault(); const v = body.querySelector("#n-input").value; if (v.trim()) add(v); };
+    body.querySelectorAll("[data-add-name]").forEach(b => b.onclick = () => add(b.dataset.addName));
+    body.querySelectorAll("[data-rm]").forEach(b => b.onclick = () => { list().splice(+b.dataset.rm, 1); commit(); editNamesSheet(kind); });
+  });
+}
+
+function addStaples() {
+  const staples = state.staples || [];
+  if (!staples.length) { editNamesSheet("staples"); return; }
+  staples.forEach(s => addItem(s));
+  commit();
+  toast(`${staples.length} varor från Varje vecka tillagda`);
+}
+
+/* ---------- Vad kan jag laga? ---------- */
+
+function whatCanICookSheet() {
+  if (!isLinked()) { accountSheet(); return; }
+  let photos = [];
+  openSheet(`
+    <h3>Vad kan jag laga?</h3>
+    <p class="hint" style="font-size:16px;margin-top:-6px">Skriv vad du har hemma, eller fota kylen och skafferiet. Du får förslag, helst bland dina egna recept.</p>
+    <textarea id="w-have" style="width:100%;min-height:110px" placeholder="t.ex. kycklingfilé, ris, paprika, grädde"></textarea>
+    <div class="card" style="margin-top:12px"><button class="pick" id="w-photo">Fota kylen eller skafferiet <small id="w-count" style="color:var(--muted)"></small></button></div>
+    <div class="actions"><button class="btn ghost" id="w-close">Stäng</button><button class="btn" id="w-go">Föreslå</button></div>`, body => {
+    body.querySelector("#w-close").onclick = closeSheet;
+    body.querySelector("#w-photo").onclick = () => {
+      const input = document.createElement("input");
+      input.type = "file"; input.accept = "image/*"; input.multiple = true;
+      input.onchange = async () => {
+        photos = await Promise.all([...input.files].slice(0, 3).map(shrinkPhoto));
+        body.querySelector("#w-count").textContent = photos.length ? `(${photos.length} ${photos.length === 1 ? "bild" : "bilder"})` : "";
+      };
+      input.click();
+    };
+    body.querySelector("#w-go").onclick = async () => {
+      const have = body.querySelector("#w-have").value.trim();
+      if (!have && !photos.length) { toast("Skriv vad du har, eller fota kylen"); return; }
+      busySheet("Tänker ut middagar…", have || "Från dina foton");
+      try {
+        const { ideas } = await callShop("suggest", { have, ...(photos.length ? { images: photos } : {}), recipes: state.recipes.map(r => r.name) });
+        ideasSheet(ideas || []);
+      } catch (err) { aiFailSheet("Det gick inte att få förslag", err, whatCanICookSheet); }
+    };
+  });
+}
+
+function ideasSheet(ideas) {
+  const own = n => state.recipes.find(r => r.name === n);
+  openSheet(`
+    <h3>Förslag</h3>
+    ${ideas.map((x, i) => `<div class="card" style="padding:14px 16px;margin-bottom:12px">
+      <b>${esc(x.name)}</b>${own(x.ownRecipe) ? ` <small style="color:var(--accent)">· ditt recept</small>` : ""}
+      ${x.why ? `<div class="hint" style="margin:4px 0 0">${esc(x.why)}</div>` : ""}
+      ${x.uses.length ? `<div style="font-size:.88rem;margin-top:6px">✓ Har: ${esc(x.uses.join(", "))}</div>` : ""}
+      ${x.missing.length ? `<div style="font-size:.88rem;color:var(--muted)">Saknas: ${esc(x.missing.join(", "))}</div>` : ""}
+      <div class="chips" style="margin-top:10px;padding-bottom:0;flex-wrap:wrap">
+        ${own(x.ownRecipe) ? `<button class="chip" data-idea-open="${i}">Öppna receptet</button>` : `<button class="chip" data-idea-search="${i}">Hitta ett recept</button>`}
+        ${x.missing.length ? `<button class="chip" data-idea-buy="${i}">Lägg det som saknas i listan</button>` : ""}
+      </div>
+    </div>`).join("") || `<p class="hint">Inga förslag den här gången.</p>`}
+    <div class="actions"><button class="btn ghost" id="i-again">Försök igen</button><button class="btn" id="i-close2">Klar</button></div>`, body => {
+    body.querySelector("#i-close2").onclick = closeSheet;
+    body.querySelector("#i-again").onclick = whatCanICookSheet;
+    body.querySelectorAll("[data-idea-open]").forEach(b => b.onclick = () => recipeViewSheet(own(ideas[+b.dataset.ideaOpen].ownRecipe).id));
+    body.querySelectorAll("[data-idea-search]").forEach(b => b.onclick = () => {
+      const q = ideas[+b.dataset.ideaSearch].name;
+      closeSheet(); recipeQuery = q; $("#recipe-search").value = q; recipeCatFilter = ""; view = "recipes"; render(); searchWeb(q);
+    });
+    body.querySelectorAll("[data-idea-buy]").forEach(b => b.onclick = () => {
+      const x = ideas[+b.dataset.ideaBuy];
+      x.missing.forEach(m => addItem(m, x.name));
+      commit(); toast(`${x.missing.length} varor tillagda i ${cur().name}`);
+    });
+  });
+}
+
+/* ---------- Träningsdagar i veckomenyn (från träningsappen, samma konto) ---------- */
+
+let trainingDays = { from: "", days: {} };
+async function loadTrainingDays(fromIso) {
+  if (!session || !sb || trainingDays.from === fromIso) return;
+  trainingDays = { from: fromIso, days: {} };
+  const to = new Date(fromIso + "T12:00:00"); to.setDate(to.getDate() + 6);
+  const { data, error } = await sb.rpc("my_training_days", { from_date: fromIso, to_date: isoDate(to) });
+  if (error || !data) return;
+  for (const d of data) trainingDays.days[d.day] = d.level;
+  if (view === "week" || isWide()) renderWeek();
+}
+function trainingTag(iso) {
+  const l = trainingDays.days[iso];
+  return l === "hard" ? `<small class="train-tag hard">Tung träning – ät ordentligt</small>` : l === "easy" ? `<small class="train-tag">Träning</small>` : "";
+}
+
+// Safari-genvägen nås från hjälpen
+document.addEventListener("click", e => { if (e.target.closest("[data-shortcut]")) shortcutSheet(); });
+
+/* ---------- Hjälp ---------- */
+
+// Korta guider. Samma hjälp nås från "? Hjälp"-länkarna i varje vy och från Profil.
+const HELP_SECTIONS = [
+  { id: "list", title: "Inköpslistan", html: `
+    <ol class="helpsteps">
+      <li>Skriv varor i rutan överst. Flera på en gång med komma: <b>2 l mjölk, ägg, bröd</b>.</li>
+      <li>Mängden kan stå före eller efter: <b>500 g kycklingfilé</b> och <b>kycklingfilé 500 g</b> blir samma sak.</li>
+      <li>Tryck på en vara för att bocka av den. <b>⋯</b> bredvid ändrar namn, mängd eller avdelning. Svep vänster på en vara för att ta bort den.</li>
+      <li>Varorna sorteras efter butikens avdelningar. Rättar du en avdelning kommer appen ihåg det nästa gång.</li>
+    </ol>
+    <div class="helptip">Knapparna med <b>+</b> under rutan är det du köper ofta. Ett tryck lägger till varan igen.</div>
+    <p><b>Har hemma:</b> basvaror som salt och olja hoppas över när recept läggs i listan. <b>Varje vecka:</b> det du alltid köper, läggs till med ⋯ → Lägg till Varje vecka-varorna. Båda finns under Profil, eller under ⋯ på en vara.</p>
+    <p><b>Butiksläge</b> (knappen uppe till höger): större rader, skärmen släcks inte och det du bockar av åker ner i korgen. Sortera avdelningarna i din butiks ordning under ⋯ → Din butiks ordning.</p>
+    <p>Flera listor: tryck på listans namn högst upp. Där skapar du nya listor (t.ex. Apoteket eller Helgfest) och byter mellan dem. <b>⋯</b> uppe till höger har det som gäller listan: dela, dölj eller rensa avbockade, töm listan.</p>` },
+  { id: "week", title: "Veckomenyn", html: `
+    <ol class="helpsteps">
+      <li>Tryck på en dag och välj ett recept. Ställ in antal portioner med − och +.</li>
+      <li>Ingen middag hemma? Skriv fritt, t.ex. <b>Rester</b> eller <b>Äter ute</b>.</li>
+      <li>Tryck <b>Lägg veckans ingredienser i listan</b>. Mängderna räknas om efter portionerna och läggs ihop med det som redan står på listan.</li>
+    </ol>
+    <div class="helptip">Trycker du på knappen igen läggs bara nya dagar till – inget dubbleras.</div>
+    <p>Är du inloggad med samma konto som träningsappen visas tunga träningsdagar i veckan, så att du kan planera en rejäl middag de dagarna.</p>
+    <p>Från ett recept kan du också trycka <b>Välj dag</b>. På en dator syns recepten bredvid veckan, och du kan dra ett recept till en dag.</p>` },
+  { id: "recipes", title: "Recept", html: `
+    <ol class="helpsteps">
+      <li>Tryck <b>+</b> under Recept.</li>
+      <li>Klistra in en länk från t.ex. ICA, Arla eller Köket och tryck <b>Hämta</b>. Skriver du ord i stället söks recept fram.</li>
+      <li>Kolla receptet och tryck <b>Spara</b>.</li>
+    </ol>
+    <p><b>Fota recept</b> läser en kokbokssida, en lapp eller en skärmbild (upp till 3 bilder). <b>Klistra in recepttext</b> fungerar med text från t.ex. ett sms eller Instagram. Båda kräver att du är inloggad.</p>
+    <p>I ett recept: välj portioner, <b>Lägg i listan</b>, <b>Välj dag</b>, och starta timers i stegen som har en tid.</p>
+    <p><b>Vad kan jag laga?</b> överst i Recept: skriv eller fota vad du har hemma, så får du förslag – helst bland dina egna recept – och kan lägga det som saknas i listan.</p>
+    <div class="helptip">Fungerar inte en länk (t.ex. från Coop)? Ta en skärmbild av receptet och använd <b>Fota recept</b>.</div>` },
+  { id: "account", title: "Konto och delning", html: `
+    <p>Utan konto sparas allt bara på den här enheten. Med ett konto (Profil → Logga in) får du samma listor på telefon och dator, och ändringar syns direkt. Har du träningsappen fungerar samma inloggning.</p>
+    <ul class="helpsteps">
+      <li><b>Hushållet</b>: listor, recept och veckomeny som alla i hushållet delar. Bjud in under Profil → Bjud in.</li>
+      <li><b>Bara jag</b>: listor som bara du ser, på alla dina enheter.</li>
+      <li><b>Delad lista</b>: en enskild lista du delar med någon via en länk, t.ex. inför en fest. Den personen ser bara den listan.</li>
+    </ul>
+    <p>Vem som ser en lista står under listans namn. Ändra det under <b>⋯ → Vem ser listan?</b>.</p>
+    <div class="helptip">Den gröna pricken uppe till höger betyder att allt är synkat. Orange: du saknar nät just nu – ändringarna skickas när nätet kommer tillbaka.</div>` },
+  { id: "faq", title: "Vanliga frågor", html: `
+    <details class="helpq"><summary>Hur får jag appen på hemskärmen?</summary><div>Öppna sidan i Safari, tryck på dela-knappen och välj <b>Lägg till på hemskärmen</b>. Då öppnas den som en vanlig app.</div></details>
+    <details class="helpq"><summary>Fungerar appen utan nät?</summary><div>Ja. Listan, menyn och recepten fungerar som vanligt. Är du inloggad synkas ändringarna när nätet kommer tillbaka. Att hämta recept från nätet kräver nät.</div></details>
+    <details class="helpq"><summary>Jag tog bort något av misstag.</summary><div>Tryck <b>Ångra</b> i rutan som dyker upp längst ner direkt efteråt.</div></details>
+    <details class="helpq"><summary>Varför fungerar inte länken till receptet?</summary><div>Vissa sajter (t.ex. Coop) laddar receptet först i webbläsaren, så det går inte att läsa från länken. Ta en skärmbild och fota in den, eller använd <button class="linkbtn" data-shortcut style="min-height:0;display:inline">Safari-genvägen</button>.</div></details>
+    <details class="helpq"><summary>Kostar det något?</summary><div>Nej. Foto, inklistrad text och sök använder AI och har en gräns per dag, men kostar inget för dig.</div></details>
+    <details class="helpq"><summary>Var sparas mina listor?</summary><div>Utan konto: bara i den här webbläsaren. Med konto: i ditt konto, så att de finns på alla dina enheter och hos de du delar med. Säkerhetskopia finns under Profil.</div></details>
+    <details class="helpq"><summary>Hur slutar jag dela en lista?</summary><div>Öppna listan, tryck <b>⋯ → Vem ser listan?</b> och välj Hushållet eller Bara jag. Den du delat med kan också själv sluta vara med.</div></details>` },
+];
+
+const HELP_FOR_VIEW = { list: "list", week: "week", recipes: "recipes", profile: "account" };
+
+function helpSheet(section) {
+  openSheet(`
+    <h3>Hjälp</h3>
+    <div class="helptoc">${HELP_SECTIONS.map(s => `<button class="helptoc-link" data-goto="${s.id}">${s.title}</button>`).join("")}</div>
+    ${HELP_SECTIONS.map(s => `<section class="helpsec" id="help-${s.id}"><h4>${s.title}</h4>${s.html}</section>`).join("")}
+    <div class="actions"><button class="btn ghost" id="h-close-help">Stäng</button></div>`, body => {
+    body.querySelector("#h-close-help").onclick = closeSheet;
+    body.querySelectorAll("[data-goto]").forEach(b => b.onclick = () => body.querySelector("#help-" + b.dataset.goto)?.scrollIntoView({ behavior: "smooth", block: "start" }));
+    if (section) setTimeout(() => body.querySelector("#help-" + section)?.scrollIntoView({ block: "start" }), 320);
+  });
+}
+
+// "? Hjälp om …" var som helst i appen
+document.addEventListener("click", e => {
+  const h = e.target.closest("[data-help]");
+  if (h) { e.preventDefault(); helpSheet(h.dataset.help); }
+});
+
+/* ---------- Välkomst för nya ---------- */
+
+const WELCOME_KEY = "veckohandling.welcomed";
+// No welcome box: the list itself shows what to do, and the help is behind "?".
+function welcomeHtml() { return ""; }
+document.addEventListener("click", e => {
+  if (!e.target.closest("#welcome-ok")) return;
+  try { localStorage.setItem(WELCOME_KEY, "1"); } catch (err) { /* ignorera */ }
+  render();
+});
+
+/* ---------- Bladen: dra ner eller Escape för att stänga ---------- */
+
+(() => {
+  const sheet = $("#sheet");
+  let startY = null, dy = 0;
+  sheet.addEventListener("touchstart", e => {
+    // Bara när bladet är scrollat högst upp, och inte i ett textfält
+    if (sheet.scrollTop > 0 || e.target.closest("input, textarea, select")) { startY = null; return; }
+    startY = e.touches[0].clientY; dy = 0;
+  }, { passive: true });
+  sheet.addEventListener("touchmove", e => {
+    if (startY == null) return;
+    dy = e.touches[0].clientY - startY;
+    if (dy > 0) { sheet.style.transition = "none"; sheet.style.transform = `translateY(${dy}px)`; }
+  }, { passive: true });
+  sheet.addEventListener("touchend", () => {
+    if (startY == null) return;
+    sheet.style.transition = ""; sheet.style.transform = "";
+    if (dy > 90) closeSheet();
+    startY = null;
+  });
+  document.addEventListener("keydown", e => {
+    if (e.key === "Escape" && sheet.classList.contains("open")) closeSheet();
+  });
+})();
+
+/* ---------- Välj dag för ett recept ---------- */
+
+function pickDaySheet(r) {
+  const days = [];
+  const start = new Date(); start.setHours(12, 0, 0, 0);
+  for (let i = 0; i < 14; i++) { const d = new Date(start); d.setDate(start.getDate() + i); days.push(d); }
+  openSheet(`
+    <h3>Vilken dag blir det ${esc(r.name)}?</h3>
+    <div class="card">${days.map(d => {
+      const iso = isoDate(d), p = state.plan[iso], other = p?.recipeId ? recipeById(p.recipeId)?.name : p?.text;
+      return `<button class="pick" data-day-pick="${iso}">${DAYS[(d.getDay() + 6) % 7]} ${d.getDate()} ${MONTHS[d.getMonth()]}${other ? ` <small style="color:var(--muted)">– ersätter ${esc(other)}</small>` : ""}</button>`;
+    }).join("")}</div>
+    <div class="actions"><button class="btn ghost" id="pd-back">Tillbaka</button></div>`, body => {
+    body.querySelector("#pd-back").onclick = () => recipeViewSheet(r.id);
+    body.querySelectorAll("[data-day-pick]").forEach(b => b.onclick = () => {
+      state.plan[b.dataset.dayPick] = { recipeId: r.id, servings: state.servings || r.servings };
+      closeSheet(); commit();
+      const d = new Date(b.dataset.dayPick + "T12:00:00");
+      toast(`${r.name} på ${DAYS[(d.getDay() + 6) % 7].toLowerCase()}`);
+    });
+  });
+}
+
+/* ---------- Dator: veckan och recepten bredvid varandra ---------- */
+
+const wideQuery = window.matchMedia("(min-width: 980px)");
+const isWide = () => wideQuery.matches;
+wideQuery.addEventListener?.("change", () => render());
+
+// Dra ett recept till en dag i veckomenyn
+document.addEventListener("dragstart", e => {
+  const r = e.target.closest?.("[data-recipe]");
+  if (!r) return;
+  e.dataTransfer.setData("text/x-recipe", r.dataset.recipe);
+  e.dataTransfer.effectAllowed = "copy";
+});
+document.addEventListener("dragover", e => {
+  const day = e.target.closest?.("[data-day]");
+  if (!day || !e.dataTransfer.types.includes("text/x-recipe")) return;
+  e.preventDefault();
+  document.querySelectorAll(".drop-on").forEach(x => x !== day && x.classList.remove("drop-on"));
+  day.classList.add("drop-on");
+});
+document.addEventListener("dragleave", e => { e.target.closest?.("[data-day]")?.classList.remove("drop-on"); });
+document.addEventListener("drop", e => {
+  const day = e.target.closest?.("[data-day]");
+  const id = e.dataTransfer.getData("text/x-recipe");
+  document.querySelectorAll(".drop-on").forEach(x => x.classList.remove("drop-on"));
+  if (!day || !id || !recipeById(id)) return;
+  e.preventDefault();
+  state.plan[day.dataset.day] = { recipeId: id, servings: state.servings || recipeById(id).servings };
+  commit();
+});
+
+/* ---------- Tillbaka från en webbsökning ---------- */
+
+let cameFromWebSearch = false;
+document.addEventListener("visibilitychange", () => {
+  if (document.visibilityState !== "visible" || !cameFromWebSearch) return;
+  cameFromWebSearch = false;
+  addRecipeSheet();
+  setTimeout(() => { $("#a-url")?.focus(); toast("Klistra in länken du kopierade och tryck Hämta"); }, 350);
+});
 
 /* ---------- Sheet (bottenpanel) ---------- */
 
@@ -1158,12 +2546,27 @@ function editItemSheet(id) {
     <label class="field"><span>Vara</span><input id="e-name" value="${esc(i.name)}"></label>
     <label class="field"><span>Mängd</span><input id="e-qty" value="${esc(i.qty)}" placeholder="t.ex. 2 st, 500 g"></label>
     <label class="field"><span>Kategori</span><select id="e-cat">
-      ${CATEGORIES.map(c => `<option value="${c.id}"${c.id === i.cat ? " selected" : ""}>${c.emoji} ${c.name}</option>`).join("")}
+      ${orderedCats().map(c => `<option value="${c.id}"${c.id === i.cat ? " selected" : ""}>${c.name}</option>`).join("")}
     </select></label>
+    <div class="card" style="margin-top:4px">
+      <button class="pick" id="e-pantry">Har alltid hemma <small style="color:var(--muted)">– tas bort och hoppas över i recept</small></button>
+      <button class="pick" id="e-staple">Köper varje vecka</button>
+    </div>
     <div class="actions">
       <button class="btn danger" id="e-del">Ta bort</button>
       <button class="btn" id="e-save">Spara</button>
     </div>`, body => {
+    body.querySelector("#e-pantry").onclick = () => {
+      state.pantry = state.pantry || [];
+      if (!state.pantry.some(x => key(x) === key(i.name))) state.pantry.push(i.name);
+      closeSheet(); removeItems([i.id], `${i.name} ligger nu under Har hemma`);
+    };
+    body.querySelector("#e-staple").onclick = () => {
+      state.staples = state.staples || [];
+      const entry = (i.qty ? i.qty + " " : "") + i.name.toLowerCase();
+      if (!state.staples.some(x => key(parseEntry(x).name) === key(i.name))) state.staples.push(entry);
+      closeSheet(); commit(); toast(`${i.name} finns nu under Varje vecka`);
+    };
     body.querySelector("#e-save").onclick = () => {
       const name = cap(body.querySelector("#e-name").value.trim());
       if (!name) return;
@@ -1184,21 +2587,21 @@ function listMenuSheet() {
   openSheet(`
     <h3>${esc(cur().name)}</h3>
     <div class="card">
-      <button class="pick" id="m-share">📤 Dela listan</button>
-      <button class="pick" id="m-hide">${state.hideDone ? "👁️ Visa avbockade" : "🙈 Dölj avbockade"}</button>
-      <button class="pick" id="m-clear-done"${done ? "" : " disabled style='opacity:.4'"}>✅ Rensa avbockade (${done})</button>
-      <button class="pick" id="m-uncheck"${done ? "" : " disabled style='opacity:.4'"}>↩️ Avmarkera alla</button>
-      <button class="pick" id="m-clear-all" style="color:var(--danger)"${cur().items.length ? "" : " disabled"}>🗑️ Töm hela listan</button>
+      <button class="pick" id="m-who">${session && household ? "Vem ser listan? " + (whoSees(cur()) ? "<small style='color:var(--muted)'>" + esc(whoSees(cur())) + "</small>" : "<small style='color:var(--muted)'>Hushållet</small>") : "Dela listan med någon <small style='color:var(--muted)'>(logga in)</small>"}</button>
+      <button class="pick" id="m-staples">Lägg till Varje vecka-varorna${(state.staples || []).length ? ` (${state.staples.length})` : ""}</button>
+      <button class="pick" id="m-order">Din butiks ordning</button>
+      <button class="pick" id="m-share">Skicka listan som text</button>
+      <button class="pick" id="m-hide">${state.hideDone ? "Visa avbockade" : "Dölj avbockade"}</button>
+      <button class="pick" id="m-clear-done"${done ? "" : " disabled style='opacity:.4'"}>Rensa avbockade (${done})</button>
+      <button class="pick" id="m-uncheck"${done ? "" : " disabled style='opacity:.4'"}>Avmarkera alla</button>
+      <button class="pick" id="m-clear-all" style="color:var(--danger)"${cur().items.length ? "" : " disabled"}>Töm hela listan</button>
     </div>
-    <p class="hint" style="margin-top:16px">Säkerhetskopia</p>
-    <div class="card">
-      <button class="pick" id="m-export">💾 Exportera all data</button>
-      <button class="pick" id="m-import">📥 Importera data</button>
-    </div>
-    <input type="file" id="m-file" accept="application/json,.json" hidden>
     <div class="actions"><button class="btn ghost" id="m-close">Stäng</button></div>`, body => {
     body.querySelector("#m-close").onclick = closeSheet;
     body.querySelector("#m-share").onclick = () => { closeSheet(); shareList(); };
+    body.querySelector("#m-staples").onclick = () => { closeSheet(); addStaples(); };
+    body.querySelector("#m-order").onclick = storeOrderSheet;
+    body.querySelector("#m-who").onclick = () => { if (session && household) listShareSheet(cur()); else accountSheet(); };
     body.querySelector("#m-hide").onclick = () => { state.hideDone = !state.hideDone; closeSheet(); commit(); };
     body.querySelector("#m-clear-done").onclick = () => {
       closeSheet(); removeItems(cur().items.filter(i => i.done).map(i => i.id), `${done} varor rensade`);
@@ -1207,10 +2610,6 @@ function listMenuSheet() {
     body.querySelector("#m-clear-all").onclick = () => {
       closeSheet(); removeItems(cur().items.map(i => i.id), "Listan tömd");
     };
-    body.querySelector("#m-export").onclick = exportData;
-    const file = body.querySelector("#m-file");
-    body.querySelector("#m-import").onclick = () => file.click();
-    file.onchange = () => importData(file.files[0]);
   });
 }
 
@@ -1233,26 +2632,45 @@ function bindStepper(root, initial, onChange) {
   });
 }
 
+// Listorna grupperade efter vem som ser dem (bara när man är inloggad)
+function listGroupsHtml(active) {
+  const row = l => `<button class="pick${l.id === active.id ? " sel" : ""}" data-list="${l.id}">${l.id === active.id ? "✓ " : ""}${esc(l.name)}<span class="count">${l.items.filter(i => !i.done).length}</span></button>`;
+  if (!session || !household) return `<div class="card">${state.lists.map(row).join("")}</div>`;
+  const groups = [["home", "Hushållet"], ["private", "Bara jag"], ["shared", "Delade med andra"]];
+  return groups.map(([k, title]) => {
+    const ls = state.lists.filter(l => spaceKindOf(l) === k);
+    return ls.length ? `<p class="hint" style="margin-top:12px">${title}</p><div class="card">${ls.map(row).join("")}</div>` : "";
+  }).join("");
+}
+
 function listsSheet() {
   const list = cur();
   openSheet(`
     <h3>Mina listor</h3>
-    <div class="card">
-      ${state.lists.map(l => `<button class="pick${l.id === list.id ? " sel" : ""}" data-list="${l.id}">${l.id === list.id ? "✓ " : ""}${esc(l.name)}<span class="count">${l.items.filter(i => !i.done).length}</span></button>`).join("")}
-    </div>
+    ${listGroupsHtml(list)}
     <form id="l-form" class="addbar card" style="position:static;margin-top:16px" autocomplete="off">
       <input id="l-new" placeholder="Ny lista, t.ex. Helgfest eller Apoteket" enterkeyhint="done">
       <button class="btn" type="submit">Skapa</button>
     </form>
+    ${session && household ? `<div class="chips" id="l-where" style="margin-top:8px">
+      <button type="button" class="chip on" data-where="home">Hushållet</button>
+      <button type="button" class="chip" data-where="private">Bara jag</button>
+      <button type="button" class="chip" data-where="share">Dela med någon</button>
+    </div>` : ""}
     <p class="hint" style="margin-top:16px">Vald lista: ${esc(list.name)}</p>
     <div class="card">
-      <button class="pick" id="l-rename">✏️ Byt namn</button>
-      ${state.lists.length > 1 ? `<button class="pick" id="l-delete" style="color:var(--danger)">🗑️ Ta bort listan</button>` : ""}
+      <button class="pick" id="l-rename">Byt namn</button>
+      ${state.lists.length > 1 ? `<button class="pick" id="l-delete" style="color:var(--danger)">Ta bort listan</button>` : ""}
     </div>
     <div class="actions"><button class="btn ghost" id="l-close">Stäng</button></div>`, body => {
     body.querySelector("#l-close").onclick = closeSheet;
     body.querySelectorAll("[data-list]").forEach(b => b.onclick = () => { state.activeList = b.dataset.list; closeSheet(); commit(); });
-    body.querySelector("#l-form").onsubmit = e => {
+    let where = "home";
+    body.querySelectorAll("[data-where]").forEach(b => b.onclick = () => {
+      where = b.dataset.where;
+      body.querySelectorAll("[data-where]").forEach(x => x.classList.toggle("on", x === b));
+    });
+    body.querySelector("#l-form").onsubmit = async e => {
       e.preventDefault();
       const name = cap(body.querySelector("#l-new").value.trim());
       if (!name) { body.querySelector("#l-new").focus(); return; }
@@ -1260,7 +2678,8 @@ function listsSheet() {
       state.lists.push(l);
       state.activeList = l.id;
       closeSheet(); commit();
-      toast(`Listan ${name} skapad`);
+      if (where !== "home") await moveList(l, where);
+      else toast(`Listan ${name} skapad`);
     };
     body.querySelector("#l-rename").onclick = () => {
       const name = prompt("Nytt namn på listan", list.name);
@@ -1283,7 +2702,7 @@ function dayPickerSheet(iso) {
   const dayName = DAYS[(d.getDay() + 6) % 7];
   const sorted = [...state.recipes].sort((a, b) => a.name.localeCompare(b.name, "sv"));
   const options = q => sorted.filter(r => recipeMatches(r, q)).map(r =>
-    `<button class="pick${p.recipeId === r.id ? " sel" : ""}" data-pick="${r.id}">${recipeCat(r.category).emoji} ${esc(r.name)}</button>`
+    `<button class="pick${p.recipeId === r.id ? " sel" : ""}" data-pick="${r.id}">${esc(r.name)}</button>`
   ).join("") || `<div class="pick" style="color:var(--muted)">Inga recept hittades</div>`;
   openSheet(`
     <h3>${dayName} ${d.getDate()} ${MONTHS[d.getMonth()]}</h3>
@@ -1336,7 +2755,7 @@ function recipeViewSheet(id) {
   openSheet(`
     ${r.image ? `<img class="hero" src="${esc(r.image)}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()">` : ""}
     <h3>${esc(r.name)}</h3>
-    <div class="recipe-meta">${c.emoji} ${esc(c.name)}${r.time ? ` · ⏱ ${fmtTime(r.time)}` : ""} · grundrecept för ${r.servings} portioner</div>
+    <div class="recipe-meta">${esc(c.name)}${r.time ? ` · ${fmtTime(r.time)}` : ""} · grundrecept för ${r.servings} portioner</div>
     ${stepperHtml(servings)}
     <h4>Ingredienser</h4>
     <div class="card" id="v-ing">${ingredientRows(r, servings)}</div>
@@ -1344,22 +2763,25 @@ function recipeViewSheet(id) {
       const min = stepMinutes(s);
       return `<li>${esc(s)}${min ? timerHtml(`${r.id}:${n}`, min) : ""}</li>`;
     }).join("")}</ol></div>` : ""}
-    ${r.source ? `<a class="source" href="${esc(r.source)}" target="_blank" rel="noopener">🔗 Originalrecept på ${esc(new URL(r.source).hostname.replace(/^www\./, ""))}</a>` : ""}
+    ${r.source ? `<a class="source" href="${esc(r.source)}" target="_blank" rel="noopener">Originalrecept på ${esc(new URL(r.source).hostname.replace(/^www\./, ""))}</a>` : ""}
     ${state.lists.length > 1 ? `<label class="field" style="margin-top:16px"><span>Lägg i lista</span><select id="v-list">
       ${state.lists.map(l => `<option value="${l.id}"${l.id === state.activeList ? " selected" : ""}>${esc(l.name)}</option>`).join("")}
     </select></label>` : ""}
     <div class="actions">
       <button class="btn ghost" id="v-edit">Redigera</button>
+      <button class="btn ghost" id="v-day">Välj dag</button>
       <button class="btn" id="v-add">Lägg i listan</button>
     </div>`, body => {
     bindStepper(body, servings, n => { servings = n; body.querySelector("#v-ing").innerHTML = ingredientRows(r, n); });
     body.querySelector("#v-edit").onclick = () => recipeEditSheet(id);
+    body.querySelector("#v-day").onclick = () => pickDaySheet(recipeById(id));
     body.querySelector("#v-add").onclick = () => {
       const listId = body.querySelector("#v-list")?.value;
       const list = state.lists.find(l => l.id === listId) || cur();
+      lastSkipped = 0;
       addRecipeToList(r, servings, list);
       closeSheet(); commit();
-      toast(`${r.name} för ${servings} portioner tillagt i ${list.name}`);
+      toast(`${r.name} för ${servings} portioner tillagt i ${list.name}${skippedNote()}`);
     };
   });
 }
@@ -1367,11 +2789,11 @@ function recipeViewSheet(id) {
 function recipeEditSheet(id, assignTo, assignServings, draft) {
   const r = id ? recipeById(id) : draft || { name: "", category: recipeCatFilter || "Övrigt", servings: 4, time: 0, ingredients: [], steps: [], source: "", image: "" };
   openSheet(`
-    <h3>${id ? "Redigera recept" : draft?.source ? "Importerat recept" : "Nytt recept"}</h3>
+    <h3>${id ? "Redigera recept" : draft ? "Importerat recept" : "Nytt recept"}</h3>
     <label class="field"><span>Namn</span><input id="r-name" value="${esc(r.name)}" placeholder="t.ex. Lasagne"></label>
     <div class="field-row">
       <label class="field"><span>Kategori</span><select id="r-cat">
-        ${RECIPE_CATS.map(c => `<option value="${esc(c.name)}"${c.name === r.category ? " selected" : ""}>${c.emoji} ${esc(c.name)}</option>`).join("")}
+        ${RECIPE_CATS.map(c => `<option value="${esc(c.name)}"${c.name === r.category ? " selected" : ""}>${esc(c.name)}</option>`).join("")}
       </select></label>
     </div>
     <div class="field-row">
@@ -1447,14 +2869,14 @@ function timerHtml(tid, defMin) {
     const m = timerDrafts[tid] ?? defMin;
     return `<div class="timer" data-tid="${tid}" data-def="${defMin}">
       <button data-t="minus" aria-label="En minut mindre">−</button><span class="t-time">${m} min</span><button data-t="plus" aria-label="En minut mer">+</button>
-      <button class="t-go" data-t="start">▶ Starta timer</button></div>`;
+      <button class="t-go" data-t="start">Starta timer</button></div>`;
   }
   if (t.done) {
     return `<div class="timer done" data-tid="${tid}" data-def="${defMin}"><span class="t-time">Klar!</span><button class="t-go" data-t="reset">OK</button></div>`;
   }
   return `<div class="timer${t.endAt ? " running" : ""}" data-tid="${tid}" data-def="${defMin}">
     <button data-t="minus" aria-label="En minut mindre">−</button><span class="t-time">${fmtClock(leftMs(t))}</span><button data-t="plus" aria-label="En minut mer">+</button>
-    <button class="t-go" data-t="${t.endAt ? "pause" : "resume"}">${t.endAt ? "❚❚ Pausa" : "▶ Fortsätt"}</button>
+    <button class="t-go" data-t="${t.endAt ? "pause" : "resume"}">${t.endAt ? "❚❚ Pausa" : "Fortsätt"}</button>
     <button data-t="reset" aria-label="Stoppa timern">✕</button></div>`;
 }
 
@@ -1493,7 +2915,7 @@ function updateTimers(full) {
   const active = Object.entries(timers);
   document.body.classList.toggle("has-timers", active.length > 0);
   $("#timerbar").innerHTML = active.map(([tid, t]) => `<div class="tb${t.done ? " done" : ""}">
-    <button class="lbl" data-open-recipe="${t.recipeId}">${t.done ? "🔔 Klar: " : "⏱ "}${esc(t.label)}</button>
+    <button class="lbl" data-open-recipe="${t.recipeId}">${t.done ? "Klar: " : ""}${esc(t.label)}</button>
     ${t.done ? "" : `<span class="tt">${fmtClock(leftMs(t))}${t.endAt ? "" : " ❚❚"}</span>`}
     <button class="x" data-tb-reset="${tid}" aria-label="Stoppa timern">✕</button></div>`).join("");
   const ringing = active.some(([, t]) => t.done);
@@ -1520,7 +2942,7 @@ function beep() {
   });
 }
 function alarm(label) {
-  toast(`🔔 ${label} är klar!`);
+  toast(`${label} är klar!`);
   if (navigator.vibrate) navigator.vibrate([300, 150, 300, 150, 300]);
   if (alarmLoop) return;
   beep();
@@ -1564,12 +2986,14 @@ function removeItems(ids, message) {
 }
 
 // Lägger ett recepts ingredienser i en lista och kommer ihåg receptet i listans översikt
-function addRecipeToList(r, servings, list = cur()) {
+function addRecipeToList(r, servings, list = cur(), day = "") {
   const factor = servings / r.servings;
-  r.ingredients.forEach(ing => addItem(ing, r.name, factor, list));
+  let skipped = 0;
+  r.ingredients.forEach(ing => { if (inPantry(parseEntry(ing).name)) skipped++; else addItem(ing, r.name, factor, list); });
+  lastSkipped += skipped;
   const entry = list.recipes.find(x => x.recipeId === r.id);
-  if (entry) entry.servings += servings;
-  else list.recipes.push({ recipeId: r.id, name: r.name, servings });
+  if (entry) { entry.servings += servings; if (day) entry.days = [...(entry.days || []), day]; }
+  else list.recipes.push({ recipeId: r.id, name: r.name, servings, ...(day ? { days: [day] } : {}) });
 }
 
 // Tar bort ett recept ur listan, och de varor som bara behövdes till det receptet
@@ -1579,11 +3003,23 @@ function removeRecipeFromList(recipeId) {
   if (!entry) return;
   const before = JSON.parse(JSON.stringify({ items: list.items, recipes: list.recipes }));
   list.recipes = list.recipes.filter(x => x !== entry);
+  // Receptets mängder (för de portioner som lades i listan), per vara
+  const r = recipeById(recipeId);
+  const amounts = {};
+  if (r) for (const ing of r.ingredients) {
+    const e = parseEntry(ing);
+    if (e.name) amounts[key(e.name)] = scaleQty(e.qty, entry.servings / r.servings);
+  }
   list.items = list.items.filter(i => {
     const from = (i.from || "").split(", ").filter(Boolean);
     if (!from.includes(entry.name)) return true;
     if (from.length === 1) return i.done; // avbockade varor får vara kvar
     i.from = from.filter(f => f !== entry.name).join(", ");
+    // Varan behövs till andra recept också: dra bara av det här receptets mängd
+    if (!i.done) {
+      const rest = subtractQty(i.qty, amounts[key(i.name)]);
+      if (rest) i.qty = rest;
+    }
     return true;
   });
   commit();
@@ -1592,12 +3028,12 @@ function removeRecipeFromList(recipeId) {
 
 function listAsText() {
   const list = cur();
-  let out = `🛒 ${list.name}\n`;
+  let out = `${list.name}\n`;
   if (list.recipes.length) out += "\nRecept: " + list.recipes.map(x => `${x.name} (${x.servings} port.)`).join(", ") + "\n";
-  for (const c of CATEGORIES) {
+  for (const c of orderedCats()) {
     const items = cur().items.filter(i => i.cat === c.id && !i.done);
     if (!items.length) continue;
-    out += `\n${c.emoji} ${c.name}\n` + items.map(i => `• ${i.name}${i.qty ? " – " + i.qty : ""}`).join("\n") + "\n";
+    out += `\n${c.name}\n` + items.map(i => `• ${i.name}${i.qty ? " – " + i.qty : ""}`).join("\n") + "\n";
   }
   return out.trim();
 }
@@ -1632,20 +3068,28 @@ function importData(file) {
   }).catch(() => toast("Filen kunde inte läsas"));
 }
 
+let lastSkipped = 0;   // basvaror som hoppades över senast (Har hemma)
+const skippedNote = () => lastSkipped ? ` · ${lastSkipped} basvaror hoppades över (Har hemma)` : "";
+
 function addWeekToList() {
+  lastSkipped = 0;
   const mon = mondayOf(weekOffset);
-  let count = 0;
+  let count = 0, already = 0;
   for (let d = 0; d < 7; d++) {
     const date = new Date(mon); date.setDate(mon.getDate() + d);
-    const p = state.plan[isoDate(date)];
+    const iso = isoDate(date);
+    const p = state.plan[iso];
     const r = p?.recipeId && recipeById(p.recipeId);
     if (!r) continue;
-    addRecipeToList(r, planServings(p, r));
+    // Samma dag redan tillagd: hoppa över så att inget dubbleras
+    if (cur().recipes.some(x => x.recipeId === r.id && (x.days || []).includes(iso))) { already++; continue; }
+    addRecipeToList(r, planServings(p, r), cur(), iso);
     count++;
   }
+  if (!count) { toast(already ? "Veckans recept finns redan i listan" : "Välj middagar först – tryck på en dag"); return; }
   view = "list";
   commit();
-  toast(`${count} recept tillagda i ${cur().name}`);
+  toast(`${count} recept tillagda i ${cur().name}${already ? ` (${already} fanns redan)` : ""}${skippedNote()}`);
 }
 
 /* ---------- Händelser ---------- */
@@ -1654,7 +3098,7 @@ $("#add-form").addEventListener("submit", e => {
   e.preventDefault();
   const input = $("#add-input");
   // Flera varor på en gång: "mjölk, ägg, bröd"
-  const parts = input.value.split(/[,;\n]/).map(s => s.trim()).filter(Boolean);
+  const parts = input.value.split(/[;\n]|,(?!\d)/).map(s => s.trim()).filter(Boolean); // "2,5 dl" är ett decimaltal
   parts.forEach(p => addItem(p));
   input.value = "";
   commit();
@@ -1667,7 +3111,38 @@ $("#quick-chips").addEventListener("click", e => {
   commit();
 });
 
+// Svep vänster på en vara för att ta bort den (med Ångra)
+let swipe = null, swiped = false;
+$("#list").addEventListener("touchstart", e => {
+  const row = e.target.closest("[data-toggle]");
+  swipe = row ? { row, x: e.touches[0].clientX, y: e.touches[0].clientY, dx: 0, locked: null } : null;
+}, { passive: true });
+$("#list").addEventListener("touchmove", e => {
+  if (!swipe) return;
+  const dx = e.touches[0].clientX - swipe.x, dy = e.touches[0].clientY - swipe.y;
+  if (swipe.locked == null && (Math.abs(dx) > 8 || Math.abs(dy) > 8)) swipe.locked = Math.abs(dx) > Math.abs(dy) && dx < 0;
+  if (!swipe.locked) return;
+  swipe.dx = Math.min(0, dx);
+  const w = Math.min(-swipe.dx, swipe.row.offsetWidth);
+  swipe.row.classList.add("swiping");
+  swipe.row.style.background = `linear-gradient(to left, var(--danger) ${w}px, var(--surface) ${w}px)`;
+  swipe.row.style.setProperty("--swipe", w > 90 ? "1" : "0");
+}, { passive: true });
+$("#list").addEventListener("touchend", () => {
+  if (!swipe) return;
+  const { row, dx, locked } = swipe;
+  swipe = null;
+  if (!locked) return;
+  swiped = true; setTimeout(() => { swiped = false; }, 350);
+  row.classList.remove("swiping"); row.style.background = "";
+  if (dx < -90) {
+    const i = cur().items.find(x => x.id === row.dataset.toggle);
+    if (i) { if (navigator.vibrate) navigator.vibrate(15); removeItems([i.id], `${i.name} borttagen`); }
+  }
+});
+
 $("#list").addEventListener("click", e => {
+  if (swiped) return;
   const edit = e.target.closest("[data-edit]");
   if (edit) { editItemSheet(edit.dataset.edit); return; }
   const row = e.target.closest("[data-toggle]");
@@ -1676,10 +3151,15 @@ $("#list").addEventListener("click", e => {
   if (!i) return;
   i.done = !i.done;
   if (i.done && navigator.vibrate) navigator.vibrate(10);
+  justToggled = i.id;
   commit();
+  justToggled = null;
+  if (i.done && cur().items.length > 1 && cur().items.every(x => x.done)) toast("Allt handlat! Bra jobbat");
 });
 
 $("#list-menu").addEventListener("click", listMenuSheet);
+$("#shop-mode").addEventListener("click", () => setShopping(!shopping));
+$("#shop-done").addEventListener("click", () => setShopping(false));
 $("#list-switch").addEventListener("click", listsSheet);
 $("#list-tabs").addEventListener("click", e => {
   const b = e.target.closest("[data-list]");
@@ -1708,9 +3188,26 @@ document.addEventListener("visibilitychange", () => { if (document.visibilitySta
 $("#days").addEventListener("click", e => { const b = e.target.closest("[data-day]"); if (b) dayPickerSheet(b.dataset.day); });
 $("#recipes").addEventListener("click", e => { const b = e.target.closest("[data-recipe]"); if (b) recipeViewSheet(b.dataset.recipe); });
 $("#recipe-add").addEventListener("click", addRecipeSheet);
+$("#profile").addEventListener("click", e => {
+  if (e.target.closest("[data-cook-p]")) { whatCanICookSheet(); return; }
+  const b = e.target.closest("[data-p]");
+  if (!b) return;
+  const act = {
+    login: accountSheet, invite: inviteToHousehold, leave: leaveHousehold, photo: pickRecipePhotos,
+    shortcut: shortcutSheet, export: exportData, pantry: () => editNamesSheet("pantry"), staples: () => editNamesSheet("staples"), order: storeOrderSheet, import: () => $("#p-file").click(),
+    signout: confirmSignOut, delete: deleteAccount,
+  }[b.dataset.p];
+  if (act) act();
+});
 $("#recipes").addEventListener("click", e => {
   const w = e.target.closest("[data-websearch]");
   if (w) { openWebSearch(recipeQuery, w.dataset.websearch); return; }
+  if (e.target.closest("[data-aisearch]")) { searchWeb(recipeQuery); return; }
+  if (e.target.closest("[data-cook]")) { whatCanICookSheet(); return; }
+  if (e.target.closest("[data-defaults]")) {
+    for (const d of DEFAULT_RECIPES) if (!state.recipes.some(r => r.name === d.name)) state.recipes.push({ id: uid(), ...d });
+    commit(); toast("7 recept tillagda"); return;
+  }
   const imp = e.target.closest("[data-import]");
   if (imp) importRecipe(imp.dataset.import);
 });
@@ -1741,6 +3238,7 @@ window.addEventListener("storage", e => { if (e.key === STORE_KEY) { state = loa
 
 render();
 updateTimers(true);
+initAuth();
 
 // Öppnas appen med ?import=<länk> (t.ex. från en iPhone-genväg) hämtas receptet direkt
 {
@@ -1756,7 +3254,15 @@ updateTimers(true);
 
 // Offline-stöd
 if ("serviceWorker" in navigator && location.protocol.startsWith("http")) {
-  navigator.serviceWorker.register("sw.js").catch(() => {});
+  navigator.serviceWorker.register("sw.js", { updateViaCache: "none" })
+    .then(reg => { reg.update().catch(() => {}); })
+    .catch(() => {});
+  // En ny version tar över: ladda om en gång så att den syns direkt
+  let reloaded = !navigator.serviceWorker.controller; // första installationen behöver ingen omladdning
+  navigator.serviceWorker.addEventListener("controllerchange", () => {
+    if (reloaded) return;
+    reloaded = true; location.reload();
+  });
 }
 </script>
 </body>
